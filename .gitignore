@@ -18,6 +18,8 @@ Thumbs.db
 /laravel-medical-ecommerce/php.ini
 /app/analysis_output*.txt
 /app/final_analysis.txt
+/app/android/.kotlin/
+/laravel-medical-ecommerce/storage/framework/*.sqlite
 
 # Never commit local environment or credential files
 **/.env
