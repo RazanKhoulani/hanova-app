@@ -180,8 +180,12 @@ class ProductSeeder extends Seeder
             $storedProduct = Product::firstOrNew(['name_en' => $product['name_en']]);
             $storedProduct->fill($product);
 
-            if (! $storedProduct->exists && $image && Storage::disk('public')->exists($image)) {
-                $storedProduct->image = $image;
+            if ($image && Storage::disk('public')->exists($image)) {
+                if (! $storedProduct->exists || ! $storedProduct->image) {
+                    $storedProduct->image = $image;
+                }
+            } elseif ($storedProduct->image === $image) {
+                $storedProduct->image = null;
             }
 
             $storedProduct->save();

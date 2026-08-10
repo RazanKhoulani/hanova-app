@@ -8,7 +8,9 @@ use App\Models\Message;
 use App\Models\Offer;
 use App\Models\Product;
 use App\Models\User;
+use Database\Seeders\ProductSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -52,6 +54,21 @@ class PublicApiTest extends TestCase
         $this->getJson('/api/products?per_page=100')
             ->assertUnprocessable()
             ->assertJsonValidationErrors('per_page');
+    }
+
+    public function test_product_seeder_does_not_publish_missing_placeholder_images(): void
+    {
+        Storage::fake('public');
+
+        $this->seed(ProductSeeder::class);
+
+        $product = Product::where('name_en', 'Gentle Medical Cleanser')->firstOrFail();
+        $this->assertNull($product->image);
+
+        $product->update(['image' => 'products/uploaded-cleanser.png']);
+        $this->seed(ProductSeeder::class);
+
+        $this->assertSame('products/uploaded-cleanser.png', $product->fresh()->image);
     }
 
     public function test_available_slots_reject_a_past_date(): void
