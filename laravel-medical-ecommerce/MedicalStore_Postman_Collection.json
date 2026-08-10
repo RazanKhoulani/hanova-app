@@ -1,0 +1,53 @@
+{
+	"info": {
+		"name": "Hanova API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"+123456789\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
+							"options": { "padding": { "top": 10 } }
+						},
+						"url": "{{base_url}}/auth/register"
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/auth/login"
+					}
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"request": {
+				"method": "GET",
+				"url": "{{base_url}}/products"
+			}
+		},
+		{
+			"name": "Patients",
+			"request": {
+				"method": "GET",
+				"url": "{{base_url}}/patients"
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000/api"
+		}
+	]
+}

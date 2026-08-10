@@ -1,0 +1,30 @@
+# Local agent and downloaded runtime files
+/.agents/
+/.codex/
+/.downloads/
+
+# WordPress is a separate local installation and contains wp-config secrets
+/wordpress-clinic/
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
+# Project-local tools and accidental database files
+/laravel-medical-ecommerce/composer.phar
+/laravel-medical-ecommerce/clinic_db
+/laravel-medical-ecommerce/php.ini
+/app/analysis_output*.txt
+/app/final_analysis.txt
+
+# Never commit local environment or credential files
+**/.env
+**/.env.*
+!**/.env.example
+**/auth.json
+**/*.keystore
+**/*.jks
+**/key.properties
+**/local.properties
