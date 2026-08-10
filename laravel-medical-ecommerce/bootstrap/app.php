@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Middleware\SetLocale;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\SetLocale;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -21,14 +21,16 @@ return Application::configure(basePath: dirname(__DIR__))
         'middleware' => ['api', 'auth:sanctum'],
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Throwable $exception, Request $request) {
+        $exceptions->render(function (Throwable $exception, Request $request) {
             if (
-                !$request->is('api/*')
+                ! $request->is('api/*')
                 || $exception instanceof AuthenticationException
                 || $exception instanceof ValidationException
                 || $exception instanceof HttpExceptionInterface

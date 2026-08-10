@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Product;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class ProductSeeder extends Seeder
 {
@@ -173,10 +174,17 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($products as $product) {
-            Product::updateOrCreate(
-                ['name_en' => $product['name_en']],
-                $product
-            );
+            $image = $product['image'] ?? null;
+            unset($product['image']);
+
+            $storedProduct = Product::firstOrNew(['name_en' => $product['name_en']]);
+            $storedProduct->fill($product);
+
+            if (! $storedProduct->exists && $image && Storage::disk('public')->exists($image)) {
+                $storedProduct->image = $image;
+            }
+
+            $storedProduct->save();
         }
     }
 }

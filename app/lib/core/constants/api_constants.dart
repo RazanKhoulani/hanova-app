@@ -1,7 +1,7 @@
 class ApiConstants {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.43.230:8000/api',
+    defaultValue: 'https://hanova-api-production.up.railway.app/api',
   );
   static const String pusherKey = String.fromEnvironment(
     'PUSHER_APP_KEY',
