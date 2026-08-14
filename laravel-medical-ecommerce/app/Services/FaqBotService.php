@@ -374,10 +374,6 @@ class FaqBotService
             return $this->defaultResponse($lang);
         }
 
-        if (! empty($context['product_name'])) {
-            return $this->productResponse($query, $lang, $context);
-        }
-
         $topicQuestion = $this->detectTopicQuestion($query);
         if ($topicQuestion !== null) {
             [$topic, $question] = $topicQuestion;
@@ -395,6 +391,12 @@ class FaqBotService
         $topic = $this->detectTopic($query);
         if ($topic !== null) {
             return $this->topicResponse($topic, $lang, $askedQuestions);
+        }
+
+        // Product context should enrich general product questions, not block the
+        // concern-specific flow after the user chooses a topic or follow-up.
+        if (! empty($context['product_name'])) {
+            return $this->productResponse($query, $lang, $context);
         }
 
         $faq = $this->findMatchingFaq($query);
