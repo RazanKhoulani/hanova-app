@@ -27,9 +27,9 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _verify(String phone) {
-    if (_pinController.text.length != 4) {
+    if (_pinController.text.length != 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter the 4-digit OTP code')),
+        const SnackBar(content: Text('Enter the 5-digit OTP code')),
       );
       return;
     }
@@ -71,6 +71,10 @@ class _OtpScreenState extends State<OtpScreen> {
               backgroundColor: AppColors.danger,
             ),
           );
+        } else if (state is AuthActionSuccess) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) {
@@ -110,7 +114,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 const SizedBox(height: 26),
                 Center(
                   child: Pinput(
-                    length: 4,
+                    length: 5,
                     controller: _pinController,
                     focusNode: _focusNode,
                     defaultPinTheme: defaultPinTheme,
@@ -132,6 +136,17 @@ class _OtpScreenState extends State<OtpScreen> {
                         _verify(phone);
                       }
                     },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: (phone.isEmpty || isLoading)
+                        ? null
+                        : () => context.read<AuthBloc>().add(
+                            AuthResendRegistrationOtpRequested(phone),
+                          ),
+                    child: const Text('Resend code by WhatsApp'),
                   ),
                 ),
                 const Spacer(),

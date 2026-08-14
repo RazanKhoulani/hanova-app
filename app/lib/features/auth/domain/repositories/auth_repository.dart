@@ -10,6 +10,7 @@ abstract class AuthRepository {
     String passwordConfirmation,
   );
   Future<AuthResponseModel> verifyRegistrationOtp(String phone, String otp);
+  Future<void> resendRegistrationOtp(String phone);
   Future<UserModel> updateProfile(UserModel user);
   Future<void> forgotPassword(String phone);
   Future<void> logout();

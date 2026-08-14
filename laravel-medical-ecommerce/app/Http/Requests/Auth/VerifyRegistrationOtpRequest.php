@@ -16,7 +16,8 @@ class VerifyRegistrationOtpRequest extends FormRequest
     {
         return [
             'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
-            'otp' => 'required|string|size:4',
+            'otp' => ['required', 'digits:'.config('otp.length', 5)],
+            'request_id' => ['sometimes', 'nullable', 'uuid'],
         ];
     }
 

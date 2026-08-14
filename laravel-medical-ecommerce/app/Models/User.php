@@ -33,6 +33,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'availability_schedule' => 'array',
+            'qverify_expires_at' => 'datetime',
         ];
     }
 

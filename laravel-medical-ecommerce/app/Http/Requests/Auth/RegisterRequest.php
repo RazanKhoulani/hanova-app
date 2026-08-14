@@ -16,7 +16,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'unique:users,phone'],
+            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
             'password' => 'required|string|min:6|confirmed',
         ];
     }

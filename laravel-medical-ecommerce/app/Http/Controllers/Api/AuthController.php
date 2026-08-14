@@ -8,37 +8,55 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\VerifyRegistrationOtpRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\Otp\OtpService;
 use App\Support\SyrianPhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly OtpService $otpService) {}
+
     /**
      * Register user and send OTP. No token is issued until OTP verification.
      */
     public function register(RegisterRequest $request)
     {
-        $user = User::create([
-            'name' => $request->name,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = User::where('phone', $request->phone)->first();
+        if ($user?->phone_verified_at) {
+            throw ValidationException::withMessages([
+                'phone' => ['This phone number is already registered.'],
+            ]);
+        }
 
-        $otp = (string) random_int(1000, 9999);
-        $user->otp = $otp;
-        $user->phone_verified_at = null;
+        $isNewUser = $user === null;
+        $user ??= new User;
+        $user->name = $request->name;
+        $user->phone = $request->phone;
+        $user->password = Hash::make($request->password);
+        $user->otp = null;
         $user->save();
 
-        Log::info("OTP for {$user->phone} is $otp");
+        try {
+            $otpPayload = $this->requestOtp($user, $request, 'signup');
+        } catch (Throwable $exception) {
+            if ($isNewUser) {
+                $user->delete();
+            }
+
+            throw $exception;
+        }
 
         return response()->json([
-            'message' => 'Account created. Verify OTP to continue.',
+            'message' => 'Account created. The verification code was sent by WhatsApp.',
             'phone' => $user->phone,
-            'otp_simulated' => $otp,
+            'request_id' => $otpPayload['request_id'],
+            'expires_in' => $otpPayload['expires_in'],
+            'code_length' => $otpPayload['code_length'],
             'requires_otp_verification' => true,
-        ], 201);
+        ], 202);
     }
 
     /**
@@ -48,13 +66,22 @@ class AuthController extends Controller
     {
         $user = User::where('phone', $request->phone)->firstOrFail();
 
-        if ((string) $user->otp !== (string) $request->otp) {
+        $requestId = $request->validated('request_id') ?? $user->qverify_request_id;
+        $verified = $this->otpService->verify(
+            $user->phone,
+            (string) $request->otp,
+            $requestId,
+        );
+
+        if (! $verified) {
             return response()->json([
-                'message' => 'Invalid OTP code',
+                'message' => 'The verification code is invalid or expired.',
             ], 422);
         }
 
         $user->otp = null;
+        $user->qverify_request_id = null;
+        $user->qverify_expires_at = null;
         $user->phone_verified_at = now();
         $user->save();
 
@@ -66,6 +93,33 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
             'message' => 'Phone verified successfully',
         ]);
+    }
+
+    public function resendRegistrationOtp(Request $request)
+    {
+        $request->merge([
+            'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
+        ]);
+        $request->validate([
+            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
+        ]);
+
+        $user = User::where('phone', $request->phone)->firstOrFail();
+        if ($user->phone_verified_at) {
+            throw ValidationException::withMessages([
+                'phone' => ['This phone number is already verified.'],
+            ]);
+        }
+
+        $otpPayload = $this->requestOtp($user, $request, 'signup');
+
+        return response()->json([
+            'message' => 'A new verification code was sent by WhatsApp.',
+            'phone' => $user->phone,
+            'request_id' => $otpPayload['request_id'],
+            'expires_in' => $otpPayload['expires_in'],
+            'code_length' => $otpPayload['code_length'],
+        ], 202);
     }
 
     /**
@@ -137,9 +191,7 @@ class AuthController extends Controller
         return new UserResource($user);
     }
 
-    /**
-     * Forgot Password (Simulated)
-     */
+    /** Send a password recovery OTP through QVerify. */
     public function forgotPassword(Request $request)
     {
         $request->merge([
@@ -149,12 +201,31 @@ class AuthController extends Controller
             'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
         ]);
 
-        $otp = (string) random_int(1000, 9999);
-        Log::info("Password reset OTP for {$request->phone} is $otp");
+        $user = User::where('phone', $request->phone)->firstOrFail();
+        $otpPayload = $this->requestOtp($user, $request, 'recovery');
 
         return response()->json([
             'message' => 'Reset OTP sent successfully.',
-            'otp_simulated' => $otp,
-        ]);
+            'request_id' => $otpPayload['request_id'],
+            'expires_in' => $otpPayload['expires_in'],
+            'code_length' => $otpPayload['code_length'],
+        ], 202);
+    }
+
+    /** @return array<string, mixed> */
+    private function requestOtp(User $user, Request $request, string $purpose): array
+    {
+        $payload = $this->otpService->request(
+            phone: $user->phone,
+            purpose: $purpose,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
+        );
+
+        $user->qverify_request_id = $payload['request_id'];
+        $user->qverify_expires_at = now()->addSeconds((int) $payload['expires_in']);
+        $user->save();
+
+        return $payload;
     }
 }

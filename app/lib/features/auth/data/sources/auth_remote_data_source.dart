@@ -49,6 +49,13 @@ class AuthRemoteDataSource {
     return AuthResponseModel.fromJson(response.data);
   }
 
+  Future<void> resendRegistrationOtp(String phone) async {
+    await _dioClient.post(
+      ApiConstants.resendRegistrationOtp,
+      data: {'phone': SyrianPhoneNumber.international(phone)},
+    );
+  }
+
   Future<UserModel> updateProfile(UserModel user) async {
     final response = await _dioClient.put(
       ApiConstants.updateProfile,

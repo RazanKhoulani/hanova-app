@@ -41,4 +41,13 @@ return [
         'credentials_base64' => env('FIREBASE_CREDENTIALS_BASE64'),
     ],
 
+    'qverify' => [
+        'base_url' => env('QVERIFY_BASE_URL', 'https://verify-api.qomratech.com/api'),
+        'api_key' => env('QVERIFY_API_KEY'),
+        'template_key' => env('QVERIFY_TEMPLATE_KEY', 'verify_otp_app'),
+        'locale' => env('QVERIFY_LOCALE', 'en'),
+        'app_name' => env('QVERIFY_APP_NAME', env('APP_NAME', 'Hannova')),
+        'verify_ssl' => env('QVERIFY_VERIFY_SSL', true),
+    ],
+
 ];

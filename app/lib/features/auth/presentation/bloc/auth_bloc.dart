@@ -13,6 +13,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthRegisterRequested>(_onRegisterRequested);
     on<AuthVerifyOtpRequested>(_onVerifyOtpRequested);
+    on<AuthResendRegistrationOtpRequested>(_onResendRegistrationOtpRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthUpdateProfileRequested>(_onUpdateProfileRequested);
     on<AuthForgotPasswordRequested>(_onForgotPasswordRequested);
@@ -93,6 +94,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       emit(AuthAuthenticated(response.user!));
+    } catch (e) {
+      emit(AuthFailure(ApiErrorMessage.from(e)));
+    }
+  }
+
+  Future<void> _onResendRegistrationOtpRequested(
+    AuthResendRegistrationOtpRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.resendRegistrationOtp(event.phone);
+      emit(AuthActionSuccess('A new code was sent by WhatsApp.'));
     } catch (e) {
       emit(AuthFailure(ApiErrorMessage.from(e)));
     }

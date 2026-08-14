@@ -25,6 +25,11 @@ class AuthVerifyOtpRequested extends AuthEvent {
   AuthVerifyOtpRequested(this.phone, this.otp);
 }
 
+class AuthResendRegistrationOtpRequested extends AuthEvent {
+  final String phone;
+  AuthResendRegistrationOtpRequested(this.phone);
+}
+
 class AuthLogoutRequested extends AuthEvent {}
 
 class AuthCheckStatus extends AuthEvent {}
