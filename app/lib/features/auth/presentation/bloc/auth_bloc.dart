@@ -71,6 +71,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           phone: response.phone ?? event.phone,
           otpSimulated: response.otpSimulated,
           message: response.message,
+          deliveryStatus: response.deliveryStatus,
         ),
       );
     } catch (e) {

@@ -12,6 +12,7 @@ use App\Services\Otp\OtpService;
 use App\Support\SyrianPhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -50,9 +51,10 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Account created. The verification code was sent by WhatsApp.',
+            'message' => 'Account created. WhatsApp accepted the verification request.',
             'phone' => $user->phone,
             'request_id' => $otpPayload['request_id'],
+            'delivery_status' => $otpPayload['delivery_status'],
             'expires_in' => $otpPayload['expires_in'],
             'code_length' => $otpPayload['code_length'],
             'requires_otp_verification' => true,
@@ -114,9 +116,10 @@ class AuthController extends Controller
         $otpPayload = $this->requestOtp($user, $request, 'signup');
 
         return response()->json([
-            'message' => 'A new verification code was sent by WhatsApp.',
+            'message' => 'WhatsApp accepted a new verification request.',
             'phone' => $user->phone,
             'request_id' => $otpPayload['request_id'],
+            'delivery_status' => $otpPayload['delivery_status'],
             'expires_in' => $otpPayload['expires_in'],
             'code_length' => $otpPayload['code_length'],
         ], 202);
@@ -205,8 +208,9 @@ class AuthController extends Controller
         $otpPayload = $this->requestOtp($user, $request, 'recovery');
 
         return response()->json([
-            'message' => 'Reset OTP sent successfully.',
+            'message' => 'WhatsApp accepted the reset code request.',
             'request_id' => $otpPayload['request_id'],
+            'delivery_status' => $otpPayload['delivery_status'],
             'expires_in' => $otpPayload['expires_in'],
             'code_length' => $otpPayload['code_length'],
         ], 202);
@@ -225,6 +229,13 @@ class AuthController extends Controller
         $user->qverify_request_id = $payload['request_id'];
         $user->qverify_expires_at = now()->addSeconds((int) $payload['expires_in']);
         $user->save();
+
+        Log::info('QVerify OTP request created.', [
+            'user_id' => $user->id,
+            'purpose' => $purpose,
+            'delivery_status' => $payload['delivery_status'],
+            'expires_in' => $payload['expires_in'],
+        ]);
 
         return $payload;
     }

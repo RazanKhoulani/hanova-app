@@ -76,7 +76,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (state is AuthOtpRequired) {
           context.push(
             '/otp',
-            extra: {'phone': state.phone, 'otp_simulated': state.otpSimulated},
+            extra: {
+              'phone': state.phone,
+              'otp_simulated': state.otpSimulated,
+              'delivery_status': state.deliveryStatus,
+            },
           );
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(

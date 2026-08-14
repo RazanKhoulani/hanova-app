@@ -45,6 +45,7 @@ class QVerifyRegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ])->assertAccepted()
             ->assertJsonPath('request_id', $requestId)
+            ->assertJsonPath('delivery_status', 'sent')
             ->assertJsonMissingPath('otp_simulated');
 
         $user = User::where('phone', '963945345844')->firstOrFail();

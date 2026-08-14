@@ -48,6 +48,7 @@ class OtpService
         return [
             'request_id' => $requestId,
             'phone' => SyrianPhoneNumber::normalize($phone),
+            'delivery_status' => (string) ($result['status'] ?? 'queued'),
             'expires_in' => $expirySeconds,
             'code_length' => $codeLength,
             'expires_at' => $result['expires_at'] ?? now()->addSeconds($expirySeconds)->toIso8601String(),

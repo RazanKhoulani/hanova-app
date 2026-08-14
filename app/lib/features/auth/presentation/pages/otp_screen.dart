@@ -45,6 +45,7 @@ class _OtpScreenState extends State<OtpScreen> {
     final payload = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
     final phone = (payload['phone'] ?? '').toString();
     final otpSimulated = payload['otp_simulated']?.toString();
+    final deliveryStatus = payload['delivery_status']?.toString();
 
     final defaultPinTheme = PinTheme(
       width: 58,
@@ -91,9 +92,24 @@ class _OtpScreenState extends State<OtpScreen> {
                 Text(
                   phone.isEmpty
                       ? 'Complete registration verification.'
-                      : 'Code sent to ${SyrianPhoneNumber.display(phone)}',
+                      : 'Verification requested for ${SyrianPhoneNumber.display(phone)}',
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
+                if (deliveryStatus == 'accepted') ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF5E6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'WhatsApp accepted the request. Delivery may take up to a minute. Make sure this is your active WhatsApp number.',
+                      style: TextStyle(color: Color(0xFF8A5B00)),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 if (otpSimulated != null && otpSimulated.isNotEmpty)
                   Container(

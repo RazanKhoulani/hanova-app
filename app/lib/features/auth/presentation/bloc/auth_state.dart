@@ -15,8 +15,14 @@ class AuthOtpRequired extends AuthState {
   final String phone;
   final String? otpSimulated;
   final String? message;
+  final String? deliveryStatus;
 
-  AuthOtpRequired({required this.phone, this.otpSimulated, this.message});
+  AuthOtpRequired({
+    required this.phone,
+    this.otpSimulated,
+    this.message,
+    this.deliveryStatus,
+  });
 }
 
 class AuthUnauthenticated extends AuthState {}
