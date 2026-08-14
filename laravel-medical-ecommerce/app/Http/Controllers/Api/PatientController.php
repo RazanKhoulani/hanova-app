@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Patient;
-use App\Services\PatientService;
 use App\Http\Requests\Patient\StorePatientRequest;
 use App\Http\Resources\PatientResource;
+use App\Models\Patient;
+use App\Services\PatientService;
+use App\Support\SyrianPhoneNumber;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
@@ -40,6 +41,7 @@ class PatientController extends Controller
         $payload['user_id'] = $request->user()->id;
 
         $patient = $this->patientService->createPatient($payload);
+
         return new PatientResource($patient);
     }
 
@@ -62,10 +64,16 @@ class PatientController extends Controller
         $patient = $this->patientService->getPatientById($id);
         $this->authorizePatientAccess($patient, $request->user());
 
+        if ($request->has('phone')) {
+            $request->merge([
+                'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
+            ]);
+        }
+
         $payload = $request->validate([
             'name' => 'sometimes|string|max:255',
             'age' => 'sometimes|integer|min:0',
-            'phone' => 'sometimes|string|max:20',
+            'phone' => ['sometimes', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
             'address' => 'nullable|string',
             'notes' => 'nullable|string',
             'medical_file' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120',

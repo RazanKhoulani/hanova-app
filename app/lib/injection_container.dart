@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'core/network/api_interceptor.dart';
 import 'core/network/dio_client.dart';
+import 'core/notifications/push_notification_service.dart';
 import 'core/settings/app_settings_cubit.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -34,12 +35,13 @@ Future<void> init() async {
   sl.registerLazySingleton(() => Dio());
   sl.registerLazySingleton(() => ApiInterceptor(sl()));
   sl.registerLazySingleton(() => DioClient(sl(), sl()));
+  sl.registerLazySingleton(() => PushNotificationService(sl()));
   sl.registerLazySingleton(() => AppSettingsCubit(sl(), sl()));
 
   // Features - Auth
   sl.registerLazySingleton(() => AuthRemoteDataSource(sl()));
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl(), sl(), sl()),
+    () => AuthRepositoryImpl(sl(), sl(), sl(), sl()),
   );
   sl.registerFactory(() => AuthBloc(sl()));
 

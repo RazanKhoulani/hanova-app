@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/syrian_phone_number.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -32,13 +34,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _submit() {
     final name = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
+    final phone = SyrianPhoneNumber.tryInternational(_phoneController.text);
     final password = _passwordController.text;
     final passwordConfirmation = _confirmPasswordController.text;
 
-    if (name.isEmpty || phone.isEmpty || password.isEmpty || passwordConfirmation.isEmpty) {
+    if (name.isEmpty ||
+        phone == null ||
+        password.isEmpty ||
+        passwordConfirmation.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all fields')),
+        const SnackBar(
+          content: Text('Complete all fields with a valid Syrian number'),
+        ),
       );
       return;
     }
@@ -58,13 +65,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     context.read<AuthBloc>().add(
-          AuthRegisterRequested(
-            name,
-            phone,
-            password,
-            passwordConfirmation,
-          ),
-        );
+      AuthRegisterRequested(name, phone, password, passwordConfirmation),
+    );
   }
 
   @override
@@ -72,13 +74,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthOtpRequired) {
-          context.push('/otp', extra: {
-            'phone': state.phone,
-            'otp_simulated': state.otpSimulated,
-          });
+          context.push(
+            '/otp',
+            extra: {'phone': state.phone, 'otp_simulated': state.otpSimulated},
+          );
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.danger),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.danger,
+            ),
           );
         }
       },
@@ -87,9 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: const Text('Create Account'),
-          ),
+          appBar: AppBar(title: const Text('Create Account')),
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
@@ -116,8 +119,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(9),
+                    ],
                     decoration: const InputDecoration(
-                      hintText: '09XXXXXXXX',
+                      hintText: '9XXXXXXXX',
+                      prefixText: '+963 ',
                       prefixIcon: Icon(Icons.phone_iphone_rounded),
                     ),
                   ),
@@ -131,8 +139,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: 'At least 6 characters',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
                       ),
                     ),
                   ),
@@ -146,8 +160,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: 'Repeat your password',
                       prefixIcon: const Icon(Icons.lock_person_outlined),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                        onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        ),
                       ),
                     ),
                   ),
@@ -158,7 +179,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Text('Register & Send OTP'),
                   ),
@@ -182,4 +206,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-

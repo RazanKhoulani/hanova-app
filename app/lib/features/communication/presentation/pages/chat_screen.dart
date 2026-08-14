@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -55,8 +56,9 @@ class _ChatScreenState extends State<ChatScreen> {
       );
       await _pusher.subscribe(channelName: channelName);
       await _pusher.connect();
-    } catch (_) {
+    } catch (error) {
       _realtimeStarted = false;
+      if (kDebugMode) debugPrint('Pusher connection failed: $error');
     }
   }
 
@@ -105,7 +107,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
+    return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          previous is! AuthAuthenticated && current is AuthAuthenticated,
+      listener: (context, state) {
+        context.read<CommunicationBloc>().add(CommunicationFetchChatMessages());
+        _initRealtime();
+      },
       builder: (context, authState) {
         if (authState is AuthLoading || authState is AuthInitial) {
           return const Scaffold(

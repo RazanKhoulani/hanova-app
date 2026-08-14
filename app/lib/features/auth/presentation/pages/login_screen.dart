@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/syrian_phone_number.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -26,19 +28,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submit() {
-    if (_phoneController.text.trim().isEmpty ||
-        _passwordController.text.isEmpty) {
+    final phone = SyrianPhoneNumber.tryInternational(_phoneController.text);
+    if (phone == null || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter phone and password')),
+        const SnackBar(
+          content: Text('Enter a valid Syrian mobile number and password'),
+        ),
       );
       return;
     }
 
     context.read<AuthBloc>().add(
-      AuthLoginRequested(
-        _phoneController.text.trim(),
-        _passwordController.text,
-      ),
+      AuthLoginRequested(phone, _passwordController.text),
     );
   }
 
@@ -119,8 +120,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(9),
+                    ],
                     decoration: const InputDecoration(
-                      hintText: '09XXXXXXXX',
+                      hintText: '9XXXXXXXX',
+                      prefixText: '+963 ',
                       prefixIcon: Icon(Icons.phone_iphone_rounded),
                     ),
                   ),
@@ -150,18 +156,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        if (_phoneController.text.trim().isEmpty) {
+                        final phone = SyrianPhoneNumber.tryInternational(
+                          _phoneController.text,
+                        );
+                        if (phone == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Enter your phone number first'),
+                              content: Text(
+                                'Enter a valid Syrian mobile number first',
+                              ),
                             ),
                           );
                           return;
                         }
                         context.read<AuthBloc>().add(
-                          AuthForgotPasswordRequested(
-                            _phoneController.text.trim(),
-                          ),
+                          AuthForgotPasswordRequested(phone),
                         );
                       },
                       child: const Text('Forgot password?'),

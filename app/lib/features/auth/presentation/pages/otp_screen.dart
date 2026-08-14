@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pinput/pinput.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/syrian_phone_number.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -34,8 +35,8 @@ class _OtpScreenState extends State<OtpScreen> {
     }
 
     context.read<AuthBloc>().add(
-          AuthVerifyOtpRequested(phone, _pinController.text),
-        );
+      AuthVerifyOtpRequested(phone, _pinController.text),
+    );
   }
 
   @override
@@ -65,7 +66,10 @@ class _OtpScreenState extends State<OtpScreen> {
           context.go('/home');
         } else if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.danger),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.danger,
+            ),
           );
         }
       },
@@ -81,7 +85,9 @@ class _OtpScreenState extends State<OtpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  phone.isEmpty ? 'Complete registration verification.' : 'Code sent to $phone',
+                  phone.isEmpty
+                      ? 'Complete registration verification.'
+                      : 'Code sent to ${SyrianPhoneNumber.display(phone)}',
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 24),
@@ -130,12 +136,17 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
                 const Spacer(),
                 ElevatedButton(
-                  onPressed: (phone.isEmpty || isLoading) ? null : () => _verify(phone),
+                  onPressed: (phone.isEmpty || isLoading)
+                      ? null
+                      : () => _verify(phone),
                   child: isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Verify & Continue'),
                 ),
@@ -147,4 +158,3 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 }
-

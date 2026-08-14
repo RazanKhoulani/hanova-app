@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Support\SyrianPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class VerifyRegistrationOtpRequest extends FormRequest
@@ -14,9 +15,15 @@ class VerifyRegistrationOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => 'required|string|exists:users,phone',
+            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
             'otp' => 'required|string|size:4',
         ];
     }
-}
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'phone' => SyrianPhoneNumber::normalize($this->input('phone')),
+        ]);
+    }
+}

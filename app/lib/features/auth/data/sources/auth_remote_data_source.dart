@@ -1,5 +1,6 @@
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/utils/syrian_phone_number.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_model.dart';
 
@@ -12,7 +13,7 @@ class AuthRemoteDataSource {
     final response = await _dioClient.post(
       ApiConstants.login,
       data: {
-        'phone': phone,
+        'phone': SyrianPhoneNumber.international(phone),
         'password': password,
       },
     );
@@ -29,7 +30,7 @@ class AuthRemoteDataSource {
       ApiConstants.register,
       data: {
         'name': name,
-        'phone': phone,
+        'phone': SyrianPhoneNumber.international(phone),
         'password': password,
         'password_confirmation': passwordConfirmation,
       },
@@ -37,13 +38,13 @@ class AuthRemoteDataSource {
     return AuthResponseModel.fromJson(response.data);
   }
 
-  Future<AuthResponseModel> verifyRegistrationOtp(String phone, String otp) async {
+  Future<AuthResponseModel> verifyRegistrationOtp(
+    String phone,
+    String otp,
+  ) async {
     final response = await _dioClient.post(
       ApiConstants.verifyRegistrationOtp,
-      data: {
-        'phone': phone,
-        'otp': otp,
-      },
+      data: {'phone': SyrianPhoneNumber.international(phone), 'otp': otp},
     );
     return AuthResponseModel.fromJson(response.data);
   }
@@ -51,7 +52,10 @@ class AuthRemoteDataSource {
   Future<UserModel> updateProfile(UserModel user) async {
     final response = await _dioClient.put(
       ApiConstants.updateProfile,
-      data: user.toJson(),
+      data: {
+        ...user.toJson(),
+        'phone': SyrianPhoneNumber.international(user.phone),
+      },
     );
     final payload = response.data['data'] ?? response.data;
     return UserModel.fromJson(payload);
@@ -60,7 +64,7 @@ class AuthRemoteDataSource {
   Future<void> forgotPassword(String phone) async {
     await _dioClient.post(
       ApiConstants.forgotPassword,
-      data: {'phone': phone},
+      data: {'phone': SyrianPhoneNumber.international(phone)},
     );
   }
 

@@ -1,23 +1,23 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\AppointmentController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BotController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ConsultationController;
-use App\Http\Controllers\Api\FaqController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\BotController;
 use App\Http\Controllers\Api\DeliveryAreaController;
-use App\Http\Controllers\Api\OfferController;
-use App\Http\Controllers\Api\PatientProgressPhotoController;
+use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OfferController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PatientProgressPhotoController;
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Middleware\EnsureDashboardStaffRole;
+use Illuminate\Support\Facades\Route;
 
 // Auth routes
 Route::prefix('auth')->group(function () {
@@ -45,7 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile', [AuthController::class, 'profile']);
         Route::put('/profile', [AuthController::class, 'updateProfile']);
     });
-    
+
     // Product management (admin/doctor side)
     Route::middleware(EnsureDashboardStaffRole::class)->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
@@ -56,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Bot conversation history for authenticated patients.
     Route::get('/bot/conversation', [BotController::class, 'conversation']);
-    
+
     // Cart Routes
     Route::prefix('cart')->group(function () {
         Route::get('/', [CartController::class, 'index']);
@@ -64,7 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{itemId}', [CartController::class, 'update']);
         Route::delete('/{itemId}', [CartController::class, 'destroy']);
     });
-    
+
     // Order Routes
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index']);
@@ -73,12 +73,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/confirm', [OrderController::class, 'confirm']);
         Route::post('/{id}/delivered', [OrderController::class, 'markDelivered']);
     });
-    
+
     // Patients and Appointments
     Route::apiResource('patients', PatientController::class);
     Route::post('/patient-progress-photos', [PatientProgressPhotoController::class, 'store']);
     Route::apiResource('appointments', AppointmentController::class);
-    
+
     // Chat System
     Route::prefix('chat')->group(function () {
         Route::get('/conversations', [ChatController::class, 'index']);
@@ -86,17 +86,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/conversations/{id}/messages', [ChatController::class, 'messages']);
         Route::post('/conversations/{id}/messages', [ChatController::class, 'sendMessage']);
     });
-    
+
     // Consultations
     Route::prefix('consultations')->group(function () {
         Route::get('/', [ConsultationController::class, 'index']);
         Route::post('/', [ConsultationController::class, 'store']);
         Route::get('/{id}', [ConsultationController::class, 'show']);
     });
-    
+
     // Notifications
     Route::prefix('notifications')->group(function () {
         Route::get('/', [NotificationController::class, 'index']);
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
     });
+
+    Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
+    Route::delete('/device-tokens', [DeviceTokenController::class, 'destroy']);
 });

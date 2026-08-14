@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\SyrianPhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,26 +21,32 @@ class AuthController extends Controller
         ) {
             return redirect()->route('admin.dashboard');
         }
+
         return view('admin.auth.login');
     }
 
     public function login(Request $request)
     {
+        $request->merge([
+            'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
+        ]);
+
         $credentials = $request->validate([
-            'phone' => ['required', 'string'],
+            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
             'password' => ['required'],
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            
+
             // Check role after login
             if (
-                !Auth::user()->hasRole('admin')
-                && !Auth::user()->hasRole('doctor')
-                && !Auth::user()->hasRole('delivery')
+                ! Auth::user()->hasRole('admin')
+                && ! Auth::user()->hasRole('doctor')
+                && ! Auth::user()->hasRole('delivery')
             ) {
                 Auth::logout();
+
                 return back()->withErrors([
                     'phone' => 'You do not have permission to access the dashboard.',
                 ])->onlyInput('phone');

@@ -1,4 +1,4 @@
-package com.example.app
+package hanova_app.com
 
 import io.flutter.embedding.android.FlutterActivity
 

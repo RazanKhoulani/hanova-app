@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\DeliveryArea;
 use App\Models\User;
+use App\Support\SyrianPhoneNumber;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
@@ -78,7 +79,7 @@ class ProductionSeeder extends Seeder
     private function upsertConfiguredUser(string $prefix, string $defaultName, array $roles): ?User
     {
         $name = trim((string) env("{$prefix}_NAME", $defaultName));
-        $phone = trim((string) env("{$prefix}_PHONE"));
+        $phone = SyrianPhoneNumber::normalize(env("{$prefix}_PHONE"));
         $password = (string) env("{$prefix}_PASSWORD");
 
         if ($phone === '' && $password === '') {

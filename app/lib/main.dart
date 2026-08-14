@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
@@ -13,11 +14,18 @@ import 'features/clinical/presentation/bloc/clinical_bloc.dart';
 import 'features/communication/presentation/bloc/communication_bloc.dart';
 import 'features/notifications/presentation/bloc/notification_bloc.dart';
 import 'injection_container.dart' as di;
+import 'firebase_options.dart';
+import 'core/notifications/push_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await di.init();
+  await di.sl<PushNotificationService>().initialize();
   runApp(const MyApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    di.sl<PushNotificationService>().handleInitialMessage();
+  });
 }
 
 class MyApp extends StatelessWidget {

@@ -13,6 +13,7 @@ class NotificationController extends Controller
     {
         $notifications = Notification::with('user')->latest()->paginate(15);
         $users = User::all();
+
         return view('admin.notifications.index', compact('notifications', 'users'));
     }
 
@@ -22,7 +23,7 @@ class NotificationController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'title' => 'required|string|max:255',
             'body' => 'required|string',
-            'type' => 'nullable|in:general,offer,clinic,order_status,order_accepted,order_ready',
+            'type' => 'nullable|in:general,offer,clinic,chat_message,order_status,order_created,order_accepted,order_ready,order_delivered',
         ]);
 
         Notification::create([
@@ -38,6 +39,7 @@ class NotificationController extends Controller
     public function destroy($id)
     {
         Notification::findOrFail($id)->delete();
+
         return back()->with('success', 'Notification deleted');
     }
 }
