@@ -106,43 +106,56 @@ class ProfileScreen extends StatelessWidget {
     final isGuest = user == null;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 28, 22, 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
+        gradient: AppColors.brandGradient,
+        borderRadius: BorderRadius.circular(30),
         boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
+          BoxShadow(
+            color: Color(0x24A24A63),
+            blurRadius: 28,
+            offset: Offset(0, 14),
+          ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          const CircleAvatar(
-            radius: 40,
-            backgroundColor: AppColors.primaryLight,
-            child: Icon(
+          Container(
+            width: 86,
+            height: 86,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.5),
+                width: 4,
+              ),
+            ),
+            child: const Icon(
               Icons.person_rounded,
-              size: 40,
+              size: 44,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isGuest ? context.tr('guest_user') : user.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                isGuest ? context.tr('login_to_unlock') : user.phone,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            ],
+          const SizedBox(height: 14),
+          Text(
+            isGuest ? context.tr('guest_user') : user.name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            isGuest ? context.tr('login_to_unlock') : user.phone,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -155,7 +168,8 @@ class ProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.divider, width: 0.6),
         boxShadow: const [
           BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
         ],
@@ -201,7 +215,8 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.divider, width: 0.6),
         boxShadow: const [
           BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
         ],

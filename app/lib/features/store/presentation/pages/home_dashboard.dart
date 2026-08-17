@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_auth_shell.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
@@ -147,106 +148,101 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return SliverAppBar(
       floating: true,
       pinned: true,
-      expandedHeight: 120,
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 50, 20, 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    textInputAction: TextInputAction.search,
-                    decoration: InputDecoration(
-                      hintText: context.tr('search_products'),
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: AppColors.textSecondary,
-                      ),
-                      suffixIcon: _searchController.text.isEmpty
-                          ? null
-                          : IconButton(
-                              onPressed: _clearFilters,
-                              icon: const Icon(Icons.close_rounded),
+      toolbarHeight: 126,
+      titleSpacing: 0,
+      backgroundColor: AppColors.background,
+      surfaceTintColor: Colors.transparent,
+      title: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const HanovaBrandMark(size: 42),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: BlocBuilder<AuthBloc, AuthState>(
+                    buildWhen: (previous, current) =>
+                        previous.runtimeType != current.runtimeType,
+                    builder: (context, authState) {
+                      final name = authState is AuthAuthenticated
+                          ? authState.user.name
+                          : 'Hanova';
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
                             ),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () => context.push('/bot'),
-                child: const CircleAvatar(
-                  backgroundColor: AppColors.primaryLight,
-                  child: Icon(
-                    Icons.smart_toy_rounded,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const NotificationBell(),
-              const SizedBox(width: 10),
-              BlocBuilder<CartBloc, CartState>(
-                builder: (context, cartState) {
-                  return GestureDetector(
-                    onTap: () => context.push('/cart'),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.shopping_bag_outlined,
-                            color: AppColors.primary,
                           ),
+                          Text(
+                            context.tr('skin_consultation'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                _HomeHeaderAction(
+                  icon: Icons.smart_toy_outlined,
+                  onTap: () => context.push('/bot'),
+                ),
+                const NotificationBell(),
+                BlocBuilder<CartBloc, CartState>(
+                  buildWhen: (previous, current) =>
+                      previous.itemCount != current.itemCount,
+                  builder: (context, cartState) {
+                    return _HomeHeaderAction(
+                      icon: Icons.shopping_bag_outlined,
+                      badge: cartState.itemCount,
+                      onTap: () => context.push('/cart'),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 48,
+              child: TextField(
+                controller: _searchController,
+                onChanged: _onSearchChanged,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: context.tr('search_products'),
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: _searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          onPressed: _clearFilters,
+                          icon: const Icon(Icons.close_rounded),
                         ),
-                        if (cartState.itemCount > 0)
-                          Positioned(
-                            right: -4,
-                            top: -4,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Text(
-                                cartState.itemCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -263,6 +259,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             final offer = snapshot.data?.activeOffer;
 
             return Container(
+              constraints: const BoxConstraints(minHeight: 188),
               width: double.infinity,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -270,7 +267,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(28),
               ),
               child: Stack(
                 children: [
@@ -436,30 +433,36 @@ class _HomeDashboardState extends State<HomeDashboard> {
           );
         }
 
-        return Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: categories.map((category) {
-            final filterValue = category.slug ?? category.name;
-            final isSelected = _selectedConcernSlug == filterValue;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedConcernSlug = isSelected ? null : filterValue;
-                });
-                context.read<StoreBloc>().add(
-                  StoreFetchProducts(
-                    concern: _selectedConcernSlug,
-                    query: _searchQuery,
-                  ),
-                );
-              },
-              child: _CategoryChip(
-                label: category.name,
-                isSelected: isSelected,
-              ),
-            );
-          }).toList(),
+        return SizedBox(
+          height: 104,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              final filterValue = category.slug ?? category.name;
+              final isSelected = _selectedConcernSlug == filterValue;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedConcernSlug = isSelected ? null : filterValue;
+                  });
+                  context.read<StoreBloc>().add(
+                    StoreFetchProducts(
+                      concern: _selectedConcernSlug,
+                      query: _searchQuery,
+                    ),
+                  );
+                },
+                child: _CategoryChip(
+                  label: category.name,
+                  isSelected: isSelected,
+                  icon: _categoryIcon(filterValue),
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -483,9 +486,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.75,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+              childAspectRatio: 0.72,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
             ),
             itemCount: state.products.length,
             itemBuilder: (context, index) {
@@ -528,7 +531,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: AppColors.divider, width: 0.6),
           boxShadow: const [
             BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
           ],
@@ -540,13 +544,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
               child: Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
                 ),
                 child: product.image != null
                     ? CachedNetworkImage(
                         imageUrl: product.image!,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
+                        memCacheWidth: 360,
                         fadeInDuration: Duration.zero,
                         placeholder: (context, url) => const Center(
                           child: CircularProgressIndicator(strokeWidth: 2),
@@ -637,32 +642,121 @@ class _HomeDashboardState extends State<HomeDashboard> {
       ),
     );
   }
+
+  IconData _categoryIcon(String value) {
+    final key = value.toLowerCase();
+    if (key.contains('hair')) return Icons.auto_awesome_rounded;
+    if (key.contains('sun')) return Icons.wb_sunny_outlined;
+    if (key.contains('body') || key.contains('cellulite')) {
+      return Icons.accessibility_new_rounded;
+    }
+    if (key.contains('clean')) return Icons.water_drop_outlined;
+    if (key.contains('hormon')) return Icons.balance_rounded;
+    if (key.contains('acne')) return Icons.healing_rounded;
+    return Icons.spa_outlined;
+  }
 }
 
 class _CategoryChip extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final IconData icon;
 
-  const _CategoryChip({required this.label, this.isSelected = false});
+  const _CategoryChip({
+    required this.label,
+    required this.icon,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isSelected ? AppColors.primary : AppColors.divider,
-        ),
+    return SizedBox(
+      width: 82,
+      child: Column(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? AppColors.primary : AppColors.divider,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: isSelected ? Colors.white : AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              height: 1.1,
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: isSelected ? Colors.white : AppColors.textPrimary,
+    );
+  }
+}
+
+class _HomeHeaderAction extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final int badge;
+
+  const _HomeHeaderAction({
+    required this.icon,
+    required this.onTap,
+    this.badge = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton.filledTonal(
+          onPressed: onTap,
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.primaryLight,
+            foregroundColor: AppColors.primary,
+          ),
+          icon: Icon(icon, size: 20),
         ),
-      ),
+        if (badge > 0)
+          PositionedDirectional(
+            top: 0,
+            end: 0,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: AppColors.danger,
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(color: Colors.white),
+              ),
+              child: Text(
+                badge > 99 ? '99+' : '$badge',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
