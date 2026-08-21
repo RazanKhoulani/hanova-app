@@ -33,4 +33,19 @@ class FaqController extends Controller
         Faq::findOrFail($id)->delete();
         return back()->with('success', 'FAQ deleted successfully');
     }
+
+    public function update(Request $request, $id)
+    {
+        $data = $request->validate([
+            'question_ar' => 'required|string|max:255',
+            'question_en' => 'required|string|max:255',
+            'answer_ar' => 'required|string',
+            'answer_en' => 'required|string',
+            'keywords' => 'nullable|string',
+        ]);
+
+        Faq::findOrFail($id)->update($data);
+
+        return back()->with('success', 'FAQ updated successfully');
+    }
 }

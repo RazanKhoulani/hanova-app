@@ -19,7 +19,9 @@ import '../../data/models/product_model.dart';
 import '../../data/models/home_data_model.dart';
 
 class HomeDashboard extends StatefulWidget {
-  const HomeDashboard({super.key});
+  final int refreshVersion;
+
+  const HomeDashboard({super.key, this.refreshVersion = 0});
 
   @override
   State<HomeDashboard> createState() => _HomeDashboardState();
@@ -31,6 +33,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
   late Future<HomeDataModel> _homeFuture;
   Timer? _searchDebounce;
   String? _searchQuery;
+  bool _hasSearchText = false;
 
   @override
   void initState() {
@@ -45,6 +48,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant HomeDashboard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshVersion != widget.refreshVersion) {
+      _refreshHome();
+    }
+  }
+
   void _fetchProducts({bool force = false}) {
     context.read<StoreBloc>().add(
       StoreFetchProducts(
@@ -57,7 +68,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   void _onSearchChanged(String value) {
     _searchDebounce?.cancel();
-    setState(() {});
+    setState(() => _hasSearchText = value.isNotEmpty);
     _searchDebounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
       final query = value.trim();
@@ -71,6 +82,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     setState(() {
       _selectedConcernSlug = null;
       _searchQuery = null;
+      _hasSearchText = false;
       _searchController.clear();
     });
     _fetchProducts();
@@ -80,6 +92,22 @@ class _HomeDashboardState extends State<HomeDashboard> {
     setState(() {
       _homeFuture = _requestHomeData();
     });
+  }
+
+  Future<void> _refreshHome() async {
+    final request = _requestHomeData();
+    setState(() {
+      _homeFuture = request;
+    });
+
+    try {
+      await request;
+      if (_selectedConcernSlug != null || _searchQuery != null) {
+        _fetchProducts(force: true);
+      }
+    } catch (_) {
+      // The page already renders a retry state with the server error.
+    }
   }
 
   Future<HomeDataModel> _requestHomeData() async {
@@ -110,35 +138,40 @@ class _HomeDashboardState extends State<HomeDashboard> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          slivers: [
-            _buildAppBar(context),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildBanner(),
-                    const SizedBox(height: 24),
-                    _buildSectionHeader(
-                      context.tr('categories'),
-                      _clearFilters,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildCategoriesSection(),
-                    const SizedBox(height: 24),
-                    _buildSectionHeader(
-                      context.tr('top_products'),
-                      _clearFilters,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildProductsSection(),
-                  ],
+        body: RefreshIndicator(
+          onRefresh: _refreshHome,
+          color: AppColors.primary,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildAppBar(context),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBanner(),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        context.tr('categories'),
+                        _clearFilters,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCategoriesSection(),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        context.tr('top_products'),
+                        _clearFilters,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildProductsSection(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -224,7 +257,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   fillColor: Colors.white,
                   hintText: context.tr('search_products'),
                   prefixIcon: const Icon(Icons.search_rounded),
-                  suffixIcon: _searchController.text.isEmpty
+                  suffixIcon: !_hasSearchText
                       ? null
                       : IconButton(
                           onPressed: _clearFilters,

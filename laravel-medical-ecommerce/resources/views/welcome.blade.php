@@ -1,399 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $locale }}" dir="{{ $locale === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#ca6d84">
-    <meta name="description" content="Hanova beauty, clinic, and skincare platform.">
-    <title>Hanova | Beauty, Clinic &amp; Care</title>
-
-    <style>
-        @font-face {
-            font-family: "Tajawal";
-            src: url("{{ asset('fonts/Tajawal-Regular.ttf') }}") format("truetype");
-            font-weight: 400;
-            font-display: swap;
-        }
-
-        @font-face {
-            font-family: "Tajawal";
-            src: url("{{ asset('fonts/Tajawal-Bold.ttf') }}") format("truetype");
-            font-weight: 700;
-            font-display: swap;
-        }
-
-        @font-face {
-            font-family: "Tajawal";
-            src: url("{{ asset('fonts/Tajawal-ExtraBold.ttf') }}") format("truetype");
-            font-weight: 800;
-            font-display: swap;
-        }
-
-        :root {
-            color-scheme: light;
-            --primary: #ca6d84;
-            --primary-dark: #a24a63;
-            --ink: #2b2320;
-            --muted: #7b6860;
-            --paper: #fffaf7;
-            --line: #ebddd7;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            min-height: 100vh;
-            margin: 0;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at 12% 10%, rgba(202, 109, 132, .18), transparent 31rem),
-                radial-gradient(circle at 90% 88%, rgba(210, 138, 94, .13), transparent 28rem),
-                var(--paper);
-            font-family: "Tajawal", sans-serif;
-        }
-
-        .page {
-            width: min(1180px, calc(100% - 40px));
-            min-height: 100vh;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            min-height: 96px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-        }
-
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 13px;
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .mark {
-            width: 48px;
-            height: 48px;
-            display: grid;
-            place-items: center;
-            color: #fff;
-            background: linear-gradient(145deg, #dc8da2, var(--primary-dark));
-            border-radius: 16px;
-            box-shadow: 0 12px 28px rgba(162, 74, 99, .24);
-        }
-
-        .mark svg {
-            width: 25px;
-            height: 25px;
-        }
-
-        .brand-copy strong,
-        .brand-copy small {
-            display: block;
-        }
-
-        .brand-copy strong {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: .04em;
-        }
-
-        .brand-copy small {
-            color: var(--muted);
-            font-size: 11px;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-        }
-
-        .admin-link,
-        .primary-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-            color: #fff;
-            background: var(--ink);
-            border-radius: 999px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: transform .2s ease, background .2s ease;
-        }
-
-        .admin-link {
-            min-height: 44px;
-            padding: 0 20px;
-            font-size: 14px;
-        }
-
-        .admin-link:hover,
-        .primary-link:hover {
-            color: #fff;
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        main {
-            flex: 1;
-            display: grid;
-            grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
-            align-items: center;
-            gap: clamp(50px, 8vw, 110px);
-            padding: 70px 0 95px;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            padding: 8px 13px;
-            color: var(--primary-dark);
-            background: rgba(202, 109, 132, .11);
-            border: 1px solid rgba(202, 109, 132, .17);
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: .14em;
-        }
-
-        h1 {
-            max-width: 720px;
-            margin: 24px 0 20px;
-            font-size: clamp(3.2rem, 7vw, 6.6rem);
-            line-height: .92;
-            letter-spacing: -.055em;
-        }
-
-        h1 span {
-            color: var(--primary);
-        }
-
-        .lead {
-            max-width: 620px;
-            margin: 0;
-            color: var(--muted);
-            font-size: clamp(17px, 2vw, 21px);
-            line-height: 1.8;
-        }
-
-        .lead-ar {
-            max-width: 620px;
-            margin: 10px 0 0;
-            color: var(--muted);
-            font-size: 16px;
-            line-height: 1.9;
-        }
-
-        .primary-link {
-            min-height: 54px;
-            margin-top: 32px;
-            padding: 0 26px;
-            background: var(--primary);
-        }
-
-        .showcase {
-            position: relative;
-            min-height: 510px;
-        }
-
-        .showcase::before {
-            content: "";
-            position: absolute;
-            inset: 8% -8% -4% 14%;
-            background: linear-gradient(145deg, rgba(202, 109, 132, .2), rgba(210, 138, 94, .08));
-            border-radius: 44% 56% 46% 54% / 56% 42% 58% 44%;
-            transform: rotate(-7deg);
-        }
-
-        .panel {
-            position: relative;
-            z-index: 1;
-            padding: 28px;
-            background: rgba(255, 255, 255, .83);
-            border: 1px solid rgba(255, 255, 255, .9);
-            border-radius: 32px;
-            box-shadow: 0 28px 80px rgba(78, 50, 45, .13);
-            backdrop-filter: blur(16px);
-        }
-
-        .panel-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-            padding-bottom: 23px;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .panel-head strong {
-            font-size: 23px;
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            color: #2f8f64;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .status::before {
-            content: "";
-            width: 8px;
-            height: 8px;
-            background: currentColor;
-            border-radius: 50%;
-            box-shadow: 0 0 0 5px rgba(47, 143, 100, .1);
-        }
-
-        .features {
-            display: grid;
-            gap: 13px;
-            margin-top: 22px;
-        }
-
-        .feature {
-            display: grid;
-            grid-template-columns: 48px 1fr;
-            gap: 14px;
-            align-items: center;
-            padding: 17px;
-            background: #fff;
-            border: 1px solid var(--line);
-            border-radius: 19px;
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            display: grid;
-            place-items: center;
-            color: var(--primary-dark);
-            background: #fbeaf0;
-            border-radius: 15px;
-            font-weight: 800;
-        }
-
-        .feature strong,
-        .feature small {
-            display: block;
-        }
-
-        .feature small {
-            margin-top: 3px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        footer {
-            padding: 24px 0 30px;
-            color: var(--muted);
-            border-top: 1px solid rgba(235, 221, 215, .8);
-            font-size: 13px;
-        }
-
-        @media (max-width: 820px) {
-            .page {
-                width: min(100% - 28px, 620px);
-            }
-
-            header {
-                min-height: 82px;
-            }
-
-            .admin-link {
-                width: 44px;
-                padding: 0;
-                overflow: hidden;
-                font-size: 0;
-            }
-
-            .admin-link::after {
-                content: "↗";
-                font-size: 18px;
-            }
-
-            main {
-                grid-template-columns: 1fr;
-                gap: 58px;
-                padding: 62px 0 80px;
-            }
-
-            h1 {
-                font-size: clamp(3.4rem, 17vw, 5rem);
-            }
-
-            .showcase {
-                min-height: auto;
-            }
-        }
-    </style>
+    <meta name="theme-color" content="#a24a63">
+    <meta name="description" content="Hanova clinic, skincare products, appointments, and connected beauty care.">
+    <title>Hanova | {{ $locale === 'ar' ? 'العناية التي تشبهك' : 'Care made personal' }}</title>
+    <link rel="preload" href="{{ asset('fonts/Tajawal-Regular.ttf') }}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/Tajawal-Bold.ttf') }}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="{{ asset('css/site.css') }}">
 </head>
 <body>
-    <div class="page">
-        <header>
-            <a class="brand" href="{{ url('/') }}" aria-label="Hanova home">
-                <span class="mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <path d="M12 21c0-7 3.5-11 9-13-1 6-4.5 9-9 9"/>
-                        <path d="M12 21c0-7-3.5-11-9-13 1 6 4.5 9 9 9"/>
-                        <path d="M12 14c-3-3-3-7 0-11 3 4 3 8 0 11Z"/>
-                    </svg>
-                </span>
-                <span class="brand-copy">
-                    <strong>Hanova</strong>
-                    <small>Beauty | Clinic | Care</small>
-                </span>
+    @php
+        $isArabic = $locale === 'ar';
+        $productName = fn ($product) => $isArabic ? $product->name_ar : $product->name_en;
+        $productDescription = fn ($product) => $isArabic ? $product->description_ar : $product->description_en;
+        $concernName = fn ($concern) => $isArabic ? $concern->name_ar : $concern->name_en;
+        $offerTitle = $activeOffer ? ($isArabic ? $activeOffer->title_ar : $activeOffer->title_en) : null;
+        $offerDescription = $activeOffer ? ($isArabic ? $activeOffer->description_ar : $activeOffer->description_en) : null;
+    @endphp
+
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="{{ route('site.home') }}" aria-label="Hanova">
+                <span class="brand-mark"><img src="{{ asset('images/hanova-mark.svg') }}" alt="" width="30" height="30"></span>
+                <span><strong>Hanova</strong><small>Beauty · Clinic · Care</small></span>
             </a>
 
-            <a class="admin-link" href="{{ auth()->check() ? route('admin.dashboard') : route('admin.login') }}">
-                Admin Dashboard
-                <span aria-hidden="true">→</span>
-            </a>
-        </header>
+            <nav class="site-nav" aria-label="{{ $isArabic ? 'التنقل الرئيسي' : 'Main navigation' }}">
+                <a href="#care">{{ $isArabic ? 'العناية' : 'Care' }}</a>
+                <a href="#products">{{ $isArabic ? 'المنتجات' : 'Products' }}</a>
+                <a href="#experience">{{ $isArabic ? 'التجربة' : 'Experience' }}</a>
+            </nav>
 
-        <main>
-            <section>
-                <span class="eyebrow">CONNECTED BEAUTY CARE</span>
-                <h1>Care that feels <span>personal.</span></h1>
-                <p class="lead">Beauty care, clinic management, and skincare products in one connected Hanova experience.</p>
-                <p class="lead-ar" dir="rtl">العناية بالجمال، إدارة العيادة، ومنتجات البشرة ضمن تجربة Hanova واحدة ومترابطة.</p>
-                <a class="primary-link" href="{{ auth()->check() ? route('admin.dashboard') : route('admin.login') }}">
-                    Open Hanova Dashboard
-                    <span aria-hidden="true">→</span>
+            <div class="header-actions">
+                <a class="language-link" href="{{ route('language.switch', $isArabic ? 'en' : 'ar') }}">{{ $isArabic ? 'EN' : 'عربي' }}</a>
+                <a class="dashboard-link" href="{{ auth()->check() ? route('admin.dashboard') : route('admin.login') }}">
+                    {{ $isArabic ? 'لوحة الإدارة' : 'Dashboard' }}
+                    <span aria-hidden="true">↗</span>
                 </a>
-            </section>
+            </div>
+        </div>
+    </header>
 
-            <section class="showcase" aria-label="Hanova services">
-                <div class="panel">
-                    <div class="panel-head">
-                        <strong>Hanova Platform</strong>
-                        <span class="status">Unified</span>
+    <main>
+        <section class="hero container">
+            <div class="hero-copy reveal">
+                <span class="eyebrow">HANOVA CONNECTED CARE</span>
+                <h1>{{ $isArabic ? 'العناية التي' : 'Care that feels' }} <em>{{ $isArabic ? 'تشبهك.' : 'personal.' }}</em></h1>
+                <p>{{ $isArabic
+                    ? 'تجربة واحدة تجمع العيادة، الاستشارات، المواعيد، ومنتجات العناية المختارة لتكون رحلتك أوضح وأسهل.'
+                    : 'One connected experience for clinic visits, consultations, appointments, and carefully selected skincare.' }}</p>
+                <div class="hero-actions">
+                    <a class="button button-primary" href="#products">{{ $isArabic ? 'اكتشفي المنتجات' : 'Explore products' }}</a>
+                    <a class="button button-ghost" href="#care">{{ $isArabic ? 'كيف تعمل Hanova؟' : 'How Hanova works' }}</a>
+                </div>
+                <div class="hero-metrics" aria-label="Platform metrics">
+                    <span><strong>{{ $productCount }}+</strong>{{ $isArabic ? 'منتج عناية' : 'care products' }}</span>
+                    <span><strong>{{ $concernCount }}+</strong>{{ $isArabic ? 'مجال اهتمام' : 'care concerns' }}</span>
+                    <span><strong>1</strong>{{ $isArabic ? 'ملف صحي متكامل' : 'connected profile' }}</span>
+                </div>
+            </div>
+
+            <div class="hero-stage reveal reveal-delay">
+                <div class="stage-orbit orbit-one"></div>
+                <div class="stage-orbit orbit-two"></div>
+                <div class="phone-frame">
+                    <div class="phone-top">
+                        <span class="mini-mark"><img src="{{ asset('images/hanova-mark.svg') }}" alt="" width="22" height="22"></span>
+                        <span>Hanova</span>
+                        <i></i>
                     </div>
-                    <div class="features">
-                        <div class="feature">
-                            <span class="feature-icon">01</span>
-                            <span><strong>Clinic</strong><small>Appointments, patient records, and consultations.</small></span>
-                        </div>
-                        <div class="feature">
-                            <span class="feature-icon">02</span>
-                            <span><strong>Store</strong><small>Products, offers, orders, and delivery workflow.</small></span>
-                        </div>
-                        <div class="feature">
-                            <span class="feature-icon">03</span>
-                            <span><strong>Care</strong><small>Live chat, beauty assistant, and notifications.</small></span>
-                        </div>
+                    <div class="phone-banner">
+                        <small>{{ $isArabic ? 'استشارة البشرة' : 'Skin consultation' }}</small>
+                        <strong>{{ $isArabic ? 'اختيارات أدق لروتينك' : 'A smarter routine for you' }}</strong>
                     </div>
+                    <div class="phone-products">
+                        @forelse($products->take(2) as $product)
+                            <article>
+                                <div class="phone-image">
+                                    @if($product->image)
+                                        <img src="{{ url(\Illuminate\Support\Facades\Storage::url($product->image)) }}" alt="{{ $productName($product) }}">
+                                    @else
+                                        <span>H</span>
+                                    @endif
+                                </div>
+                                <strong>{{ $productName($product) }}</strong>
+                                <small>${{ number_format($product->price, 2) }}</small>
+                            </article>
+                        @empty
+                            <article class="phone-placeholder"><div>H</div><strong>Hanova Care</strong></article>
+                            <article class="phone-placeholder"><div>H</div><strong>Clinic Pick</strong></article>
+                        @endforelse
+                    </div>
+                    <div class="phone-nav"><span>⌂</span><span>✦</span><b>H</b><span>□</span><span>○</span></div>
+                </div>
+                <div class="floating-note note-top"><span>✓</span>{{ $isArabic ? 'مواعيد متاحة فعلياً' : 'Live availability' }}</div>
+                <div class="floating-note note-bottom"><span>✦</span>{{ $isArabic ? 'اختيارات العيادة' : 'Clinic selected' }}</div>
+            </div>
+        </section>
+
+        @if($activeOffer)
+            <section class="offer-strip">
+                <div class="container offer-inner">
+                    <span class="offer-badge">{{ $activeOffer->discount_type === 'percentage' ? rtrim(rtrim(number_format($activeOffer->discount_value, 2), '0'), '.') . '%' : '$' . number_format($activeOffer->discount_value, 2) }}</span>
+                    <div><small>{{ $isArabic ? 'عرض Hanova النشط' : 'Active Hanova offer' }}</small><strong>{{ $offerTitle }}</strong></div>
+                    @if($offerDescription)<p>{{ $offerDescription }}</p>@endif
+                    <a href="#products">{{ $isArabic ? 'شاهدي المنتجات' : 'View products' }} <span>→</span></a>
                 </div>
             </section>
-        </main>
+        @endif
 
-        <footer>&copy; {{ date('Y') }} Hanova. Beauty, clinic, and care.</footer>
-    </div>
+        <section class="section container" id="care">
+            <div class="section-heading">
+                <span>{{ $isArabic ? 'عناية مترابطة' : 'CONNECTED CARE' }}</span>
+                <h2>{{ $isArabic ? 'كل ما تحتاجينه، ضمن رحلة واحدة.' : 'Everything you need, in one clear journey.' }}</h2>
+                <p>{{ $isArabic ? 'كل خطوة في التطبيق مرتبطة بالداشبورد وملفك، من الحجز حتى استلام الطلب.' : 'Every app step connects to the dashboard and your profile, from booking to order delivery.' }}</p>
+            </div>
+            <div class="care-grid">
+                <article class="care-card featured"><span>01</span><div class="care-icon">✦</div><h3>{{ $isArabic ? 'العيادة والمواعيد' : 'Clinic & appointments' }}</h3><p>{{ $isArabic ? 'مواعيد حسب دوام الطبيبة والحجوزات الفعلية، مع متابعة نوع ومدة الجلسة.' : 'Real availability based on doctor schedules, bookings, visit type, and duration.' }}</p></article>
+                <article class="care-card"><span>02</span><div class="care-icon">◌</div><h3>{{ $isArabic ? 'متجر العناية' : 'Care store' }}</h3><p>{{ $isArabic ? 'منتجات مرتبطة بالمشكلات والتصنيفات والعروض التي تديرها العيادة.' : 'Products connected to concerns, categories, and clinic-managed offers.' }}</p></article>
+                <article class="care-card"><span>03</span><div class="care-icon">□</div><h3>{{ $isArabic ? 'المحادثة والمتابعة' : 'Chat & follow-up' }}</h3><p>{{ $isArabic ? 'تواصل مباشر مع فريق العيادة ومتابعة الطلبات والإشعارات من مكان واحد.' : 'Direct clinic chat, order tracking, and notifications in one place.' }}</p></article>
+            </div>
+        </section>
+
+        <section class="concerns-section" id="experience">
+            <div class="container concerns-inner">
+                <div>
+                    <span class="section-kicker">{{ $isArabic ? 'مصمم لاحتياجك' : 'BUILT AROUND YOU' }}</span>
+                    <h2>{{ $isArabic ? 'ابدئي من المشكلة، وليس من اسم المنتج.' : 'Start with the concern, not the product name.' }}</h2>
+                </div>
+                <div class="concern-cloud">
+                    @forelse($concerns as $index => $concern)
+                        <span class="{{ $index % 4 === 0 ? 'accent' : '' }}">{{ $concernName($concern) }}</span>
+                    @empty
+                        <span class="accent">{{ $isArabic ? 'العناية بالبشرة' : 'Skin care' }}</span>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
+        <section class="section container" id="products">
+            <div class="section-heading split-heading">
+                <div><span>{{ $isArabic ? 'مختارات Hanova' : 'HANOVA EDIT' }}</span><h2>{{ $isArabic ? 'منتجات العناية المتاحة.' : 'Care products available now.' }}</h2></div>
+                <p>{{ $isArabic ? 'هذه البيانات تأتي مباشرة من الداشبورد نفسه.' : 'This catalog is loaded directly from the same dashboard data.' }}</p>
+            </div>
+            <div class="product-grid">
+                @forelse($products as $product)
+                    <article class="product-card">
+                        <div class="product-image">
+                            @if($product->image)
+                                <img loading="lazy" src="{{ url(\Illuminate\Support\Facades\Storage::url($product->image)) }}" alt="{{ $productName($product) }}">
+                            @else
+                                <span class="product-fallback">H</span>
+                            @endif
+                            @if($product->concerns->isNotEmpty())<small>{{ $concernName($product->concerns->first()) }}</small>@endif
+                        </div>
+                        <div class="product-copy">
+                            <h3>{{ $productName($product) }}</h3>
+                            <p>{{ \Illuminate\Support\Str::limit($productDescription($product) ?: ($isArabic ? 'منتج عناية مختار من Hanova.' : 'A care product selected by Hanova.'), 88) }}</p>
+                            <strong>${{ number_format($product->price, 2) }}</strong>
+                        </div>
+                    </article>
+                @empty
+                    <div class="catalog-empty">{{ $isArabic ? 'سيتم عرض المنتجات هنا فور إضافتها من الداشبورد.' : 'Products will appear here as soon as they are added in the dashboard.' }}</div>
+                @endforelse
+            </div>
+        </section>
+
+        <section class="final-cta container">
+            <div><span>HANOVA</span><h2>{{ $isArabic ? 'إدارة واضحة. تجربة أهدأ. عناية أقرب.' : 'Clear management. Calmer experience. Closer care.' }}</h2></div>
+            <a class="button button-light" href="{{ auth()->check() ? route('admin.dashboard') : route('admin.login') }}">{{ $isArabic ? 'فتح لوحة الإدارة' : 'Open dashboard' }} <span>↗</span></a>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="brand footer-brand"><span class="brand-mark"><img src="{{ asset('images/hanova-mark.svg') }}" alt="" width="28" height="28"></span><span><strong>Hanova</strong><small>Beauty · Clinic · Care</small></span></div>
+            <p>© {{ date('Y') }} Hanova. {{ $isArabic ? 'جميع الحقوق محفوظة.' : 'All rights reserved.' }}</p>
+        </div>
+    </footer>
 </body>
 </html>

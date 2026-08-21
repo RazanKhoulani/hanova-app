@@ -73,7 +73,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     Icons.security_rounded,
                     context.tr('security'),
-                    () {},
+                    () => context.push('/security'),
                   ),
                 ]),
                 const SizedBox(height: 24),
@@ -81,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     Icons.help_outline_rounded,
                     context.tr('help_center'),
-                    () {},
+                    () => context.push('/help'),
                   ),
                   if (isAuthenticated)
                     _buildMenuItem(

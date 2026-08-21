@@ -142,10 +142,12 @@
                 </div>
 
                 <div class="topbar-actions">
+                    <a href="{{ route('site.home') }}" class="topbar-icon" target="_blank" rel="noopener" title="Hanova website">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
                     @unless($isDelivery)
                         <a href="{{ route('admin.notifications.index') }}" class="topbar-icon" title="{{ __('admin.notifications') }}">
                             <i class="fa-regular fa-bell"></i>
-                            <span class="notification-dot"></span>
                         </a>
                     @endunless
 

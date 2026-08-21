@@ -15,6 +15,8 @@ import '../../features/clinical/presentation/pages/appointment_screen.dart';
 import '../../features/communication/presentation/pages/bot_screen.dart';
 import '../../features/communication/presentation/pages/chat_screen.dart';
 import '../../features/notifications/presentation/pages/notifications_screen.dart';
+import '../../features/support/presentation/pages/help_center_screen.dart';
+import '../../features/support/presentation/pages/security_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -78,6 +80,14 @@ class AppRouter {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/security',
+        builder: (context, state) => const SecurityScreen(),
+      ),
+      GoRoute(
+        path: '/help',
+        builder: (context, state) => const HelpCenterScreen(),
       ),
     ],
   );
