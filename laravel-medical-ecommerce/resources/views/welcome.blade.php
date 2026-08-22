@@ -80,7 +80,7 @@
                             <article>
                                 <div class="phone-image">
                                     @if($product->image)
-                                        <img src="{{ url(\Illuminate\Support\Facades\Storage::url($product->image)) }}" alt="{{ $productName($product) }}">
+                                        <img src="{{ '/storage/' . ltrim($product->image, '/') }}" alt="{{ $productName($product) }}">
                                     @else
                                         <span>H</span>
                                     @endif
@@ -150,7 +150,7 @@
                     <article class="product-card">
                         <div class="product-image">
                             @if($product->image)
-                                <img loading="lazy" src="{{ url(\Illuminate\Support\Facades\Storage::url($product->image)) }}" alt="{{ $productName($product) }}">
+                                <img loading="lazy" src="{{ '/storage/' . ltrim($product->image, '/') }}" alt="{{ $productName($product) }}">
                             @else
                                 <span class="product-fallback">H</span>
                             @endif

@@ -30,20 +30,37 @@ class HomeDashboard extends StatefulWidget {
 class _HomeDashboardState extends State<HomeDashboard> {
   String? _selectedConcernSlug;
   final TextEditingController _searchController = TextEditingController();
+  final PageController _bannerController = PageController(
+    viewportFraction: 0.95,
+  );
+  final GlobalKey _productsSectionKey = GlobalKey();
   late Future<HomeDataModel> _homeFuture;
   Timer? _searchDebounce;
+  Timer? _bannerTimer;
   String? _searchQuery;
   bool _hasSearchText = false;
+  int _bannerIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _homeFuture = _requestHomeData();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (!mounted || !_bannerController.hasClients) return;
+      final nextPage = (_bannerIndex + 1) % 2;
+      _bannerController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _bannerTimer?.cancel();
+    _bannerController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -91,6 +108,23 @@ class _HomeDashboardState extends State<HomeDashboard> {
   void _reloadHome() {
     setState(() {
       _homeFuture = _requestHomeData();
+    });
+  }
+
+  void _scrollToProducts() {
+    if (_selectedConcernSlug != null || _searchQuery != null) {
+      _clearFilters();
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final productsContext = _productsSectionKey.currentContext;
+      if (productsContext == null) return;
+      Scrollable.ensureVisible(
+        productsContext,
+        duration: const Duration(milliseconds: 480),
+        curve: Curves.easeOutCubic,
+        alignment: 0.08,
+      );
     });
   }
 
@@ -165,7 +199,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
                         _clearFilters,
                       ),
                       const SizedBox(height: 16),
-                      _buildProductsSection(),
+                      Container(
+                        key: _productsSectionKey,
+                        child: _buildProductsSection(),
+                      ),
                     ],
                   ),
                 ),
@@ -290,113 +327,71 @@ class _HomeDashboardState extends State<HomeDashboard> {
           future: _homeFuture,
           builder: (context, snapshot) {
             final offer = snapshot.data?.activeOffer;
+            final slides = [
+              _BannerSlideData(
+                badge: offer?.discountLabel ?? 'HANOVA',
+                title: offer?.title ?? context.tr('shop_banner_title'),
+                description: offer?.description?.isNotEmpty == true
+                    ? offer!.description!
+                    : context.tr('shop_banner_copy'),
+                actionLabel: context.tr('order_now'),
+                icon: offer == null
+                    ? Icons.shopping_bag_rounded
+                    : Icons.local_offer_rounded,
+                colors: const [AppColors.primary, Color(0xFFE08FA5)],
+                onAction: _scrollToProducts,
+              ),
+              _BannerSlideData(
+                title: context.tr('skin_consultation'),
+                description: context.tr('clinic_banner_copy'),
+                actionLabel: isAuthenticated
+                    ? context.tr('book_now')
+                    : context.tr('login_to_book'),
+                icon: Icons.calendar_month_rounded,
+                colors: const [Color(0xFFA24A63), Color(0xFFC76C83)],
+                onAction: () =>
+                    context.push(isAuthenticated ? '/appointment' : '/login'),
+              ),
+            ];
 
-            return Container(
-              constraints: const BoxConstraints(minHeight: 188),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, Color(0xFFE08FA5)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            return Column(
+              children: [
+                SizedBox(
+                  height: 218,
+                  child: PageView.builder(
+                    controller: _bannerController,
+                    itemCount: slides.length,
+                    onPageChanged: (index) {
+                      if (mounted) setState(() => _bannerIndex = index);
+                    },
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsetsDirectional.only(end: 10),
+                        child: _HomeBannerCard(data: slides[index]),
+                      );
+                    },
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: -20,
-                    bottom: -20,
-                    child: Icon(
-                      offer == null
-                          ? Icons.medical_services_rounded
-                          : Icons.local_offer_rounded,
-                      size: 120,
-                      color: Colors.white.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (offer != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              offer.discountLabel,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        if (offer != null) const SizedBox(height: 10),
-                        Text(
-                          offer?.title ?? context.tr('skin_consultation'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          offer?.description?.isNotEmpty == true
-                              ? offer!.description!
-                              : context.tr('home_banner_copy'),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (offer != null) {
-                              setState(() {
-                                _selectedConcernSlug = null;
-                              });
-                              context.read<StoreBloc>().add(
-                                StoreFetchProducts(),
-                              );
-                              return;
-                            }
-
-                            if (isAuthenticated) {
-                              context.push('/appointment');
-                              return;
-                            }
-                            context.push('/login');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppColors.primary,
-                            minimumSize: const Size(100, 36),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                          ),
-                          child: Text(
-                            offer != null
-                                ? context.tr('browse_products')
-                                : isAuthenticated
-                                ? context.tr('book_now')
-                                : context.tr('login_to_book'),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(slides.length, (index) {
+                    final selected = index == _bannerIndex;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      width: selected ? 22 : 7,
+                      height: 7,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? AppColors.primary
+                            : AppColors.primaryMist,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    );
+                  }),
+                ),
+              ],
             );
           },
         );
@@ -641,13 +636,19 @@ class _HomeDashboardState extends State<HomeDashboard> {
                           context.read<CartBloc>().add(
                             CartItemAdded(product, 1),
                           );
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          final messenger = ScaffoldMessenger.of(context);
+                          messenger.hideCurrentSnackBar();
+                          messenger.showSnackBar(
                             SnackBar(
+                              duration: const Duration(seconds: 2),
                               content: Text(context.readTr('added_to_cart')),
                               action: SnackBarAction(
                                 label: context.readTr('view_cart'),
                                 textColor: AppColors.primaryLight,
-                                onPressed: () => context.push('/cart'),
+                                onPressed: () {
+                                  messenger.hideCurrentSnackBar();
+                                  context.push('/cart');
+                                },
                               ),
                             ),
                           );
@@ -687,6 +688,138 @@ class _HomeDashboardState extends State<HomeDashboard> {
     if (key.contains('hormon')) return Icons.balance_rounded;
     if (key.contains('acne')) return Icons.healing_rounded;
     return Icons.spa_outlined;
+  }
+}
+
+class _BannerSlideData {
+  final String? badge;
+  final String title;
+  final String description;
+  final String actionLabel;
+  final IconData icon;
+  final List<Color> colors;
+  final VoidCallback onAction;
+
+  const _BannerSlideData({
+    this.badge,
+    required this.title,
+    required this.description,
+    required this.actionLabel,
+    required this.icon,
+    required this.colors,
+    required this.onAction,
+  });
+}
+
+class _HomeBannerCard extends StatelessWidget {
+  final _BannerSlideData data;
+
+  const _HomeBannerCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: data.colors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1FA24A63),
+            blurRadius: 18,
+            offset: Offset(0, 9),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          PositionedDirectional(
+            end: -22,
+            bottom: -22,
+            child: Icon(
+              data.icon,
+              size: 126,
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (data.badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      data.badge!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                Text(
+                  data.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  data.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.76),
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 13),
+                SizedBox(
+                  height: 38,
+                  child: ElevatedButton.icon(
+                    onPressed: data.onAction,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primaryDark,
+                      minimumSize: const Size(118, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      elevation: 0,
+                    ),
+                    icon: Icon(data.icon, size: 17),
+                    label: Text(
+                      data.actionLabel,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

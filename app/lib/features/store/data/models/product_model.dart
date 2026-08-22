@@ -34,6 +34,15 @@ class ProductModel {
       final value = raw.toString();
       if (value.isEmpty) return null;
       if (value.startsWith('http://') || value.startsWith('https://')) {
+        final imageUri = Uri.tryParse(value);
+        final backendUri = Uri.tryParse(ApiConstants.backendUrl);
+        if (imageUri != null &&
+            backendUri != null &&
+            backendUri.scheme == 'https' &&
+            imageUri.scheme == 'http' &&
+            imageUri.host == backendUri.host) {
+          return imageUri.replace(scheme: 'https').toString();
+        }
         return value;
       }
 

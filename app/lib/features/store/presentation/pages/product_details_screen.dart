@@ -327,9 +327,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             child: ElevatedButton(
               onPressed: () {
                 context.read<CartBloc>().add(CartItemAdded(product, _quantity));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(context.readTr('added_to_cart'))),
-                );
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 context.push('/cart');
               },
               child: Text(_detailLabel('add_to_cart')),
