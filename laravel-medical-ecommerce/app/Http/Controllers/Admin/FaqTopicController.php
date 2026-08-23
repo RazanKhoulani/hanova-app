@@ -16,25 +16,25 @@ class FaqTopicController extends Controller
 
         FaqTopic::create($data);
 
-        return back()->with('success', 'Consultation topic added successfully');
+        return back()->with('success', __('admin.topic_added_successfully'));
     }
 
     public function update(Request $request, FaqTopic $faqTopic)
     {
         $faqTopic->update($this->validated($request));
 
-        return back()->with('success', 'Consultation topic updated successfully');
+        return back()->with('success', __('admin.topic_updated_successfully'));
     }
 
     public function destroy(FaqTopic $faqTopic)
     {
         if ($faqTopic->faqs()->exists()) {
-            return back()->with('error', 'Move or delete the questions in this topic before deleting it.');
+            return back()->with('error', __('admin.topic_has_questions'));
         }
 
         $faqTopic->delete();
 
-        return back()->with('success', 'Consultation topic deleted successfully');
+        return back()->with('success', __('admin.topic_deleted_successfully'));
     }
 
     private function validated(Request $request): array

@@ -1,19 +1,18 @@
 @extends('admin.layout.app')
 
-@section('title', 'Manage Bot Knowledge')
+@section('title', __('admin.bot_knowledge_management'))
 
 @section('content')
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div>
-        <h2 class="mb-1">Bot Knowledge Management</h2>
-        <p class="text-muted mb-0">Flow: consultation topics → topic questions → answer → remaining questions.</p>
+        <h2 class="mb-1">{{ __('admin.bot_knowledge_management') }}</h2>
     </div>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addTopicModal">
-            <i class="fas fa-folder-plus me-2"></i> Add Topic
+            <i class="fas fa-folder-plus me-2"></i> {{ __('admin.add_topic') }}
         </button>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFaqModal" @disabled($topics->isEmpty())>
-            <i class="fas fa-plus me-2"></i> Add Question
+            <i class="fas fa-plus me-2"></i> {{ __('admin.add_question') }}
         </button>
     </div>
 </div>
@@ -28,30 +27,26 @@
     </div>
 @endif
 
-<div class="alert alert-light border d-flex align-items-start gap-3 mb-4">
-    <i class="fas fa-sitemap text-primary mt-1"></i>
-    <div>
-        <strong>How the app uses this data</strong>
-        <div class="text-muted">Only active topics containing active questions appear in the bot. Question order controls the sequence shown after a topic is selected and after each answer.</div>
-    </div>
-</div>
+@if(session('error'))
+    <div class="alert alert-danger">{{ session('error') }}</div>
+@endif
 
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">Consultation Topics</h5>
-        <span class="badge bg-light text-dark border">{{ $topics->count() }} topics</span>
+        <h5 class="mb-0">{{ __('admin.consultation_topics') }}</h5>
+        <span class="badge bg-light text-dark border">{{ __('admin.topics_count', ['count' => $topics->count()]) }}</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th class="border-0 px-4 py-3">Order</th>
-                        <th class="border-0 px-4 py-3">Topic (EN)</th>
-                        <th class="border-0 px-4 py-3">Topic (AR)</th>
-                        <th class="border-0 px-4 py-3">Questions</th>
-                        <th class="border-0 px-4 py-3">Status</th>
-                        <th class="border-0 px-4 py-3 text-end">Action</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.order') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.topic_en') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.topic_ar') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.questions') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.status') }}</th>
+                        <th class="border-0 px-4 py-3 text-end">{{ __('admin.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,24 +64,24 @@
                             <td class="align-middle px-4"><span class="badge bg-primary">{{ $topic->faqs_count }}</span></td>
                             <td class="align-middle px-4">
                                 <span class="badge {{ $topic->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                    {{ $topic->is_active ? 'Active' : 'Inactive' }}
+                                    {{ $topic->is_active ? __('admin.active') : __('admin.inactive') }}
                                 </span>
                             </td>
                             <td class="align-middle px-4 text-end text-nowrap">
-                                <button type="button" class="btn btn-sm btn-outline-primary" title="Edit topic" data-bs-toggle="modal" data-bs-target="#editTopicModal{{ $topic->id }}">
+                                <button type="button" class="btn btn-sm btn-outline-primary" title="{{ __('admin.edit_topic') }}" data-bs-toggle="modal" data-bs-target="#editTopicModal{{ $topic->id }}">
                                     <i class="fas fa-pen"></i>
                                 </button>
                                 <form action="{{ route('admin.faq-topics.destroy', $topic) }}" method="POST" class="d-inline delete-confirm">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete topic" @disabled($topic->faqs_count > 0)>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ __('admin.delete_topic') }}" @disabled($topic->faqs_count > 0)>
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center py-4 text-muted">Add the first consultation topic before adding questions.</td></tr>
+                        <tr><td colspan="6" class="text-center py-4 text-muted">{{ __('admin.add_first_topic') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -96,21 +91,21 @@
 
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">Topic Questions & Answers</h5>
-        <span class="text-muted small">Drag-free ordering: edit the order number for each question.</span>
+        <h5 class="mb-0">{{ __('admin.topic_questions_answers') }}</h5>
+        <span class="text-muted small">{{ __('admin.question_order_hint') }}</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th class="border-0 px-4 py-3">ID</th>
-                        <th class="border-0 px-4 py-3">Topic</th>
-                        <th class="border-0 px-4 py-3">Order</th>
-                        <th class="border-0 px-4 py-3">Question (EN)</th>
-                        <th class="border-0 px-4 py-3">Question (AR)</th>
-                        <th class="border-0 px-4 py-3">Status</th>
-                        <th class="border-0 px-4 py-3 text-end">Action</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.id') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.topic') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.order') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.question_en') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.question_ar') }}</th>
+                        <th class="border-0 px-4 py-3">{{ __('admin.status') }}</th>
+                        <th class="border-0 px-4 py-3 text-end">{{ __('admin.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,7 +116,7 @@
                                 @if($faq->topic)
                                     <span class="badge bg-light text-dark border">{{ $faq->topic->name_en }}</span>
                                 @else
-                                    <span class="badge bg-warning text-dark">Unassigned</span>
+                                    <span class="badge bg-warning text-dark">{{ __('admin.unassigned') }}</span>
                                 @endif
                             </td>
                             <td class="align-middle px-4">{{ $faq->sort_order }}</td>
@@ -129,24 +124,24 @@
                             <td class="align-middle px-4 text-truncate" style="max-width: 260px;" title="{{ $faq->question_ar }}" dir="rtl">{{ $faq->question_ar }}</td>
                             <td class="align-middle px-4">
                                 <span class="badge {{ $faq->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                    {{ $faq->is_active ? 'Active' : 'Inactive' }}
+                                    {{ $faq->is_active ? __('admin.active') : __('admin.inactive') }}
                                 </span>
                             </td>
                             <td class="align-middle px-4 text-end text-nowrap">
-                                <button type="button" class="btn btn-sm btn-outline-primary" title="Edit question" data-bs-toggle="modal" data-bs-target="#editFaqModal{{ $faq->id }}">
+                                <button type="button" class="btn btn-sm btn-outline-primary" title="{{ __('admin.edit_question') }}" data-bs-toggle="modal" data-bs-target="#editFaqModal{{ $faq->id }}">
                                     <i class="fas fa-pen"></i>
                                 </button>
                                 <form action="{{ route('admin.faqs.destroy', $faq) }}" method="POST" class="d-inline delete-confirm">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete question">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ __('admin.delete_question') }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center py-5 text-muted">No questions found.</td></tr>
+                        <tr><td colspan="7" class="text-center py-5 text-muted">{{ __('admin.no_questions_found') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -165,15 +160,15 @@
                 @csrf
                 @method('PUT')
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Consultation Topic</h5>
+                    <h5 class="modal-title">{{ __('admin.edit_consultation_topic') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     @include('admin.faqs.partials.topic-fields', ['topic' => $topic])
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Topic</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('admin.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('admin.save_topic') }}</button>
                 </div>
             </form>
         </div>
@@ -189,15 +184,15 @@
                 @csrf
                 @method('PUT')
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Question & Answer</h5>
+                    <h5 class="modal-title">{{ __('admin.edit_question_answer') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     @include('admin.faqs.partials.faq-fields', ['faq' => $faq, 'topics' => $topics])
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Question</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('admin.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('admin.save_question') }}</button>
                 </div>
             </form>
         </div>
@@ -211,15 +206,15 @@
             <form action="{{ route('admin.faq-topics.store') }}" method="POST">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Consultation Topic</h5>
+                    <h5 class="modal-title">{{ __('admin.add_consultation_topic') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     @include('admin.faqs.partials.topic-fields', ['topic' => null])
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Topic</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('admin.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('admin.add_topic') }}</button>
                 </div>
             </form>
         </div>
@@ -232,15 +227,15 @@
             <form action="{{ route('admin.faqs.store') }}" method="POST">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Question & Answer</h5>
+                    <h5 class="modal-title">{{ __('admin.add_question_answer') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     @include('admin.faqs.partials.faq-fields', ['faq' => null, 'topics' => $topics])
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Question</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('admin.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('admin.add_question') }}</button>
                 </div>
             </form>
         </div>

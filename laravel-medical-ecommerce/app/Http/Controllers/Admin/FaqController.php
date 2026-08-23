@@ -41,14 +41,14 @@ class FaqController extends Controller
 
         Faq::create($data);
 
-        return back()->with('success', 'FAQ added successfully');
+        return back()->with('success', __('admin.question_added_successfully'));
     }
 
     public function destroy($id)
     {
         Faq::findOrFail($id)->delete();
 
-        return back()->with('success', 'FAQ deleted successfully');
+        return back()->with('success', __('admin.question_deleted_successfully'));
     }
 
     public function update(Request $request, $id)
@@ -68,7 +68,7 @@ class FaqController extends Controller
 
         $faq->update($data);
 
-        return back()->with('success', 'FAQ updated successfully');
+        return back()->with('success', __('admin.question_updated_successfully'));
     }
 
     private function normalizeKeywords(?string $keywords): ?string
