@@ -30,9 +30,7 @@ class HomeDashboard extends StatefulWidget {
 class _HomeDashboardState extends State<HomeDashboard> {
   String? _selectedConcernSlug;
   final TextEditingController _searchController = TextEditingController();
-  final PageController _bannerController = PageController(
-    viewportFraction: 0.95,
-  );
+  final PageController _bannerController = PageController();
   final ScrollController _categoryController = ScrollController();
   final GlobalKey _productsSectionKey = GlobalKey();
   late Future<HomeDataModel> _homeFuture;
@@ -42,14 +40,17 @@ class _HomeDashboardState extends State<HomeDashboard> {
   bool _categoryHintScheduled = false;
   bool _categoryHintCancelled = false;
   int _bannerIndex = 0;
+  int _bannerSlideCount = 2;
 
   @override
   void initState() {
     super.initState();
     _homeFuture = _requestHomeData();
     _bannerTimer = Timer.periodic(const Duration(seconds: 6), (_) {
-      if (!mounted || !_bannerController.hasClients) return;
-      final nextPage = (_bannerIndex + 1) % 2;
+      if (!mounted || !_bannerController.hasClients || _bannerSlideCount < 2) {
+        return;
+      }
+      final nextPage = (_bannerIndex + 1) % _bannerSlideCount;
       _bannerController.animateToPage(
         nextPage,
         duration: const Duration(milliseconds: 420),
@@ -146,6 +147,17 @@ class _HomeDashboardState extends State<HomeDashboard> {
         duration: const Duration(milliseconds: 620),
         curve: Curves.easeInOutCubic,
       );
+    });
+  }
+
+  void _syncBannerSlideCount(int count) {
+    _bannerSlideCount = count;
+    if (_bannerIndex < count) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_bannerController.hasClients) return;
+      _bannerController.jumpToPage(0);
+      setState(() => _bannerIndex = 0);
     });
   }
 
@@ -342,17 +354,25 @@ class _HomeDashboardState extends State<HomeDashboard> {
           future: _homeFuture,
           builder: (context, snapshot) {
             final offer = snapshot.data?.activeOffer;
-            final slides = [
+            final slides = <_BannerSlideData>[
+              if (offer != null)
+                _BannerSlideData(
+                  badge: offer.discountLabel,
+                  title: offer.title,
+                  description: offer.description?.isNotEmpty == true
+                      ? offer.description!
+                      : context.tr('shop_banner_copy'),
+                  actionLabel: context.tr('order_now'),
+                  icon: Icons.local_offer_rounded,
+                  colors: const [Color(0xFF9A425C), AppColors.primary],
+                  onAction: _scrollToProducts,
+                ),
               _BannerSlideData(
-                badge: offer?.discountLabel ?? 'HANOVA',
-                title: offer?.title ?? context.tr('shop_banner_title'),
-                description: offer?.description?.isNotEmpty == true
-                    ? offer!.description!
-                    : context.tr('shop_banner_copy'),
+                badge: 'HANOVA',
+                title: context.tr('shop_banner_title'),
+                description: context.tr('shop_banner_copy'),
                 actionLabel: context.tr('order_now'),
-                icon: offer == null
-                    ? Icons.shopping_bag_rounded
-                    : Icons.local_offer_rounded,
+                icon: Icons.shopping_bag_rounded,
                 colors: const [AppColors.primary, Color(0xFFE08FA5)],
                 onAction: _scrollToProducts,
               ),
@@ -368,34 +388,31 @@ class _HomeDashboardState extends State<HomeDashboard> {
                     context.push(isAuthenticated ? '/appointment' : '/login'),
               ),
             ];
+            _syncBannerSlideCount(slides.length);
 
             return Column(
               children: [
                 SizedBox(
-                  height: 188,
+                  height: 166,
                   child: PageView.builder(
                     controller: _bannerController,
                     itemCount: slides.length,
                     onPageChanged: (index) {
                       if (mounted) setState(() => _bannerIndex = index);
                     },
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 10),
-                        child: _HomeBannerCard(data: slides[index]),
-                      );
-                    },
+                    itemBuilder: (context, index) =>
+                        _HomeBannerCard(data: slides[index]),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(slides.length, (index) {
                     final selected = index == _bannerIndex;
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
-                      width: selected ? 22 : 7,
-                      height: 7,
+                      width: selected ? 20 : 6,
+                      height: 6,
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       decoration: BoxDecoration(
                         color: selected
@@ -792,7 +809,7 @@ class _HomeBannerCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1FA24A63),
@@ -804,24 +821,24 @@ class _HomeBannerCard extends StatelessWidget {
       child: Stack(
         children: [
           PositionedDirectional(
-            end: -18,
-            bottom: -18,
+            end: -14,
+            bottom: -14,
             child: Icon(
               data.icon,
-              size: 108,
+              size: 92,
               color: Colors.white.withValues(alpha: 0.14),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(19),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (data.badge != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: 8,
+                      vertical: 3,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.18),
@@ -831,7 +848,7 @@ class _HomeBannerCard extends StatelessWidget {
                       data.badge!,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -843,38 +860,38 @@ class _HomeBannerCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 21,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 3),
                 Text(
                   data.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.76),
-                    fontSize: 12,
-                    height: 1.45,
+                    fontSize: 10.5,
+                    height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 13),
+                const SizedBox(height: 8),
                 SizedBox(
-                  height: 36,
+                  height: 32,
                   child: ElevatedButton.icon(
                     onPressed: data.onAction,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.primaryDark,
-                      minimumSize: const Size(112, 36),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      minimumSize: const Size(104, 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       elevation: 0,
                     ),
-                    icon: Icon(data.icon, size: 17),
+                    icon: Icon(data.icon, size: 15),
                     label: Text(
                       data.actionLabel,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
