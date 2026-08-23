@@ -56,4 +56,24 @@ void main() {
 
     expect(ApiErrorMessage.from(error), contains('connect to the server'));
   });
+
+  test('shows a localized credentials error for failed login', () {
+    final requestOptions = RequestOptions(
+      path: '/auth/login',
+      headers: {'Accept-Language': 'ar'},
+    );
+    final error = DioException(
+      requestOptions: requestOptions,
+      response: Response<dynamic>(
+        requestOptions: requestOptions,
+        statusCode: 401,
+        data: {'message': 'Invalid credentials'},
+      ),
+    );
+
+    expect(
+      ApiErrorMessage.from(error),
+      'رقم الموبايل أو كلمة المرور غير صحيحة.',
+    );
+  });
 }

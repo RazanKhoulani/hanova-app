@@ -52,8 +52,11 @@ class HanovaAuthShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           Positioned(
@@ -62,8 +65,10 @@ class HanovaAuthShell extends StatelessWidget {
             right: 0,
             child: ClipPath(
               clipper: _HanovaWaveClipper(),
-              child: Container(
-                height: 310,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                height: keyboardVisible ? 238 : 310,
                 decoration: const BoxDecoration(
                   gradient: AppColors.brandGradient,
                 ),
@@ -87,80 +92,99 @@ class HanovaAuthShell extends StatelessWidget {
           SafeArea(
             child: SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(22, 10, 22, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      if (showBack)
-                        _HeaderButton(
-                          icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: () => context.canPop()
-                              ? context.pop()
-                              : context.go('/home'),
-                        )
-                      else
-                        const SizedBox(width: 44),
-                      const Spacer(),
-                      if (topActionLabel != null)
-                        TextButton(
-                          onPressed: onTopAction,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
+              padding: EdgeInsets.fromLTRB(
+                22,
+                keyboardVisible ? 2 : 10,
+                22,
+                keyboardVisible ? 18 : 32,
+              ),
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (showBack)
+                          _HeaderButton(
+                            icon: Icons.arrow_back_ios_new_rounded,
+                            onTap: () => context.canPop()
+                                ? context.pop()
+                                : context.go('/home'),
+                          )
+                        else
+                          const SizedBox(width: 44),
+                        const Spacer(),
+                        if (topActionLabel != null)
+                          TextButton(
+                            onPressed: onTopAction,
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(
+                              topActionLabel!,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                          child: Text(
-                            topActionLabel!,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Center(child: HanovaBrandMark(size: 58, onColor: true)),
-                  const SizedBox(height: 14),
-                  Center(
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 27,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Center(
-                    child: Text(
-                      subtitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13,
-                        height: 1.45,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 50),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: AppColors.divider),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: AppColors.cardShadow,
-                          blurRadius: 26,
-                          offset: Offset(0, 12),
-                        ),
                       ],
                     ),
-                    child: child,
-                  ),
-                ],
+                    SizedBox(height: keyboardVisible ? 0 : 10),
+                    Center(
+                      child: HanovaBrandMark(
+                        size: keyboardVisible ? 44 : 58,
+                        onColor: true,
+                      ),
+                    ),
+                    SizedBox(height: keyboardVisible ? 6 : 14),
+                    Center(
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: keyboardVisible ? 23 : 27,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    if (!keyboardVisible) ...[
+                      const SizedBox(height: 6),
+                      Center(
+                        child: Text(
+                          subtitle,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 13,
+                            height: 1.45,
+                          ),
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: keyboardVisible ? 12 : 50),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: AppColors.divider),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: AppColors.cardShadow,
+                            blurRadius: 26,
+                            offset: Offset(0, 12),
+                          ),
+                        ],
+                      ),
+                      child: child,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

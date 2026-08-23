@@ -14,6 +14,11 @@ class ApiErrorMessage {
         .startsWith('en');
     final statusCode = error.response?.statusCode;
 
+    if (statusCode == 401 && _isLoginRequest(error.requestOptions.path)) {
+      return isEnglish
+          ? 'The mobile number or password is incorrect.'
+          : 'رقم الموبايل أو كلمة المرور غير صحيحة.';
+    }
     if (statusCode == 401) {
       return isEnglish
           ? 'Your session has expired. Please log in again.'
@@ -56,6 +61,11 @@ class ApiErrorMessage {
             ? 'The request could not be completed. Please try again.'
             : '\u062a\u0639\u0630\u0631 \u0625\u0643\u0645\u0627\u0644 \u0627\u0644\u0637\u0644\u0628. \u062d\u0627\u0648\u0644\u064a \u0645\u0631\u0629 \u0623\u062e\u0631\u0649.';
     }
+  }
+
+  static bool _isLoginRequest(String path) {
+    final normalized = path.toLowerCase().split('?').first;
+    return normalized.endsWith('/auth/login');
   }
 
   static String? _extractServerMessage(dynamic data) {
