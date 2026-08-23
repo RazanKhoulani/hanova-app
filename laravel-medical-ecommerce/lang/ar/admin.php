@@ -148,4 +148,12 @@ return [
     'deleting' => 'جارٍ الحذف...',
     'unexpected_error' => 'حدث خطأ غير متوقع. لم يتم تنفيذ العملية، يرجى المحاولة مرة أخرى.',
     'user_role_updated' => 'تم تحديث صلاحية المستخدم بنجاح.',
+    'chat_with' => 'محادثة مع :name',
+    'chat_title' => 'محادثة: :name',
+    'realtime_connecting' => 'جارٍ الاتصال المباشر...',
+    'realtime_connected' => 'متصل مباشرة',
+    'realtime_reconnecting' => 'جارٍ إعادة الاتصال...',
+    'realtime_unavailable' => 'الاتصال المباشر غير متاح',
+    'write_message' => 'اكتبي رسالتك هنا...',
+    'message_sent_successfully' => 'تم إرسال الرسالة بنجاح.',
 ];

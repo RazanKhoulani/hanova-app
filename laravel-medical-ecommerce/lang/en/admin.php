@@ -148,4 +148,12 @@ return [
     'deleting' => 'Deleting...',
     'unexpected_error' => 'Something went wrong. The operation was not completed. Please try again.',
     'user_role_updated' => 'User role updated successfully.',
+    'chat_with' => 'Chat with :name',
+    'chat_title' => 'Chat: :name',
+    'realtime_connecting' => 'Connecting in real time...',
+    'realtime_connected' => 'Connected in real time',
+    'realtime_reconnecting' => 'Reconnecting...',
+    'realtime_unavailable' => 'Real-time connection unavailable',
+    'write_message' => 'Type your message here...',
+    'message_sent_successfully' => 'Message sent successfully.',
 ];

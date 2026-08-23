@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Middleware\EnsureDashboardStaffRole;
 use App\Http\Middleware\EnsureOrderStaffRole;
 use App\Http\Controllers\SiteController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/', SiteController::class)->name('site.home');
 
@@ -86,9 +88,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('users/{id}/role', [UserController::class, 'assignRole'])->name('users.assignRole');
 
             // Chat Management
+            Route::post('broadcasting/auth', function (Request $request) {
+                return Broadcast::auth($request);
+            })->name('broadcasting.auth');
             Route::get('chats', [ChatController::class, 'index'])->name('chats.index');
             Route::get('chats/{id}', [ChatController::class, 'show'])->name('chats.show');
             Route::post('chats/{id}/messages', [ChatController::class, 'store'])->name('chats.messages.store');
+            Route::post('chats/{id}/read', [ChatController::class, 'markRead'])->name('chats.read');
 
             // Notifications Management
             Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');

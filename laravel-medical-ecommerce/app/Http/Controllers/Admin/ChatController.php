@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\PatientMedicalFactExtractor;
@@ -55,6 +56,23 @@ class ChatController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Message sent successfully');
+        if ($request->expectsJson()) {
+            return response()->json([
+                'data' => new MessageResource($message->fresh('sender')),
+            ], 201);
+        }
+
+        return back()->with('success', __('admin.message_sent_successfully'));
+    }
+
+    public function markRead($id)
+    {
+        $conversation = Conversation::findOrFail($id);
+        $updated = $conversation->messages()
+            ->where('sender_id', '!=', auth()->id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['updated' => $updated]);
     }
 }

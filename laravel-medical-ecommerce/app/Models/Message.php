@@ -15,6 +15,13 @@ class Message extends Model
         'is_read',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'is_read' => 'boolean',
+        ];
+    }
+
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);
