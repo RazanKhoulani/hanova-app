@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,11 +32,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
   final PageController _bannerController = PageController(
     viewportFraction: 0.95,
   );
+  final ScrollController _categoryController = ScrollController();
   final GlobalKey _productsSectionKey = GlobalKey();
   late Future<HomeDataModel> _homeFuture;
   Timer? _bannerTimer;
   String? _searchQuery;
   bool _hasSearchText = false;
+  bool _categoryHintScheduled = false;
+  bool _categoryHintCancelled = false;
   int _bannerIndex = 0;
 
   @override
@@ -57,6 +61,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
   void dispose() {
     _bannerTimer?.cancel();
     _bannerController.dispose();
+    _categoryController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -113,6 +118,36 @@ class _HomeDashboardState extends State<HomeDashboard> {
     });
   }
 
+  void _scheduleCategoryScrollHint(int categoryCount) {
+    if (_categoryHintScheduled || categoryCount < 5) return;
+    _categoryHintScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future<void>.delayed(const Duration(milliseconds: 650));
+      if (!mounted ||
+          _categoryHintCancelled ||
+          !_categoryController.hasClients) {
+        return;
+      }
+
+      final maxExtent = _categoryController.position.maxScrollExtent;
+      if (maxExtent <= 0) return;
+      final hintOffset = math.min(54.0, maxExtent);
+      await _categoryController.animateTo(
+        hintOffset,
+        duration: const Duration(milliseconds: 520),
+        curve: Curves.easeOutCubic,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 260));
+      if (!mounted || _categoryHintCancelled) return;
+      await _categoryController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 620),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
+
   Future<void> _refreshHome() async {
     final request = _requestHomeData(force: true);
     setState(() {
@@ -165,14 +200,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildBanner(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       _buildSectionHeader(
                         context.tr('categories'),
                         _clearFilters,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                       _buildCategoriesSection(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 18),
                       _buildSectionHeader(
                         context.tr('top_products'),
                         _clearFilters,
@@ -336,7 +371,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             return Column(
               children: [
                 SizedBox(
-                  height: 218,
+                  height: 188,
                   child: PageView.builder(
                     controller: _bannerController,
                     itemCount: slides.length,
@@ -351,7 +386,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                     },
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(slides.length, (index) {
@@ -392,6 +427,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
         ),
         TextButton(
           onPressed: onSeeAll,
+          style: TextButton.styleFrom(
+            minimumSize: const Size(0, 32),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: Text(
             context.tr('see_all'),
             style: TextStyle(
@@ -440,35 +480,81 @@ class _HomeDashboardState extends State<HomeDashboard> {
           );
         }
 
+        _scheduleCategoryScrollHint(categories.length);
+
         return SizedBox(
-          height: 104,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              final filterValue = category.slug ?? category.name;
-              final isSelected = _selectedConcernSlug == filterValue;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedConcernSlug = isSelected ? null : filterValue;
-                  });
-                  context.read<StoreBloc>().add(
-                    StoreFetchProducts(
-                      concern: _selectedConcernSlug,
-                      query: _searchQuery,
-                    ),
-                  );
+          height: 92,
+          child: Stack(
+            children: [
+              NotificationListener<UserScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.direction != ScrollDirection.idle) {
+                    _categoryHintCancelled = true;
+                  }
+                  return false;
                 },
-                child: _CategoryChip(
-                  label: category.name,
-                  isSelected: isSelected,
-                  icon: _categoryIcon(filterValue),
+                child: ListView.separated(
+                  controller: _categoryController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsetsDirectional.only(end: 26),
+                  itemCount: categories.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 6),
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    final filterValue = category.slug ?? category.name;
+                    final isSelected = _selectedConcernSlug == filterValue;
+                    return GestureDetector(
+                      key: ValueKey(category.id),
+                      onTap: () {
+                        setState(() {
+                          _selectedConcernSlug = isSelected
+                              ? null
+                              : filterValue;
+                        });
+                        context.read<StoreBloc>().add(
+                          StoreFetchProducts(
+                            concern: _selectedConcernSlug,
+                            query: _searchQuery,
+                          ),
+                        );
+                      },
+                      child: _CategoryChip(
+                        label: category.name,
+                        isSelected: isSelected,
+                        icon: _categoryIcon(filterValue),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+              if (categories.length >= 5)
+                PositionedDirectional(
+                  end: 0,
+                  top: 10,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 30,
+                      height: 52,
+                      alignment: AlignmentDirectional.centerEnd,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: AlignmentDirectional.centerStart,
+                          end: AlignmentDirectional.centerEnd,
+                          colors: [Colors.transparent, AppColors.background],
+                        ),
+                      ),
+                      child: Icon(
+                        Directionality.of(context) == TextDirection.rtl
+                            ? Icons.chevron_left_rounded
+                            : Icons.chevron_right_rounded,
+                        size: 22,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -717,16 +803,16 @@ class _HomeBannerCard extends StatelessWidget {
       child: Stack(
         children: [
           PositionedDirectional(
-            end: -22,
-            bottom: -22,
+            end: -18,
+            bottom: -18,
             child: Icon(
               data.icon,
-              size: 126,
+              size: 108,
               color: Colors.white.withValues(alpha: 0.14),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(19),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -773,13 +859,13 @@ class _HomeBannerCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 13),
                 SizedBox(
-                  height: 38,
+                  height: 36,
                   child: ElevatedButton.icon(
                     onPressed: data.onAction,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.primaryDark,
-                      minimumSize: const Size(118, 38),
+                      minimumSize: const Size(112, 36),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       elevation: 0,
                     ),
@@ -816,36 +902,55 @@ class _CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 82,
+      width: 74,
       child: Column(
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.divider,
+          AnimatedScale(
+            scale: isSelected ? 1.06 : 1,
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutBack,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.divider,
+                ),
+                boxShadow: isSelected
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x2EC76C83),
+                          blurRadius: 12,
+                          offset: Offset(0, 5),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Icon(
+                icon,
+                size: 22,
+                color: isSelected ? Colors.white : AppColors.primary,
               ),
             ),
-            child: Icon(
-              icon,
-              color: isSelected ? Colors.white : AppColors.primary,
-            ),
           ),
-          const SizedBox(height: 7),
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
+          const SizedBox(height: 6),
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 180),
             style: TextStyle(
               height: 1.1,
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: isSelected ? AppColors.primaryDark : AppColors.textPrimary,
+            ),
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
           ),
         ],
