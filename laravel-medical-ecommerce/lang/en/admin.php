@@ -143,4 +143,9 @@ return [
     'topic_updated_successfully' => 'Consultation topic updated successfully.',
     'topic_deleted_successfully' => 'Consultation topic deleted successfully.',
     'topic_has_questions' => 'Move or delete the questions in this topic before deleting it.',
+    'confirm_delete' => 'Confirm deletion',
+    'delete' => 'Delete',
+    'deleting' => 'Deleting...',
+    'unexpected_error' => 'Something went wrong. The operation was not completed. Please try again.',
+    'user_role_updated' => 'User role updated successfully.',
 ];

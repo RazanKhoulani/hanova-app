@@ -143,4 +143,9 @@ return [
     'topic_updated_successfully' => 'تم تحديث موضوع الاستشارة بنجاح.',
     'topic_deleted_successfully' => 'تم حذف موضوع الاستشارة بنجاح.',
     'topic_has_questions' => 'انقلي أسئلة هذا الموضوع أو احذفيها قبل حذف الموضوع.',
+    'confirm_delete' => 'تأكيد الحذف',
+    'delete' => 'حذف',
+    'deleting' => 'جارٍ الحذف...',
+    'unexpected_error' => 'حدث خطأ غير متوقع. لم يتم تنفيذ العملية، يرجى المحاولة مرة أخرى.',
+    'user_role_updated' => 'تم تحديث صلاحية المستخدم بنجاح.',
 ];

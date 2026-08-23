@@ -702,6 +702,31 @@ textarea.form-control {
     border-color: var(--clinic-border);
 }
 
+.delete-confirm-dialog {
+    max-width: 460px;
+}
+
+.delete-confirm-icon {
+    width: 68px;
+    height: 68px;
+    display: grid;
+    place-items: center;
+    margin-inline: auto;
+    color: var(--clinic-danger);
+    background: rgba(196, 71, 71, 0.1);
+    border: 1px solid rgba(196, 71, 71, 0.18);
+    border-radius: 22px;
+    font-size: 26px;
+}
+
+.delete-confirm-dialog .modal-content {
+    overflow: hidden;
+}
+
+.delete-confirm-dialog .btn {
+    min-width: 116px;
+}
+
 .dashboard-hero {
     position: relative;
     min-height: 210px;

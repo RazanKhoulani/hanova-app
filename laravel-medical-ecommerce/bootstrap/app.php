@@ -30,6 +30,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $exception, Request $request) {
             if (
+                $request->is('admin/*')
+                && ! $request->isMethod('GET')
+                && ! $exception instanceof AuthenticationException
+                && ! $exception instanceof ValidationException
+                && ! $exception instanceof HttpExceptionInterface
+            ) {
+                return back()
+                    ->withInput()
+                    ->with('error', __('admin.unexpected_error'));
+            }
+
+            if (
                 ! $request->is('api/*')
                 || $exception instanceof AuthenticationException
                 || $exception instanceof ValidationException

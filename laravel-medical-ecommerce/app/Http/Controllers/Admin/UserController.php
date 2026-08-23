@@ -42,9 +42,11 @@ class UserController extends Controller
             // First time role creation if missing in Spatie table
             $role = Role::firstOrCreate(['name' => $request->role, 'guard_name' => 'web']);
             $user->syncRoles([$role->name]);
-            return back()->with('success', 'User role updated successfully');
+            return back()->with('success', __('admin.user_role_updated'));
         } catch (\Exception $e) {
-            return back()->with('error', 'Error assigning role: ' . $e->getMessage());
+            report($e);
+
+            return back()->with('error', __('admin.unexpected_error'));
         }
     }
 }

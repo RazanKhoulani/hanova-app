@@ -182,6 +182,14 @@
                     </div>
                 @endif
 
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('admin.close') }}"></button>
+                    </div>
+                @endif
+
                 @if($errors->any())
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="fa-solid fa-triangle-exclamation me-2"></i>
@@ -198,6 +206,32 @@
                 @yield('content')
             </div>
         </main>
+    </div>
+
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered delete-confirm-dialog">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4 p-md-5">
+                    <div class="delete-confirm-icon" aria-hidden="true">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </div>
+                    <h5 class="mt-3 mb-2" id="deleteConfirmTitle">{{ __('admin.confirm_delete') }}</h5>
+                    <p class="text-muted mb-4">{{ __('admin.delete_confirm') }}</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                            {{ __('admin.cancel') }}
+                        </button>
+                        <button type="button" class="btn btn-danger px-4" id="confirmDeleteButton">
+                            <span class="delete-button-label">{{ __('admin.delete') }}</span>
+                            <span class="delete-button-loading d-none">
+                                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                                {{ __('admin.deleting') }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -229,11 +263,42 @@
                 });
             });
 
+            const deleteModalElement = document.getElementById('deleteConfirmModal');
+            const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+            const deleteModal = deleteModalElement
+                ? bootstrap.Modal.getOrCreateInstance(deleteModalElement)
+                : null;
+            let pendingDeleteForm = null;
+
             document.querySelectorAll('.delete-confirm').forEach((form) => {
                 form.addEventListener('submit', (event) => {
                     event.preventDefault();
-                    if (window.confirm(@json(__('admin.delete_confirm')))) form.submit();
+                    if (!deleteModal || form.dataset.submitting === 'true') return;
+
+                    pendingDeleteForm = form;
+                    deleteModal.show();
                 });
+            });
+
+            confirmDeleteButton?.addEventListener('click', () => {
+                if (!pendingDeleteForm || pendingDeleteForm.dataset.submitting === 'true') return;
+
+                pendingDeleteForm.dataset.submitting = 'true';
+                confirmDeleteButton.disabled = true;
+                confirmDeleteButton.querySelector('.delete-button-label')?.classList.add('d-none');
+                confirmDeleteButton.querySelector('.delete-button-loading')?.classList.remove('d-none');
+                HTMLFormElement.prototype.submit.call(pendingDeleteForm);
+            });
+
+            deleteModalElement?.addEventListener('hidden.bs.modal', () => {
+                if (pendingDeleteForm?.dataset.submitting === 'true') return;
+
+                pendingDeleteForm = null;
+                if (confirmDeleteButton) {
+                    confirmDeleteButton.disabled = false;
+                    confirmDeleteButton.querySelector('.delete-button-label')?.classList.remove('d-none');
+                    confirmDeleteButton.querySelector('.delete-button-loading')?.classList.add('d-none');
+                }
             });
         });
     </script>
