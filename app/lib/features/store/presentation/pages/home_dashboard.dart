@@ -19,9 +19,7 @@ import '../../data/models/product_model.dart';
 import '../../data/models/home_data_model.dart';
 
 class HomeDashboard extends StatefulWidget {
-  final int refreshVersion;
-
-  const HomeDashboard({super.key, this.refreshVersion = 0});
+  const HomeDashboard({super.key});
 
   @override
   State<HomeDashboard> createState() => _HomeDashboardState();
@@ -35,7 +33,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
   );
   final GlobalKey _productsSectionKey = GlobalKey();
   late Future<HomeDataModel> _homeFuture;
-  Timer? _searchDebounce;
   Timer? _bannerTimer;
   String? _searchQuery;
   bool _hasSearchText = false;
@@ -58,19 +55,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   @override
   void dispose() {
-    _searchDebounce?.cancel();
     _bannerTimer?.cancel();
     _bannerController.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant HomeDashboard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.refreshVersion != widget.refreshVersion) {
-      _refreshHome();
-    }
   }
 
   void _fetchProducts({bool force = false}) {
@@ -84,18 +72,15 @@ class _HomeDashboardState extends State<HomeDashboard> {
   }
 
   void _onSearchChanged(String value) {
-    _searchDebounce?.cancel();
-    setState(() => _hasSearchText = value.isNotEmpty);
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
-      if (!mounted) return;
-      final query = value.trim();
+    final query = value.trim();
+    setState(() {
+      _hasSearchText = value.isNotEmpty;
       _searchQuery = query.isEmpty ? null : query;
-      _fetchProducts();
     });
+    _fetchProducts();
   }
 
   void _clearFilters() {
-    _searchDebounce?.cancel();
     setState(() {
       _selectedConcernSlug = null;
       _searchQuery = null;
@@ -107,7 +92,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   void _reloadHome() {
     setState(() {
-      _homeFuture = _requestHomeData();
+      _homeFuture = _requestHomeData(force: true);
     });
   }
 
@@ -129,25 +114,22 @@ class _HomeDashboardState extends State<HomeDashboard> {
   }
 
   Future<void> _refreshHome() async {
-    final request = _requestHomeData();
+    final request = _requestHomeData(force: true);
     setState(() {
       _homeFuture = request;
     });
 
     try {
       await request;
-      if (_selectedConcernSlug != null || _searchQuery != null) {
-        _fetchProducts(force: true);
-      }
     } catch (_) {
       // The page already renders a retry state with the server error.
     }
   }
 
-  Future<HomeDataModel> _requestHomeData() async {
+  Future<HomeDataModel> _requestHomeData({bool force = false}) async {
     try {
-      final data = await sl<StoreRepository>().getHomeData();
-      if (mounted && _selectedConcernSlug == null && _searchQuery == null) {
+      final data = await sl<StoreRepository>().getHomeData(force: force);
+      if (mounted) {
         context.read<StoreBloc>().add(StoreSeedProducts(data.products));
       }
       return data;
@@ -164,11 +146,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return BlocListener<AppSettingsCubit, AppSettingsState>(
       listener: (context, state) {
         setState(() {
-          _homeFuture = _requestHomeData();
+          _homeFuture = _requestHomeData(force: true);
         });
-        if (_selectedConcernSlug != null || _searchQuery != null) {
-          _fetchProducts(force: true);
-        }
       },
       child: Scaffold(
         backgroundColor: AppColors.background,

@@ -4,7 +4,7 @@ import '../../data/models/offer_model.dart';
 import '../../data/models/home_data_model.dart';
 
 abstract class StoreRepository {
-  Future<HomeDataModel> getHomeData();
+  Future<HomeDataModel> getHomeData({bool force = false});
   Future<List<ProductModel>> getProducts({
     String? category,
     String? concern,

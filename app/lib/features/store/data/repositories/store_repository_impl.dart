@@ -7,12 +7,42 @@ import '../sources/store_remote_data_source.dart';
 
 class StoreRepositoryImpl implements StoreRepository {
   final StoreRemoteDataSource _remoteDataSource;
+  static const Duration _homeCacheLifetime = Duration(minutes: 5);
+  HomeDataModel? _cachedHomeData;
+  DateTime? _homeDataFetchedAt;
+  Future<HomeDataModel>? _pendingHomeRequest;
 
   StoreRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<HomeDataModel> getHomeData() {
-    return _remoteDataSource.getHomeData();
+  Future<HomeDataModel> getHomeData({bool force = false}) async {
+    final cachedAt = _homeDataFetchedAt;
+    final hasFreshCache =
+        _cachedHomeData != null &&
+        cachedAt != null &&
+        DateTime.now().difference(cachedAt) < _homeCacheLifetime;
+
+    if (!force && hasFreshCache) {
+      return _cachedHomeData!;
+    }
+
+    final pendingRequest = _pendingHomeRequest;
+    if (pendingRequest != null) {
+      return pendingRequest;
+    }
+
+    final request = _remoteDataSource.getHomeData();
+    _pendingHomeRequest = request;
+    try {
+      final data = await request;
+      _cachedHomeData = data;
+      _homeDataFetchedAt = DateTime.now();
+      return data;
+    } finally {
+      if (identical(_pendingHomeRequest, request)) {
+        _pendingHomeRequest = null;
+      }
+    }
   }
 
   @override

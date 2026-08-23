@@ -21,7 +21,6 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late int _selectedIndex;
-  int _homeRefreshVersion = 0;
   late final Set<int> _builtTabs;
   late final Set<int> _builtDeliveryTabs;
 
@@ -34,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   List<Widget> _pages(int activeIndex) => [
-    HomeDashboard(refreshVersion: _homeRefreshVersion),
+    const HomeDashboard(),
     const ClinicScreen(),
     const ChatScreen(),
     MyOrdersScreen(showAppBar: false, autoFetch: activeIndex == 3),
@@ -135,9 +134,6 @@ class _MainScreenState extends State<MainScreen> {
               if (!isAuthenticated && _requiresAuth(index)) {
                 _askForAuth();
                 return;
-              }
-              if (index == 0 && visibleIndex != 0) {
-                _homeRefreshVersion++;
               }
               setState(() {
                 _selectedIndex = index;
