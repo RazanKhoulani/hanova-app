@@ -24,6 +24,8 @@ class FaqResource extends JsonResource
                 'ar' => $this->answer_ar,
                 'en' => $this->answer_en,
             ],
+            'keywords' => $this->keywords,
+            'is_active' => (bool) $this->is_active,
         ];
     }
 }

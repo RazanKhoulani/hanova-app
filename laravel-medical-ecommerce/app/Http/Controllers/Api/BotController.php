@@ -19,6 +19,20 @@ class BotController extends Controller
         $this->botService = $botService;
     }
 
+    public function bootstrap(Request $request)
+    {
+        $validated = $request->validate([
+            'product_name' => 'nullable|string|max:255',
+            'product_description' => 'nullable|string|max:2000',
+        ]);
+        $lang = $this->language($request);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->botService->bootstrap($lang, $validated),
+        ]);
+    }
+
     public function ask(Request $request)
     {
         $request->validate([
@@ -33,11 +47,10 @@ class BotController extends Controller
             'context.asked_questions.*' => 'string|max:500',
         ]);
 
-        $lang = $request->input('lang', $request->header('Accept-Language', 'ar'));
-        $lang = str_starts_with((string) $lang, 'en') ? 'en' : 'ar';
+        $lang = $this->language($request);
         $query = $request->input('query', $request->input('text', ''));
 
-        if (!$query) {
+        if (! $query) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please type your question.',
@@ -104,8 +117,7 @@ class BotController extends Controller
             'product_description' => 'nullable|string|max:2000',
         ]);
 
-        $lang = $request->input('lang', $request->header('Accept-Language', 'ar'));
-        $lang = str_starts_with((string) $lang, 'en') ? 'en' : 'ar';
+        $lang = $this->language($request);
 
         $conversation = $this->resolveConversation(
             $request->user(),
@@ -122,6 +134,13 @@ class BotController extends Controller
     private function optionalAuthenticatedUser(): ?User
     {
         return Auth::guard('sanctum')->user();
+    }
+
+    private function language(Request $request): string
+    {
+        $lang = $request->input('lang', $request->header('Accept-Language', 'ar'));
+
+        return str_starts_with((string) $lang, 'en') ? 'en' : 'ar';
     }
 
     private function resolveConversation(User $user, array $context, string $lang): BotConversation

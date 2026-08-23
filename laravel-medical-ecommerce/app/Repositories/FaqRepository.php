@@ -3,12 +3,21 @@
 namespace App\Repositories;
 
 use App\Models\Faq;
+use Illuminate\Database\Eloquent\Collection;
 
 class FaqRepository
 {
     public function getAll($perPage = 15)
     {
         return Faq::latest()->paginate($perPage);
+    }
+
+    public function getActive(): Collection
+    {
+        return Faq::query()
+            ->where('is_active', true)
+            ->latest()
+            ->get();
     }
 
     public function findById($id)
@@ -24,6 +33,7 @@ class FaqRepository
     public function update(Faq $faq, array $data)
     {
         $faq->update($data);
+
         return $faq;
     }
 

@@ -18,7 +18,12 @@ class FaqFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'question_ar' => fake()->unique()->sentence().'؟',
+            'question_en' => fake()->unique()->sentence().'?',
+            'answer_ar' => fake()->paragraph(),
+            'answer_en' => fake()->paragraph(),
+            'keywords' => implode(', ', fake()->words(3)),
+            'is_active' => true,
         ];
     }
 }

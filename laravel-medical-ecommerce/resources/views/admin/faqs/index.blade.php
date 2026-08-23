@@ -20,6 +20,7 @@
                         <th class="border-0 px-4 py-3">Question (EN)</th>
                         <th class="border-0 px-4 py-3">Question (AR)</th>
                         <th class="border-0 px-4 py-3">Keywords</th>
+                        <th class="border-0 px-4 py-3">Status</th>
                         <th class="border-0 px-4 py-3 text-end">Action</th>
                     </tr>
                 </thead>
@@ -30,9 +31,14 @@
                         <td class="align-middle px-4 text-truncate" style="max-width: 300px;">{{ $faq->question_en }}</td>
                         <td class="align-middle px-4 text-truncate" style="max-width: 300px;">{{ $faq->question_ar }}</td>
                         <td class="align-middle px-4">
-                            @foreach(array_filter(array_map('trim', explode(',', $faq->keywords ?? ''))) as $keyword)
+                            @foreach(preg_split('/[,،]+/u', $faq->keywords ?? '', -1, PREG_SPLIT_NO_EMPTY) as $keyword)
                                 <span class="badge bg-light text-dark border">{{ $keyword }}</span>
                             @endforeach
+                        </td>
+                        <td class="align-middle px-4">
+                            <span class="badge {{ $faq->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                {{ $faq->is_active ? 'Active' : 'Inactive' }}
+                            </span>
                         </td>
                         <td class="align-middle px-4 text-end">
                             <button type="button" class="btn btn-sm btn-outline-primary" title="Edit FAQ" data-bs-toggle="modal" data-bs-target="#editFaqModal{{ $faq->id }}">
@@ -49,7 +55,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="fas fa-question-circle fa-3x mb-3 text-light"></i>
                             <p class="mb-0 fs-5">No FAQs found</p>
                         </td>
@@ -59,6 +65,11 @@
             </table>
         </div>
     </div>
+    @if($faqs->hasPages())
+        <div class="card-footer bg-white py-3">
+            {{ $faqs->links('pagination::bootstrap-5') }}
+        </div>
+    @endif
 </div>
 
 @foreach($faqs as $faq)
@@ -96,6 +107,12 @@
                     <div class="mb-3">
                         <label class="form-label">Keywords (Comma separated)</label>
                         <input type="text" class="form-control" name="keywords" value="{{ $faq->keywords }}">
+                        <div class="form-text">These words help the bot match differently worded questions.</div>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input type="hidden" name="is_active" value="0">
+                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" value="1" id="faqActive{{ $faq->id }}" @checked($faq->is_active)>
+                        <label class="form-check-label" for="faqActive{{ $faq->id }}">Show this question in the app and allow the bot to answer it</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -142,6 +159,12 @@
                     <div class="mb-3">
                         <label class="form-label">Keywords (Comma separated)</label>
                         <input type="text" class="form-control" name="keywords" placeholder="e.g. acne, هرمونات, علاج">
+                        <div class="form-text">Add Arabic and English alternatives so typed questions can be matched accurately.</div>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input type="hidden" name="is_active" value="0">
+                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" value="1" id="newFaqActive" checked>
+                        <label class="form-check-label" for="newFaqActive">Show this question in the app and allow the bot to answer it</label>
                     </div>
                 </div>
                 <div class="modal-header d-flex justify-content-end">

@@ -18,6 +18,11 @@ class FaqService
         return $this->faqRepository->getAll();
     }
 
+    public function getActiveFaqs()
+    {
+        return $this->faqRepository->getActive();
+    }
+
     public function getFaqById($id)
     {
         return $this->faqRepository->findById($id);
@@ -31,12 +36,14 @@ class FaqService
     public function updateFaq($id, array $data)
     {
         $faq = $this->faqRepository->findById($id);
+
         return $this->faqRepository->update($faq, $data);
     }
 
     public function deleteFaq($id)
     {
         $faq = $this->faqRepository->findById($id);
+
         return $this->faqRepository->delete($faq);
     }
 }

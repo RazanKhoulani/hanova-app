@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\FaqService;
 use App\Http\Resources\FaqResource;
+use App\Services\FaqService;
 use Illuminate\Http\Request;
 
 class FaqController extends Controller
@@ -21,7 +21,8 @@ class FaqController extends Controller
      */
     public function index()
     {
-        $faqs = $this->faqService->getAllFaqs();
+        $faqs = $this->faqService->getActiveFaqs();
+
         return FaqResource::collection($faqs);
     }
 
@@ -37,6 +38,7 @@ class FaqController extends Controller
         ]);
 
         $faq = $this->faqService->createFaq($validated);
+
         return new FaqResource($faq);
     }
 
@@ -52,12 +54,14 @@ class FaqController extends Controller
         ]);
 
         $faq = $this->faqService->updateFaq($id, $validated);
+
         return new FaqResource($faq);
     }
 
     public function destroy($id)
     {
         $this->faqService->deleteFaq($id);
+
         return response()->json(['message' => 'FAQ deleted successfully'], 204);
     }
 }

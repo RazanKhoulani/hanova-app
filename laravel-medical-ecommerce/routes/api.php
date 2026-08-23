@@ -34,6 +34,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/categories', [ProductController::class, 'categories']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/faqs', [FaqController::class, 'index']);
+Route::get('/bot/bootstrap', [BotController::class, 'bootstrap']);
 Route::post('/bot/ask', [BotController::class, 'ask']);
 Route::get('/appointments/available-slots', [AppointmentController::class, 'availableSlots']);
 Route::get('/delivery-areas', [DeliveryAreaController::class, 'index']);
