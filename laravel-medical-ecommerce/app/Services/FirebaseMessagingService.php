@@ -71,7 +71,7 @@ class FirebaseMessagingService
         $credentialsPath = config('services.firebase.credentials_path');
 
         if (is_string($credentials) && $credentials !== '') {
-            $decoded = base64_decode($credentials, true);
+            $decoded = base64_decode($this->normalizeBase64Credentials($credentials), true);
             if ($decoded === false) {
                 Log::warning('FIREBASE_CREDENTIALS_BASE64 is not valid base64.');
 
@@ -102,6 +102,17 @@ class FirebaseMessagingService
         }
 
         return $this->messaging = $factory->createMessaging();
+    }
+
+    /**
+     * Railway variables can be pasted with a UTF-8 BOM or line wrapping.
+     * Neither is part of the Base64 payload, so remove both before decoding.
+     */
+    protected function normalizeBase64Credentials(string $credentials): string
+    {
+        $withoutBom = preg_replace('/^\x{FEFF}/u', '', $credentials) ?? $credentials;
+
+        return preg_replace('/\s+/u', '', $withoutBom) ?? $withoutBom;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\BundledProductImagePublisher;
 use App\Services\Otp\HttpQVerifyClient;
 use App\Services\Otp\QVerifyClient;
 use Illuminate\Support\Facades\Schema;
@@ -33,5 +34,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        // Railway mounts the public storage volume only when the app runs, not
+        // during pre-deploy. Make the bundled product images available there as
+        // soon as the production application boots.
+        if (! $this->app->runningInConsole()) {
+            $this->app->make(BundledProductImagePublisher::class)->publishMissing();
+        }
     }
 }

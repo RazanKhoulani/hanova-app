@@ -3,15 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\Product;
+use App\Services\BundledProductImagePublisher;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->publishBundledImages();
+        app(BundledProductImagePublisher::class)->publishMissing();
 
         $products = [
             [
@@ -195,19 +195,4 @@ class ProductSeeder extends Seeder
         }
     }
 
-    private function publishBundledImages(): void
-    {
-        $source = database_path('seeders/assets/products');
-
-        if (! File::isDirectory($source)) {
-            return;
-        }
-
-        foreach (File::files($source) as $image) {
-            Storage::disk('public')->put(
-                'products/'.$image->getFilename(),
-                File::get($image->getPathname()),
-            );
-        }
-    }
 }

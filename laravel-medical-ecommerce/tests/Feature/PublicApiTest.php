@@ -56,14 +56,15 @@ class PublicApiTest extends TestCase
             ->assertJsonValidationErrors('per_page');
     }
 
-    public function test_product_seeder_does_not_publish_missing_placeholder_images(): void
+    public function test_product_seeder_publishes_bundled_images_without_replacing_uploaded_images(): void
     {
         Storage::fake('public');
 
         $this->seed(ProductSeeder::class);
 
         $product = Product::where('name_en', 'Gentle Medical Cleanser')->firstOrFail();
-        $this->assertNull($product->image);
+        $this->assertSame('products/cleanser.png', $product->image);
+        Storage::disk('public')->assertExists('products/cleanser.png');
 
         $product->update(['image' => 'products/uploaded-cleanser.png']);
         $this->seed(ProductSeeder::class);
