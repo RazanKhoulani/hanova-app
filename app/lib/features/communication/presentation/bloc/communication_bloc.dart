@@ -12,17 +12,17 @@ class CommunicationFetchChatMessages extends CommunicationEvent {
   CommunicationFetchChatMessages({this.showLoading = true});
 }
 
-class CommunicationFetchBotConversation extends CommunicationEvent {
+class CommunicationInitializeBot extends CommunicationEvent {
+  final bool loadHistory;
   final String? productName;
   final String? productDescription;
 
-  CommunicationFetchBotConversation({
+  CommunicationInitializeBot({
+    required this.loadHistory,
     this.productName,
     this.productDescription,
   });
 }
-
-class CommunicationClearBotConversation extends CommunicationEvent {}
 
 class CommunicationSendChatMessage extends CommunicationEvent {
   final String text;
@@ -31,11 +31,13 @@ class CommunicationSendChatMessage extends CommunicationEvent {
 
 class CommunicationSendBotMessage extends CommunicationEvent {
   final String text;
+  final BotOption? option;
   final String? productName;
   final String? productDescription;
 
   CommunicationSendBotMessage(
     this.text, {
+    this.option,
     this.productName,
     this.productDescription,
   });
@@ -71,8 +73,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
 
   CommunicationBloc(this._repository) : super(CommunicationInitial()) {
     on<CommunicationFetchChatMessages>(_onFetchChatMessages);
-    on<CommunicationFetchBotConversation>(_onFetchBotConversation);
-    on<CommunicationClearBotConversation>(_onClearBotConversation);
+    on<CommunicationInitializeBot>(_onInitializeBot);
     on<CommunicationSendChatMessage>(_onSendChatMessage);
     on<CommunicationSendBotMessage>(_onSendBotMessage);
   }
@@ -94,29 +95,32 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
     }
   }
 
-  Future<void> _onFetchBotConversation(
-    CommunicationFetchBotConversation event,
+  Future<void> _onInitializeBot(
+    CommunicationInitializeBot event,
     Emitter<CommunicationState> emit,
   ) async {
+    emit(CommunicationLoading());
+    _botMessages.clear();
+
     try {
-      final messages = await _repository.getBotMessages(
+      if (event.loadHistory) {
+        final messages = await _repository.getBotMessages(
+          productName: event.productName,
+          productDescription: event.productDescription,
+        );
+        _botMessages.addAll(messages);
+        _hidePreviousBotOptions();
+      }
+
+      final bootstrapMessage = await _repository.getBotBootstrap(
         productName: event.productName,
         productDescription: event.productDescription,
       );
-      _botMessages.clear();
-      _botMessages.addAll(messages);
+      _botMessages.add(bootstrapMessage);
       emit(CommunicationBotLoaded(List.from(_botMessages)));
-    } catch (_) {
-      emit(CommunicationBotLoaded(List.from(_botMessages)));
+    } catch (e) {
+      emit(CommunicationFailure(ApiErrorMessage.from(e)));
     }
-  }
-
-  void _onClearBotConversation(
-    CommunicationClearBotConversation event,
-    Emitter<CommunicationState> emit,
-  ) {
-    _botMessages.clear();
-    emit(CommunicationBotLoaded(List.from(_botMessages)));
   }
 
   Future<void> _onSendChatMessage(
@@ -168,6 +172,7 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
 
       final botMsg = await _repository.sendBotMessage(
         event.text,
+        option: event.option,
         productName: event.productName,
         productDescription: event.productDescription,
         askedQuestions: askedQuestions,

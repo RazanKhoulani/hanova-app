@@ -11,8 +11,13 @@ abstract class CommunicationRemoteDataSource {
     String? productName,
     String? productDescription,
   });
+  Future<MessageModel> getBotBootstrap({
+    String? productName,
+    String? productDescription,
+  });
   Future<MessageModel> sendBotMessage(
     String text, {
+    BotOption? option,
     String? productName,
     String? productDescription,
     List<String> askedQuestions = const [],
@@ -137,8 +142,32 @@ class CommunicationRemoteDataSourceImpl
   }
 
   @override
+  Future<MessageModel> getBotBootstrap({
+    String? productName,
+    String? productDescription,
+  }) async {
+    final response = await _dioClient.get(
+      ApiConstants.botBootstrap,
+      queryParameters: {
+        if (productName != null && productName.trim().isNotEmpty)
+          'product_name': productName,
+        if (productDescription != null && productDescription.trim().isNotEmpty)
+          'product_description': productDescription,
+      },
+    );
+
+    final payload = response.data['data'];
+    if (response.data['success'] != true || payload is! Map<String, dynamic>) {
+      throw const FormatException('Invalid bot bootstrap response.');
+    }
+
+    return MessageModel.fromBotPayload(payload);
+  }
+
+  @override
   Future<MessageModel> sendBotMessage(
     String text, {
+    BotOption? option,
     String? productName,
     String? productDescription,
     List<String> askedQuestions = const [],
@@ -155,7 +184,13 @@ class CommunicationRemoteDataSourceImpl
 
     final response = await _dioClient.post(
       ApiConstants.botAsk,
-      data: {'query': text, if (context.isNotEmpty) 'context': context},
+      data: {
+        'query': text,
+        if (option != null && option.type != 'legacy')
+          'option_type': option.type,
+        if (option?.id != null) 'option_id': option!.id,
+        if (context.isNotEmpty) 'context': context,
+      },
     );
 
     if (response.data['success'] == true &&
@@ -167,17 +202,7 @@ class CommunicationRemoteDataSourceImpl
         _botConversationId = int.tryParse(conversationId.toString());
       }
 
-      final optionsRaw = response.data['data']['options'];
-      final List<String>? options = optionsRaw is List
-          ? List<String>.from(optionsRaw.map((e) => e.toString()))
-          : null;
-
-      return MessageModel(
-        text: response.data['data']['answer']?.toString() ?? '',
-        isMe: false,
-        timestamp: DateTime.now(),
-        options: options,
-      );
+      return MessageModel.fromBotPayload(response.data['data']);
     }
 
     return MessageModel(

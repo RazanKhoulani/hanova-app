@@ -34,14 +34,27 @@ class CommunicationRepositoryImpl implements CommunicationRepository {
   }
 
   @override
+  Future<MessageModel> getBotBootstrap({
+    String? productName,
+    String? productDescription,
+  }) async {
+    return await _remoteDataSource.getBotBootstrap(
+      productName: productName,
+      productDescription: productDescription,
+    );
+  }
+
+  @override
   Future<MessageModel> sendBotMessage(
     String text, {
+    BotOption? option,
     String? productName,
     String? productDescription,
     List<String> askedQuestions = const [],
   }) async {
     return await _remoteDataSource.sendBotMessage(
       text,
+      option: option,
       productName: productName,
       productDescription: productDescription,
       askedQuestions: askedQuestions,

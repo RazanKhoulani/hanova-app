@@ -8,8 +8,13 @@ abstract class CommunicationRepository {
     String? productName,
     String? productDescription,
   });
+  Future<MessageModel> getBotBootstrap({
+    String? productName,
+    String? productDescription,
+  });
   Future<MessageModel> sendBotMessage(
     String text, {
+    BotOption? option,
     String? productName,
     String? productDescription,
     List<String> askedQuestions = const [],

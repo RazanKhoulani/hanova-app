@@ -31,18 +31,13 @@ class _BotScreenState extends State<BotScreen> {
       }
 
       final authState = context.read<AuthBloc>().state;
-      final communicationBloc = context.read<CommunicationBloc>();
-
-      if (authState is AuthAuthenticated) {
-        communicationBloc.add(
-          CommunicationFetchBotConversation(
-            productName: widget.productName,
-            productDescription: widget.productDescription,
-          ),
-        );
-      } else {
-        communicationBloc.add(CommunicationClearBotConversation());
-      }
+      context.read<CommunicationBloc>().add(
+        CommunicationInitializeBot(
+          loadHistory: authState is AuthAuthenticated,
+          productName: widget.productName,
+          productDescription: widget.productDescription,
+        ),
+      );
     });
   }
 
@@ -52,13 +47,13 @@ class _BotScreenState extends State<BotScreen> {
     super.dispose();
   }
 
-  void _sendMessage([String? text]) {
-    final msgText = text ?? _controller.text.trim();
+  void _sendMessage([BotOption? option]) {
+    final msgText = option?.label ?? _controller.text.trim();
     if (msgText.isEmpty) {
       return;
     }
 
-    if (_isBookConsultation(msgText)) {
+    if (option?.type == 'book_consultation' || _isBookConsultation(msgText)) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.go('/home?tab=1');
@@ -72,12 +67,13 @@ class _BotScreenState extends State<BotScreen> {
     context.read<CommunicationBloc>().add(
       CommunicationSendBotMessage(
         msgText,
+        option: option,
         productName: widget.productName,
         productDescription: widget.productDescription,
       ),
     );
 
-    if (text == null) {
+    if (option == null) {
       _controller.clear();
     }
   }
@@ -93,6 +89,15 @@ class _BotScreenState extends State<BotScreen> {
           Expanded(
             child: BlocBuilder<CommunicationBloc, CommunicationState>(
               builder: (context, state) {
+                if (state is CommunicationLoading ||
+                    state is CommunicationInitial) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (state is CommunicationFailure) {
+                  return _buildFailure(state.message);
+                }
+
                 var messages = <MessageModel>[];
                 if (state is CommunicationBotLoaded) {
                   messages = state.messages;
@@ -101,7 +106,6 @@ class _BotScreenState extends State<BotScreen> {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
                   children: [
-                    if (messages.isEmpty) _buildBotMessage(_initialMessage()),
                     ...messages.map(
                       (msg) => msg.isMe
                           ? _buildUserMessage(msg.text)
@@ -118,63 +122,12 @@ class _BotScreenState extends State<BotScreen> {
     );
   }
 
-  MessageModel _initialMessage() {
-    return MessageModel(
-      text: widget.productName == null
-          ? context.tr('bot_welcome')
-          : _productWelcome(widget.productName!),
-      isMe: false,
-      timestamp: DateTime.now(),
-      options: _topicOptions(),
-    );
-  }
-
   bool _isBookConsultation(String text) {
     final normalized = text.trim().toLowerCase();
 
     return text == context.readTr('book_consultation') ||
         normalized == 'book consultation' ||
         text.trim() == 'احجزي استشارة';
-  }
-
-  List<String> _topicOptions() {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
-    if (isArabic) {
-      return const [
-        'حب الشباب',
-        'التصبغات',
-        'تصبغات الجسم',
-        'الهالات السوداء',
-        'توسع المسامات',
-        'مشاكل الشعر',
-        'اضطراب الهرمونات',
-        'ترطيب',
-        'تنظيف البشرة',
-        'واقي الشمس',
-        'علامات التمدد',
-        'السيلوليت',
-        'غير متأكدة',
-        'احجزي استشارة',
-      ];
-    }
-
-    return const [
-      'Acne',
-      'Pigmentation',
-      'Body pigmentation',
-      'Dark circles',
-      'Large pores',
-      'Hair issues',
-      'Hormonal imbalance',
-      'Hydration',
-      'Cleansing',
-      'Sun protection',
-      'Stretch marks',
-      'Cellulite',
-      'Not sure',
-      'Book Consultation',
-    ];
   }
 
   Widget _buildHeader() {
@@ -213,13 +166,61 @@ class _BotScreenState extends State<BotScreen> {
     );
   }
 
-  Widget _quickChip(String label) {
+  Widget _quickChip(BotOption option) {
+    final isNavigation = option.type == 'topics';
+    final isBooking = option.type == 'book_consultation';
+
     return ActionChip(
-      label: Text(label),
-      onPressed: () => _sendMessage(label),
-      side: const BorderSide(color: AppColors.primary),
-      backgroundColor: Colors.white,
-      labelStyle: const TextStyle(color: AppColors.primary),
+      avatar: isNavigation
+          ? const Icon(Icons.arrow_back_rounded, size: 18)
+          : isBooking
+          ? const Icon(Icons.calendar_month_rounded, size: 18)
+          : null,
+      label: Text(option.label),
+      onPressed: () => _sendMessage(option),
+      side: BorderSide(
+        color: isNavigation ? AppColors.textSecondary : AppColors.primary,
+      ),
+      backgroundColor: isBooking ? AppColors.primaryLight : Colors.white,
+      labelStyle: TextStyle(
+        color: isNavigation ? AppColors.textSecondary : AppColors.primary,
+      ),
+    );
+  }
+
+  Widget _buildFailure(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.danger,
+              size: 42,
+            ),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _initializeBot,
+              child: Text(context.tr('try_again')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _initializeBot() {
+    final authState = context.read<AuthBloc>().state;
+    context.read<CommunicationBloc>().add(
+      CommunicationInitializeBot(
+        loadHistory: authState is AuthAuthenticated,
+        productName: widget.productName,
+        productDescription: widget.productDescription,
+      ),
     );
   }
 
@@ -260,9 +261,7 @@ class _BotScreenState extends State<BotScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: msg.options!
-                        .map((option) => _quickChip(option))
-                        .toList(),
+                    children: msg.options!.map(_quickChip).toList(),
                   ),
                 ],
               ],
@@ -356,14 +355,5 @@ class _BotScreenState extends State<BotScreen> {
     }
 
     return 'Use the interactive bot to understand skin and hair concerns quickly.';
-  }
-
-  String _productWelcome(String productName) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    if (isArabic) {
-      return 'أنا جاهز أجاوبك عن $productName. اكتبي مشكلتك أو اسأليني عن طريقة الاستخدام.';
-    }
-
-    return 'I can help with $productName. Tell me your concern or ask how to use it.';
   }
 }

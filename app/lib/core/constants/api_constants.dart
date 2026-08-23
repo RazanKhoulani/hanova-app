@@ -58,6 +58,7 @@ class ApiConstants {
       '/chat/conversations/'; // /chat/conversations/{id}/messages
   static const String notifications = '/notifications';
   static const String deviceTokens = '/device-tokens';
+  static const String botBootstrap = '/bot/bootstrap';
   static const String botAsk = '/bot/ask';
   static const String botConversation = '/bot/conversation';
   static const String faqs = '/faqs';
