@@ -3,12 +3,22 @@
 namespace Database\Seeders;
 
 use App\Models\Faq;
+use App\Models\FaqTopic;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class FaqSeeder extends Seeder
 {
     public function run(): void
     {
+        $topics = [];
+        foreach ($this->topics() as $topic) {
+            $topics[$topic['slug']] = FaqTopic::updateOrCreate(
+                ['slug' => $topic['slug']],
+                $topic
+            );
+        }
+
         $faqs = array_merge($this->detailedFaqs(), [
             [
                 'question_ar' => 'ما سبب تكرار حب الشباب العميق؟',
@@ -103,12 +113,164 @@ class FaqSeeder extends Seeder
             ],
         ]);
 
+        $positions = [];
         foreach ($faqs as $faq) {
+            $topicSlug = $this->topicSlugFor($faq['question_en']);
+            $positions[$topicSlug] = ($positions[$topicSlug] ?? 0) + 1;
+
             Faq::updateOrCreate(
                 ['question_en' => $faq['question_en']],
-                $faq + ['is_active' => true]
+                $faq + [
+                    'faq_topic_id' => $topics[$topicSlug]->id,
+                    'sort_order' => $positions[$topicSlug],
+                    'is_active' => true,
+                ]
             );
         }
+    }
+
+    private function topics(): array
+    {
+        return [
+            [
+                'slug' => 'acne',
+                'name_ar' => 'حب الشباب',
+                'name_en' => 'Acne',
+                'description_ar' => 'أسئلة الحبوب المتكررة والروتين والحالات التي تحتاج علاجًا طبيًا.',
+                'description_en' => 'Questions about recurring acne, routines, and when medical treatment is needed.',
+                'sort_order' => 1,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'pigmentation',
+                'name_ar' => 'التصبغات',
+                'name_en' => 'Pigmentation',
+                'description_ar' => 'أسئلة الكلف وآثار الحبوب ومدة علاج التصبغات.',
+                'description_en' => 'Questions about melasma, acne marks, and pigmentation treatment.',
+                'sort_order' => 2,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'body-pigmentation',
+                'name_ar' => 'تصبغات الجسم',
+                'name_en' => 'Body pigmentation',
+                'description_ar' => 'أسئلة اسمرار الجسم والاحتكاك والتقشير المناسب.',
+                'description_en' => 'Questions about body darkening, friction, and suitable exfoliation.',
+                'sort_order' => 3,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'dark-circles',
+                'name_ar' => 'الهالات السوداء',
+                'name_en' => 'Dark circles',
+                'description_ar' => 'أسئلة أسباب الهالات ومتى تحتاج فحصًا أو استشارة.',
+                'description_en' => 'Questions about dark-circle causes and when assessment is needed.',
+                'sort_order' => 4,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'large-pores',
+                'name_ar' => 'توسع المسامات',
+                'name_en' => 'Large pores',
+                'description_ar' => 'أسئلة مظهر المسامات وعلاقتها بالدهون والروتين المناسب.',
+                'description_en' => 'Questions about pore appearance, oiliness, and suitable routines.',
+                'sort_order' => 5,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'hair-issues',
+                'name_ar' => 'مشاكل الشعر',
+                'name_en' => 'Hair issues',
+                'description_ar' => 'أسئلة تساقط الشعر والأسباب ومتى يحتاج إلى فحص.',
+                'description_en' => 'Questions about hair shedding, causes, and when tests are needed.',
+                'sort_order' => 6,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'hormonal-imbalance',
+                'name_ar' => 'اضطراب الهرمونات',
+                'name_en' => 'Hormonal imbalance',
+                'description_ar' => 'أسئلة تأثير الهرمونات والتكيس على البشرة والشعر.',
+                'description_en' => 'Questions about hormonal and PCOS effects on skin and hair.',
+                'sort_order' => 7,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'hydration',
+                'name_ar' => 'ترطيب',
+                'name_en' => 'Hydration',
+                'description_ar' => 'أسئلة اختيار المرطب وحماية حاجز البشرة.',
+                'description_en' => 'Questions about moisturizers and protecting the skin barrier.',
+                'sort_order' => 8,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'cleansing',
+                'name_ar' => 'تنظيف البشرة',
+                'name_en' => 'Cleansing',
+                'description_ar' => 'أسئلة اختيار الغسول وعدد مرات استخدامه.',
+                'description_en' => 'Questions about choosing and using facial cleansers.',
+                'sort_order' => 9,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'sun-protection',
+                'name_ar' => 'واقي الشمس',
+                'name_en' => 'Sun protection',
+                'description_ar' => 'أسئلة اختيار واقي الشمس وأهمية تجديده.',
+                'description_en' => 'Questions about choosing and reapplying sunscreen.',
+                'sort_order' => 10,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'stretch-marks',
+                'name_ar' => 'علامات التمدد',
+                'name_en' => 'Stretch marks',
+                'description_ar' => 'أسئلة علاج علامات التمدد وتوقيت العلاج.',
+                'description_en' => 'Questions about stretch-mark treatment and timing.',
+                'sort_order' => 11,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'cellulite',
+                'name_ar' => 'السيلوليت',
+                'name_en' => 'Cellulite',
+                'description_ar' => 'أسئلة أسباب السيلوليت وتحسين مظهره.',
+                'description_en' => 'Questions about cellulite causes and appearance improvement.',
+                'sort_order' => 12,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'not-sure',
+                'name_ar' => 'غير متأكدة',
+                'name_en' => 'Not sure',
+                'description_ar' => 'ابدئي من هنا إذا لم تكوني متأكدة من نوع المشكلة أو المعلومات المطلوبة للاستشارة.',
+                'description_en' => 'Start here if you are unsure about the concern or what consultation details to provide.',
+                'sort_order' => 13,
+                'is_active' => true,
+            ],
+        ];
+    }
+
+    private function topicSlugFor(string $question): string
+    {
+        $question = Str::lower($question);
+
+        return match (true) {
+            Str::contains($question, ['cleanser', 'cleanse']) => 'cleansing',
+            Str::contains($question, ['sunscreen', 'sun protection']) => 'sun-protection',
+            Str::contains($question, ['body pigmentation', 'body darkening', 'exfoliation suitable for body']) => 'body-pigmentation',
+            Str::contains($question, ['dark circle', 'under eye']) => 'dark-circles',
+            Str::contains($question, ['pore']) => 'large-pores',
+            Str::contains($question, ['hair', 'scalp']) => 'hair-issues',
+            Str::contains($question, ['hormonal', 'pcos']) => 'hormonal-imbalance',
+            Str::contains($question, ['stretch mark']) => 'stretch-marks',
+            Str::contains($question, ['cellulite']) => 'cellulite',
+            Str::contains($question, ['moistur', 'hydration', 'dryness']) => 'hydration',
+            Str::contains($question, ['pigmentation', 'melasma', 'dark spot']) => 'pigmentation',
+            Str::contains($question, ['acne', 'breakout']) => 'acne',
+            default => 'not-sure',
+        };
     }
 
     private function detailedFaqs(): array

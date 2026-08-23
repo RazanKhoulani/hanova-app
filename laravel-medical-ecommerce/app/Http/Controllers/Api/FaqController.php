@@ -29,12 +29,14 @@ class FaqController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'faq_topic_id' => 'nullable|integer|exists:faq_topics,id',
             'question_ar' => 'required|string|max:255',
             'question_en' => 'required|string|max:255',
             'answer_ar' => 'required|string',
             'answer_en' => 'required|string',
             'keywords' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0|max:9999',
         ]);
 
         $faq = $this->faqService->createFaq($validated);
@@ -45,12 +47,14 @@ class FaqController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
+            'faq_topic_id' => 'nullable|integer|exists:faq_topics,id',
             'question_ar' => 'sometimes|string|max:255',
             'question_en' => 'sometimes|string|max:255',
             'answer_ar' => 'sometimes|string',
             'answer_en' => 'sometimes|string',
             'keywords' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0|max:9999',
         ]);
 
         $faq = $this->faqService->updateFaq($id, $validated);

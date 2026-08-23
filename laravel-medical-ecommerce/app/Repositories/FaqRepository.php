@@ -16,7 +16,10 @@ class FaqRepository
     {
         return Faq::query()
             ->where('is_active', true)
-            ->latest()
+            ->with('topic')
+            ->orderBy('faq_topic_id')
+            ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
     }
 

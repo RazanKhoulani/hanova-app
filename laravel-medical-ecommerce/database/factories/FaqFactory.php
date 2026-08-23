@@ -24,6 +24,7 @@ class FaqFactory extends Factory
             'answer_en' => fake()->paragraph(),
             'keywords' => implode(', ', fake()->words(3)),
             'is_active' => true,
+            'sort_order' => 0,
         ];
     }
 }

@@ -39,6 +39,8 @@ class BotController extends Controller
             'query' => 'nullable|string',
             'text' => 'nullable|string',
             'lang' => 'nullable|in:ar,en',
+            'option_type' => 'nullable|in:topic,faq,topics,book_consultation',
+            'option_id' => 'nullable|integer|min:1',
             'context' => 'nullable|array',
             'context.product_name' => 'nullable|string|max:255',
             'context.product_description' => 'nullable|string|max:2000',
@@ -77,7 +79,9 @@ class BotController extends Controller
         $result = $this->botService->findAnswer(
             $query,
             $lang,
-            $context
+            $context,
+            $request->input('option_type'),
+            $request->filled('option_id') ? $request->integer('option_id') : null
         );
 
         if ($result) {
@@ -86,7 +90,13 @@ class BotController extends Controller
                     'sender' => 'bot',
                     'body' => (string) ($result['answer'] ?? ''),
                     'options' => $result['options'] ?? [],
-                    'metadata' => ['lang' => $lang],
+                    'metadata' => array_filter([
+                        'lang' => $lang,
+                        'view' => $result['view'] ?? null,
+                        'topic_id' => $result['topic_id'] ?? null,
+                        'faq_id' => $result['faq_id'] ?? null,
+                        'option_items' => $result['option_items'] ?? [],
+                    ], fn ($value) => $value !== null),
                 ]);
 
                 $conversation->forceFill([
@@ -221,6 +231,7 @@ class BotController extends Controller
             'id' => $conversation->id,
             'messages' => $messages->map(function ($message) use ($lastBotMessageId) {
                 $showOptions = $message->sender === 'bot' && $message->id === $lastBotMessageId;
+                $metadata = $message->metadata ?? [];
 
                 return [
                     'id' => $message->id,
@@ -229,6 +240,10 @@ class BotController extends Controller
                     'sender' => $message->sender,
                     'is_me' => $message->sender === 'user',
                     'options' => $showOptions ? ($message->options ?? []) : [],
+                    'option_items' => $showOptions ? ($metadata['option_items'] ?? []) : [],
+                    'view' => $metadata['view'] ?? null,
+                    'topic_id' => $metadata['topic_id'] ?? null,
+                    'faq_id' => $metadata['faq_id'] ?? null,
                     'created_at' => $message->created_at?->toISOString(),
                 ];
             })->values(),

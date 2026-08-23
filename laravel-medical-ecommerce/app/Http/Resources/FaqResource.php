@@ -14,6 +14,15 @@ class FaqResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'topic' => $this->whenLoaded('topic', fn () => $this->topic ? [
+                'id' => $this->topic->id,
+                'slug' => $this->topic->slug,
+                'name_text' => $lang === 'en' ? $this->topic->name_en : $this->topic->name_ar,
+                'name' => [
+                    'ar' => $this->topic->name_ar,
+                    'en' => $this->topic->name_en,
+                ],
+            ] : null),
             'question_text' => $lang === 'en' ? $this->question_en : $this->question_ar,
             'answer_text' => $lang === 'en' ? $this->answer_en : $this->answer_ar,
             'question' => [
@@ -26,6 +35,7 @@ class FaqResource extends JsonResource
             ],
             'keywords' => $this->keywords,
             'is_active' => (bool) $this->is_active,
+            'sort_order' => (int) $this->sort_order,
         ];
     }
 }

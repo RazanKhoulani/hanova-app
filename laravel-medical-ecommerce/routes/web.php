@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\ConsultationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\FaqTopicController;
 use App\Http\Controllers\Admin\ChatController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -95,6 +96,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
             // FAQ Management
+            Route::resource('faq-topics', FaqTopicController::class)->only(['store', 'update', 'destroy']);
             Route::resource('faqs', FaqController::class)->except(['create', 'edit', 'show']);
         });
         

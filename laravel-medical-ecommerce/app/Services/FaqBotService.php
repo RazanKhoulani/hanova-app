@@ -3,12 +3,15 @@
 namespace App\Services;
 
 use App\Models\Faq;
+use App\Models\FaqTopic;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
 class FaqBotService
 {
     private ?Collection $activeFaqs = null;
+
+    private ?Collection $activeTopics = null;
 
     public function bootstrap(string $lang = 'ar', array $context = []): array
     {
@@ -17,54 +20,201 @@ class FaqBotService
 
         if ($productName !== '') {
             $answer = $lang === 'en'
-                ? "I can help you with {$productName}. Choose a question below or type your own question."
-                : "فيني ساعدك بخصوص {$productName}. اختاري سؤال من الأسئلة أو اكتبي سؤالك مباشرة.";
+                ? "I can help you with {$productName}. First choose the consultation topic that best matches your concern."
+                : "فيني ساعدك بخصوص {$productName}. اختاري أولًا موضوع الاستشارة الأقرب لمشكلتك.";
         } else {
             $answer = $lang === 'en'
-                ? 'Welcome. Choose a question below or type your question, and I will answer from the clinic knowledge base.'
-                : 'أهلًا بكِ. اختاري سؤالًا من الأسئلة أو اكتبي سؤالك، وسأجيبك من قاعدة معلومات العيادة.';
+                ? 'Choose the consultation topic that best matches your concern, then I will show you its questions.'
+                : 'اختاري موضوع الاستشارة الأقرب لمشكلتك، وبعدها سأعرض لكِ الأسئلة الخاصة بهذا الموضوع.';
         }
 
-        return [
-            'answer' => $answer,
-            'options' => $this->faqOptions($lang),
-        ];
+        return $this->payload(
+            $answer,
+            $this->withBooking($this->topicItems($lang), $lang),
+            ['view' => 'topics']
+        );
     }
 
-    public function findAnswer(string $query, string $lang = 'ar', array $context = []): array
-    {
+    public function findAnswer(
+        string $query,
+        string $lang = 'ar',
+        array $context = [],
+        ?string $optionType = null,
+        ?int $optionId = null
+    ): array {
         $lang = $this->language($lang);
         $query = trim($query);
 
-        if ($query === '' || $this->isStartQuery($query)) {
+        if ($optionType === 'topics' || $query === '' || $this->isStartQuery($query) || $this->isTopicsQuery($query)) {
             return $this->bootstrap($lang, $context);
         }
 
+        if ($optionType === 'topic' && $optionId) {
+            $topic = $this->topics()->firstWhere('id', $optionId);
+
+            return $topic
+                ? $this->topicPayload($topic, $lang)
+                : $this->notFoundPayload($lang, $context);
+        }
+
+        if ($optionType === 'faq' && $optionId) {
+            $faq = $this->faqs()->firstWhere('id', $optionId);
+
+            return $faq
+                ? $this->faqPayload($faq, $lang, $context)
+                : $this->notFoundPayload($lang, $context);
+        }
+
+        $topic = $this->findMatchingTopic($query);
+        if ($topic) {
+            return $this->topicPayload($topic, $lang);
+        }
+
         $faq = $this->findMatchingFaq($query);
-
         if ($faq) {
-            $excludedQuestions = array_merge(
-                $context['asked_questions'] ?? [],
-                [$faq->question_ar, $faq->question_en]
-            );
-
-            return [
-                'answer' => $lang === 'en' ? $faq->answer_en : $faq->answer_ar,
-                'options' => $this->faqOptions($lang, $excludedQuestions),
-                'faq_id' => $faq->id,
-            ];
+            return $this->faqPayload($faq, $lang, $context);
         }
 
         if (trim((string) ($context['product_name'] ?? '')) !== '') {
-            return $this->productFallback($lang, $context, $query);
+            return $this->productFallback($lang, $context);
         }
 
-        return [
-            'answer' => $lang === 'en'
-                ? 'I could not find an exact answer in the clinic knowledge base. Try one of the available questions or book a consultation for a personalized answer.'
-                : 'لم أجد جوابًا مطابقًا ضمن قاعدة معلومات العيادة. جرّبي أحد الأسئلة المتاحة أو احجزي استشارة للحصول على جواب مخصص لحالتك.',
-            'options' => $this->faqOptions($lang, $context['asked_questions'] ?? []),
+        return $this->notFoundPayload($lang, $context);
+    }
+
+    private function topicPayload(FaqTopic $topic, string $lang): array
+    {
+        $name = $this->topicName($topic, $lang);
+        $description = trim((string) ($lang === 'en' ? $topic->description_en : $topic->description_ar));
+        $answer = $lang === 'en'
+            ? "Choose a question about {$name}."
+            : "اختاري السؤال الذي يهمك ضمن موضوع {$name}.";
+
+        if ($description !== '') {
+            $answer .= "\n{$description}";
+        }
+
+        return $this->payload(
+            $answer,
+            $this->withNavigation($this->faqItems($topic, $lang), $lang),
+            [
+                'view' => 'questions',
+                'topic_id' => $topic->id,
+            ]
+        );
+    }
+
+    private function faqPayload(Faq $faq, string $lang, array $context): array
+    {
+        $topic = $faq->topic;
+        $excludedQuestions = array_merge(
+            $context['asked_questions'] ?? [],
+            [$faq->question_ar, $faq->question_en]
+        );
+
+        $items = $topic
+            ? $this->faqItems($topic, $lang, $excludedQuestions)
+            : [];
+
+        return $this->payload(
+            $lang === 'en' ? $faq->answer_en : $faq->answer_ar,
+            $this->withNavigation($items, $lang),
+            [
+                'view' => 'questions',
+                'topic_id' => $topic?->id,
+                'faq_id' => $faq->id,
+            ]
+        );
+    }
+
+    private function notFoundPayload(string $lang, array $context): array
+    {
+        return $this->payload(
+            $lang === 'en'
+                ? 'I could not find an exact answer in the clinic knowledge base. Choose a consultation topic or book a consultation for a personalized answer.'
+                : 'لم أجد جوابًا مطابقًا ضمن قاعدة معلومات العيادة. اختاري موضوع الاستشارة المناسب أو احجزي استشارة للحصول على جواب مخصص لحالتك.',
+            $this->withBooking($this->topicItems($lang), $lang),
+            ['view' => 'topics']
+        );
+    }
+
+    private function payload(string $answer, array $items, array $meta = []): array
+    {
+        return array_merge([
+            'answer' => $answer,
+            'options' => collect($items)->pluck('label')->values()->all(),
+            'option_items' => array_values($items),
+        ], $meta);
+    }
+
+    private function topicItems(string $lang): array
+    {
+        return $this->topics()
+            ->map(fn (FaqTopic $topic) => [
+                'type' => 'topic',
+                'id' => $topic->id,
+                'label' => $this->topicName($topic, $lang),
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function faqItems(FaqTopic $topic, string $lang, array $excludedQuestions = []): array
+    {
+        $excluded = collect($excludedQuestions)
+            ->filter(fn ($question) => is_string($question) && trim($question) !== '')
+            ->map(fn (string $question) => $this->normalize($question))
+            ->all();
+
+        return $this->faqs()
+            ->where('faq_topic_id', $topic->id)
+            ->reject(function (Faq $faq) use ($excluded) {
+                return in_array($this->normalize($faq->question_ar), $excluded, true)
+                    || in_array($this->normalize($faq->question_en), $excluded, true);
+            })
+            ->map(fn (Faq $faq) => [
+                'type' => 'faq',
+                'id' => $faq->id,
+                'topic_id' => $topic->id,
+                'label' => $lang === 'en' ? $faq->question_en : $faq->question_ar,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function withNavigation(array $items, string $lang): array
+    {
+        $items[] = [
+            'type' => 'topics',
+            'id' => null,
+            'label' => $lang === 'en' ? 'Back to consultation topics' : 'العودة لمواضيع الاستشارة',
         ];
+
+        return $this->withBooking($items, $lang);
+    }
+
+    private function withBooking(array $items, string $lang): array
+    {
+        $items[] = [
+            'type' => 'book_consultation',
+            'id' => null,
+            'label' => $lang === 'en' ? 'Book Consultation' : 'احجزي استشارة',
+        ];
+
+        return $items;
+    }
+
+    private function findMatchingTopic(string $query): ?FaqTopic
+    {
+        $normalizedQuery = $this->normalize($query);
+
+        return $this->topics()->first(function (FaqTopic $topic) use ($normalizedQuery) {
+            return in_array($normalizedQuery, [
+                $this->normalize($topic->name_ar),
+                $this->normalize($topic->name_en),
+                $this->normalize($topic->slug),
+            ], true);
+        });
     }
 
     private function findMatchingFaq(string $query): ?Faq
@@ -126,32 +276,31 @@ class FaqBotService
         return $score;
     }
 
-    private function faqOptions(string $lang, array $excludedQuestions = []): array
+    private function topics(): Collection
     {
-        $excluded = collect($excludedQuestions)
-            ->filter(fn ($question) => is_string($question) && trim($question) !== '')
-            ->map(fn (string $question) => $this->normalize($question))
-            ->all();
-
-        $options = $this->faqs()
-            ->map(fn (Faq $faq) => $lang === 'en' ? $faq->question_en : $faq->question_ar)
-            ->filter(fn ($question) => is_string($question) && trim($question) !== '')
-            ->reject(fn (string $question) => in_array($this->normalize($question), $excluded, true))
-            ->unique(fn (string $question) => $this->normalize($question))
-            ->values()
-            ->all();
-
-        $options[] = $lang === 'en' ? 'Book Consultation' : 'احجزي استشارة';
-
-        return $options;
+        return $this->activeTopics ??= FaqTopic::query()
+            ->where('is_active', true)
+            ->whereHas('faqs', fn ($query) => $query->where('is_active', true))
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
     }
 
     private function faqs(): Collection
     {
         return $this->activeFaqs ??= Faq::query()
             ->where('is_active', true)
-            ->latest()
+            ->whereHas('topic', fn ($query) => $query->where('is_active', true))
+            ->with('topic')
+            ->orderBy('faq_topic_id')
+            ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
+    }
+
+    private function topicName(FaqTopic $topic, string $lang): string
+    {
+        return $lang === 'en' ? $topic->name_en : $topic->name_ar;
     }
 
     private function keywords(Faq $faq): array
@@ -183,12 +332,22 @@ class FaqBotService
             'hi',
             'مرحبا',
             'اهلا',
-            'ابدأ',
+            'ابدا',
             'القائمه',
         ], true);
     }
 
-    private function productFallback(string $lang, array $context, string $query): array
+    private function isTopicsQuery(string $query): bool
+    {
+        return in_array($this->normalize($query), [
+            'topics',
+            'back to consultation topics',
+            'العوده لمواضيع الاستشاره',
+            'مواضيع الاستشاره',
+        ], true);
+    }
+
+    private function productFallback(string $lang, array $context): array
     {
         $productName = trim((string) $context['product_name']);
         $description = trim((string) ($context['product_description'] ?? ''));
@@ -198,21 +357,19 @@ class FaqBotService
             if ($description !== '') {
                 $answer .= " Product information: {$description}";
             }
-            $answer .= ' Choose one of the available questions or book a consultation for personalized advice.';
+            $answer .= ' Choose a consultation topic or book a consultation for personalized advice.';
         } else {
             $answer = "لم أجد جوابًا مطابقًا لسؤالك عن {$productName} ضمن قاعدة معلومات العيادة.";
             if ($description !== '') {
                 $answer .= " معلومات المنتج: {$description}";
             }
-            $answer .= ' اختاري أحد الأسئلة المتاحة أو احجزي استشارة لنصيحة مخصصة.';
+            $answer .= ' اختاري موضوع الاستشارة أو احجزي استشارة لنصيحة مخصصة.';
         }
 
-        return [
-            'answer' => $answer,
-            'options' => $this->faqOptions(
-                $lang,
-                array_merge($context['asked_questions'] ?? [], [$query])
-            ),
-        ];
+        return $this->payload(
+            $answer,
+            $this->withBooking($this->topicItems($lang), $lang),
+            ['view' => 'topics']
+        );
     }
 }
