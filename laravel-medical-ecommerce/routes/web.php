@@ -16,10 +16,9 @@ use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Middleware\EnsureDashboardStaffRole;
 use App\Http\Middleware\EnsureOrderStaffRole;
+use App\Http\Controllers\SiteController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', SiteController::class)->name('site.home');
 
 Route::get('/language/{locale}', function (string $locale) {
     if (in_array($locale, ['ar', 'en'], true)) {
@@ -96,7 +95,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
             // FAQ Management
-            Route::resource('faqs', FaqController::class)->except(['create', 'edit', 'show', 'update']);
+            Route::resource('faqs', FaqController::class)->except(['create', 'edit', 'show']);
         });
         
     });

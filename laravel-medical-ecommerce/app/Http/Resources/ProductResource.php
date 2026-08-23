@@ -15,6 +15,9 @@ class ProductResource extends JsonResource
         $name = $lang === 'en' ? $this->name_en : $this->name_ar;
         $description = $lang === 'en' ? $this->description_en : $this->description_ar;
         $imageUrl = $this->image ? Storage::url($this->image) : null;
+        if ($imageUrl && str_starts_with($imageUrl, 'http')) {
+            $imageUrl = parse_url($imageUrl, PHP_URL_PATH) ?: $imageUrl;
+        }
 
         return [
             'id' => $this->id,

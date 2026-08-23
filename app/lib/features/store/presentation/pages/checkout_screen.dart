@@ -413,20 +413,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'enabled': true,
         'subtitle': context.tr('pay_after_confirm'),
       },
-      {
-        'label': context.tr('credit_card'),
-        'value': 'credit_card',
-        'icon': Icons.credit_card_rounded,
-        'enabled': false,
-        'subtitle': context.tr('gateway_needed'),
-      },
-      {
-        'label': context.tr('apple_pay'),
-        'value': 'apple_pay',
-        'icon': Icons.apple_rounded,
-        'enabled': false,
-        'subtitle': context.tr('gateway_needed'),
-      },
     ];
 
     return Column(

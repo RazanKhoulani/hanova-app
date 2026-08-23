@@ -43,8 +43,8 @@
     --clinic-success: #2f8f64;
     --clinic-warning: #c78636;
     --clinic-danger: #c44747;
-    --clinic-sidebar: #302522;
-    --clinic-sidebar-soft: #443430;
+    --clinic-sidebar: #8f4057;
+    --clinic-sidebar-soft: #c26880;
     --clinic-shadow: 0 16px 45px rgba(78, 50, 45, 0.08);
     --clinic-radius: 22px;
     --sidebar-width: 278px;
@@ -147,6 +147,14 @@ a {
     position: relative;
     z-index: 1;
     font-size: 19px;
+}
+
+.brand-mark img {
+    position: relative;
+    z-index: 1;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
 }
 
 .brand-copy strong,
@@ -706,8 +714,8 @@ textarea.form-control {
     overflow: hidden;
     color: #fff;
     background:
-        linear-gradient(120deg, rgba(56, 39, 35, 0.96), rgba(83, 52, 51, 0.94)),
-        var(--clinic-sidebar);
+        linear-gradient(125deg, rgba(162, 74, 99, 0.98), rgba(202, 109, 132, 0.95)),
+        var(--clinic-primary-dark);
     border-radius: 28px;
     box-shadow: 0 23px 55px rgba(68, 52, 48, 0.16);
 }
@@ -1144,7 +1152,7 @@ textarea.form-control {
     padding: 42px;
     overflow: hidden;
     color: #fff;
-    background: linear-gradient(145deg, #3f302c, #2b2320);
+    background: linear-gradient(145deg, var(--clinic-primary-dark), var(--clinic-primary));
 }
 
 .login-visual::before {

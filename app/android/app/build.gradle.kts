@@ -42,6 +42,7 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("org.slf4j:slf4j-nop:1.7.36")
 }
 
 kotlin {

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/syrian_phone_number.dart';
+import '../../../../core/widgets/hanova_auth_shell.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -23,6 +25,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
+  String _label(String ar, String en) => _isArabic ? ar : en;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -36,37 +41,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final name = _nameController.text.trim();
     final phone = SyrianPhoneNumber.tryInternational(_phoneController.text);
     final password = _passwordController.text;
-    final passwordConfirmation = _confirmPasswordController.text;
+    final confirmation = _confirmPasswordController.text;
 
     if (name.isEmpty ||
         phone == null ||
         password.isEmpty ||
-        passwordConfirmation.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Complete all fields with a valid Syrian number'),
+        confirmation.isEmpty) {
+      _showMessage(
+        _label(
+          'أكملي جميع الحقول وأدخلي رقماً سورياً صحيحاً',
+          'Complete all fields with a valid Syrian number',
         ),
       );
       return;
     }
-
     if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 6 characters')),
+      _showMessage(
+        _label(
+          'كلمة المرور يجب أن تكون 6 محارف على الأقل',
+          'Password must be at least 6 characters',
+        ),
       );
       return;
     }
-
-    if (password != passwordConfirmation) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password confirmation does not match')),
+    if (password != confirmation) {
+      _showMessage(
+        _label('تأكيد كلمة المرور غير مطابق', 'Passwords do not match'),
       );
       return;
     }
 
     context.read<AuthBloc>().add(
-      AuthRegisterRequested(name, phone, password, passwordConfirmation),
+      AuthRegisterRequested(name, phone, password, confirmation),
     );
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -94,115 +107,127 @@ class _RegisterScreenState extends State<RegisterScreen> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
 
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(title: const Text('Create Account')),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Register and verify once by OTP.',
-                    style: TextStyle(color: AppColors.textSecondary),
+        return HanovaAuthShell(
+          title: _label('إنشاء حساب', 'Create account'),
+          subtitle: _label(
+            'خطوة واحدة تفصلك عن رعاية مصممة لك',
+            'One step away from care designed around you',
+          ),
+          child: AutofillGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HanovaFieldLabel(_label('الاسم الكامل', 'Full name')),
+                TextField(
+                  controller: _nameController,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.name],
+                  decoration: InputDecoration(
+                    hintText: _label('الاسم', 'Your name'),
+                    prefixIcon: const Icon(Icons.person_outline_rounded),
                   ),
-                  const SizedBox(height: 26),
-                  const Text('Full Name'),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      hintText: 'Your name',
-                      prefixIcon: Icon(Icons.person_outline_rounded),
+                ),
+                const SizedBox(height: 16),
+                HanovaFieldLabel(_label('رقم الموبايل', 'Phone number')),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.telephoneNumber],
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(9),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: '9XXXXXXXX',
+                    prefixText: '+963  ',
+                    prefixIcon: Icon(Icons.phone_iphone_rounded),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                HanovaFieldLabel(_label('كلمة المرور', 'Password')),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.newPassword],
+                  decoration: InputDecoration(
+                    hintText: _label(
+                      '6 محارف على الأقل',
+                      'At least 6 characters',
+                    ),
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Phone Number'),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(9),
-                    ],
-                    decoration: const InputDecoration(
-                      hintText: '9XXXXXXXX',
-                      prefixText: '+963 ',
-                      prefixIcon: Icon(Icons.phone_iphone_rounded),
+                ),
+                const SizedBox(height: 16),
+                HanovaFieldLabel(
+                  _label('تأكيد كلمة المرور', 'Confirm password'),
+                ),
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) {
+                    if (!isLoading) _submit();
+                  },
+                  decoration: InputDecoration(
+                    hintText: _label(
+                      'أعيدي كلمة المرور',
+                      'Repeat your password',
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Password'),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: 'At least 6 characters',
-                      prefixIcon: const Icon(Icons.lock_outline_rounded),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword,
-                        ),
+                    prefixIcon: const Icon(Icons.lock_person_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () => setState(
+                        () =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Confirm Password'),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _confirmPasswordController,
-                    obscureText: _obscureConfirmPassword,
-                    decoration: InputDecoration(
-                      hintText: 'Repeat your password',
-                      prefixIcon: const Icon(Icons.lock_person_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: isLoading ? null : _submit,
+                  child: isLoading
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          _label(
+                            'إنشاء الحساب وإرسال الرمز',
+                            'Register & send OTP',
+                          ),
                         ),
-                        onPressed: () => setState(
-                          () => _obscureConfirmPassword =
-                              !_obscureConfirmPassword,
-                        ),
-                      ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_label('لديك حساب؟', 'Already registered?')),
+                    TextButton(
+                      onPressed: () => context.pop(),
+                      child: Text(_label('تسجيل الدخول', 'Sign in')),
                     ),
-                  ),
-                  const SizedBox(height: 28),
-                  ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Register & Send OTP'),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Already have an account? '),
-                      TextButton(
-                        onPressed: () => context.pop(),
-                        child: const Text('Login'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         );

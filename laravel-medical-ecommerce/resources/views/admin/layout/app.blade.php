@@ -30,7 +30,7 @@
     <div class="admin-shell">
         <aside class="admin-sidebar" id="adminSidebar" aria-label="{{ __('admin.main_navigation') }}">
             <a href="{{ $isDelivery ? route('admin.orders.index') : route('admin.dashboard') }}" class="sidebar-brand">
-                <span class="brand-mark"><i class="fa-solid fa-spa"></i></span>
+                <span class="brand-mark"><img src="{{ asset('images/hanova-mark.svg') }}" alt="" width="30" height="30"></span>
                 <span class="brand-copy">
                     <strong>{{ __('admin.brand') }}</strong>
                     <small>{{ __('admin.clinic_management') }}</small>
@@ -142,10 +142,12 @@
                 </div>
 
                 <div class="topbar-actions">
+                    <a href="{{ route('site.home') }}" class="topbar-icon" target="_blank" rel="noopener" title="Hanova website">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
                     @unless($isDelivery)
                         <a href="{{ route('admin.notifications.index') }}" class="topbar-icon" title="{{ __('admin.notifications') }}">
                             <i class="fa-regular fa-bell"></i>
-                            <span class="notification-dot"></span>
                         </a>
                     @endunless
 

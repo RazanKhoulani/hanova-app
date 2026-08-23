@@ -5,7 +5,6 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../store/presentation/pages/home_dashboard.dart';
 import '../../../store/presentation/pages/my_orders_screen.dart';
-import '../../../store/presentation/bloc/store_bloc.dart';
 import '../../../clinical/presentation/pages/clinic_screen.dart';
 import '../../../communication/presentation/pages/chat_screen.dart';
 import '../bloc/auth_state.dart';
@@ -129,81 +128,48 @@ class _MainScreenState extends State<MainScreen> {
               pageBuilder: (index) => _pages(visibleIndex)[index],
             ),
           ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: BottomNavigationBar(
-              currentIndex: visibleIndex,
-              onTap: (index) {
-                if (!isAuthenticated && _requiresAuth(index)) {
-                  _askForAuth();
-                  return;
-                }
-                if (index == 0) {
-                  context.read<StoreBloc>().add(StoreFetchProducts());
-                }
-                setState(() {
-                  _selectedIndex = index;
-                  _builtTabs.add(index);
-                });
-              },
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: AppColors.primary,
-              unselectedItemColor: AppColors.textLight,
-              selectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+          bottomNavigationBar: _HanovaNavigationBar(
+            currentIndex: visibleIndex,
+            onTap: (index) {
+              if (!isAuthenticated && _requiresAuth(index)) {
+                _askForAuth();
+                return;
+              }
+              setState(() {
+                _selectedIndex = index;
+                _builtTabs.add(index);
+              });
+            },
+            items: [
+              _HanovaNavItem(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
+                label: context.tr('home'),
               ),
-              unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
+              _HanovaNavItem(
+                icon: Icons.local_hospital_outlined,
+                activeIcon: Icons.local_hospital_rounded,
+                label: context.tr('clinic'),
+                isLocked: !isAuthenticated,
               ),
-              elevation: 0,
-              items: [
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.home_outlined),
-                  activeIcon: const Icon(Icons.home_rounded),
-                  label: context.tr('home'),
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.local_hospital_outlined,
-                    color: !isAuthenticated ? AppColors.textLight : null,
-                  ),
-                  activeIcon: const Icon(Icons.local_hospital_rounded),
-                  label: context.tr('clinic'),
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    color: !isAuthenticated ? AppColors.textLight : null,
-                  ),
-                  activeIcon: const Icon(Icons.chat_bubble_rounded),
-                  label: context.tr('chat'),
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.receipt_long_outlined,
-                    color: !isAuthenticated ? AppColors.textLight : null,
-                  ),
-                  activeIcon: const Icon(Icons.receipt_long_rounded),
-                  label: context.tr('orders'),
-                ),
-                BottomNavigationBarItem(
-                  icon: const Icon(Icons.person_outline_rounded),
-                  activeIcon: const Icon(Icons.person_rounded),
-                  label: context.tr('profile'),
-                ),
-              ],
-            ),
+              _HanovaNavItem(
+                icon: Icons.chat_bubble_outline_rounded,
+                activeIcon: Icons.chat_bubble_rounded,
+                label: context.tr('chat'),
+                isLocked: !isAuthenticated,
+              ),
+              _HanovaNavItem(
+                icon: Icons.receipt_long_outlined,
+                activeIcon: Icons.receipt_long_rounded,
+                label: context.tr('orders'),
+                isLocked: !isAuthenticated,
+              ),
+              _HanovaNavItem(
+                icon: Icons.person_outline_rounded,
+                activeIcon: Icons.person_rounded,
+                label: context.tr('profile'),
+              ),
+            ],
           ),
         );
       },
@@ -225,13 +191,8 @@ class _MainScreenState extends State<MainScreen> {
               : const ProfileScreen(),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: _HanovaNavigationBar(
         currentIndex: visibleIndex,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        elevation: 0,
         onTap: (index) {
           setState(() {
             _selectedIndex = index == 0 ? 3 : 4;
@@ -239,14 +200,14 @@ class _MainScreenState extends State<MainScreen> {
           });
         },
         items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.receipt_long_outlined),
-            activeIcon: const Icon(Icons.receipt_long_rounded),
+          _HanovaNavItem(
+            icon: Icons.receipt_long_outlined,
+            activeIcon: Icons.receipt_long_rounded,
             label: context.tr('orders'),
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person_outline_rounded),
-            activeIcon: const Icon(Icons.person_rounded),
+          _HanovaNavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
             label: context.tr('profile'),
           ),
         ],
@@ -269,5 +230,120 @@ class _MainScreenState extends State<MainScreen> {
 
       return pageBuilder(index);
     });
+  }
+}
+
+class _HanovaNavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isLocked;
+
+  const _HanovaNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    this.isLocked = false,
+  });
+}
+
+class _HanovaNavigationBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final List<_HanovaNavItem> items;
+
+  const _HanovaNavigationBar({
+    required this.currentIndex,
+    required this.onTap,
+    required this.items,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.divider, width: 0.7)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 24,
+            offset: Offset(0, -8),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 72,
+          child: Row(
+            children: List.generate(items.length, (index) {
+              final item = items[index];
+              final selected = index == currentIndex;
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onTap(index),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: selected ? 42 : 34,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? AppColors.primaryLight
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Icon(
+                              selected ? item.activeIcon : item.icon,
+                              size: 22,
+                              color: item.isLocked
+                                  ? AppColors.textLight
+                                  : selected
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                            ),
+                            if (item.isLocked)
+                              const PositionedDirectional(
+                                top: 2,
+                                end: 2,
+                                child: Icon(
+                                  Icons.lock_rounded,
+                                  size: 9,
+                                  color: AppColors.textLight,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: selected
+                              ? FontWeight.w800
+                              : FontWeight.w500,
+                          color: selected
+                              ? AppColors.primaryDark
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
   }
 }

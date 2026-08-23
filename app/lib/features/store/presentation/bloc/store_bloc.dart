@@ -75,6 +75,7 @@ class StoreFailure extends StoreState {
 // Bloc
 class StoreBloc extends Bloc<StoreEvent, StoreState> {
   final StoreRepository _repository;
+  List<ProductModel> _catalogProducts = const [];
   List<ProductModel> _cachedProducts = const [];
   String? _cachedCategory;
   String? _cachedConcern;
@@ -90,11 +91,13 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
   }
 
   void _onSeedProducts(StoreSeedProducts event, Emitter<StoreState> emit) {
-    _cachedProducts = event.products;
-    _cachedCategory = null;
-    _cachedConcern = null;
-    _cachedQuery = null;
-    emit(StoreProductsLoaded(event.products));
+    _catalogProducts = event.products;
+    _cachedProducts = _filterCatalog(
+      category: _cachedCategory,
+      concern: _cachedConcern,
+      query: _cachedQuery,
+    );
+    emit(StoreProductsLoaded(_cachedProducts));
   }
 
   Future<void> _onFetchProducts(
@@ -111,6 +114,19 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
       return;
     }
 
+    if (!event.force && _catalogProducts.isNotEmpty) {
+      _cachedCategory = event.category;
+      _cachedConcern = event.concern;
+      _cachedQuery = event.query;
+      _cachedProducts = _filterCatalog(
+        category: event.category,
+        concern: event.concern,
+        query: event.query,
+      );
+      emit(StoreProductsLoaded(_cachedProducts));
+      return;
+    }
+
     emit(StoreLoading());
     try {
       final products = await _repository.getProducts(
@@ -122,10 +138,57 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
       _cachedCategory = event.category;
       _cachedConcern = event.concern;
       _cachedQuery = event.query;
+      if (event.category == null &&
+          event.concern == null &&
+          event.query == null) {
+        _catalogProducts = products;
+      }
       emit(StoreProductsLoaded(products));
     } catch (e) {
       emit(StoreFailure(ApiErrorMessage.from(e)));
     }
+  }
+
+  List<ProductModel> _filterCatalog({
+    String? category,
+    String? concern,
+    String? query,
+  }) {
+    final normalizedCategory = category?.trim().toLowerCase();
+    final normalizedConcern = concern?.trim().toLowerCase();
+    final normalizedQuery = _normalizeSearch(query ?? '');
+
+    return _catalogProducts
+        .where((product) {
+          if (normalizedCategory != null &&
+              normalizedCategory.isNotEmpty &&
+              product.category?.toLowerCase() != normalizedCategory) {
+            return false;
+          }
+          if (normalizedConcern != null &&
+              normalizedConcern.isNotEmpty &&
+              !product.concernSlugs.any(
+                (slug) => slug.toLowerCase() == normalizedConcern,
+              )) {
+            return false;
+          }
+          if (normalizedQuery.isNotEmpty &&
+              !_normalizeSearch(product.searchText).contains(normalizedQuery)) {
+            return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
+  }
+
+  String _normalizeSearch(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
+        .replaceAll(RegExp(r'[\u0622\u0623\u0625]'), '\u0627')
+        .replaceAll('\u0649', '\u064A')
+        .replaceAll('\u0629', '\u0647');
   }
 
   Future<void> _onFetchCategories(

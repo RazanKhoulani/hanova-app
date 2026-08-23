@@ -210,7 +210,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.go('/home?tab=0'),
               child: Text(context.tr('browse_products')),
             ),
           ],

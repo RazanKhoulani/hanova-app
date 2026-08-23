@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_auth_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -82,10 +83,9 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.spa_rounded,
-                      size: 58,
-                      color: AppColors.primary,
+                    child: const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: HanovaBrandMark(size: 84),
                     ),
                   ),
                   const SizedBox(height: 22),

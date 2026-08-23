@@ -62,7 +62,8 @@ class CartScreen extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.divider, width: 0.6),
         boxShadow: const [
           BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
         ],
@@ -81,7 +82,8 @@ class CartScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     child: CachedNetworkImage(
                       imageUrl: item.product.image!,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
+                      memCacheWidth: 240,
                       fadeInDuration: Duration.zero,
                       placeholder: (context, url) => const Center(
                         child: CircularProgressIndicator(strokeWidth: 2),
@@ -317,7 +319,7 @@ class CartScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.go('/home?tab=0'),
               child: Text(context.tr('start_shopping')),
             ),
           ],
@@ -333,8 +335,10 @@ class CartScreen extends StatelessWidget {
   }
 
   static const _englishLabels = {
-    'calculated_checkout': 'Calculated at checkout',
+    'calculated_checkout': 'Based on pickup method and area',
   };
 
-  static const _arabicLabels = {'calculated_checkout': 'تحدد عند الدفع'};
+  static const _arabicLabels = {
+    'calculated_checkout': 'حسب طريقة الاستلام والمنطقة',
+  };
 }

@@ -26,7 +26,7 @@
         <section class="login-shell">
             <div class="login-visual">
                 <div class="login-brand">
-                    <span class="brand-mark"><i class="fa-solid fa-spa"></i></span>
+                    <span class="brand-mark"><img src="{{ asset('images/hanova-mark.svg') }}" alt="" width="30" height="30"></span>
                     <span>
                         <strong>{{ __('admin.brand') }}</strong>
                         <small>{{ __('admin.clinic_management') }}</small>

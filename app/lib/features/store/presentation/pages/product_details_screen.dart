@@ -48,7 +48,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             appBar: AppBar(),
             body: Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -138,22 +138,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
-                      Text(
-                        _detailLabel('description'),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                      const SizedBox(height: 26),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: AppColors.divider),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        product.description ?? _detailLabel('no_description'),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AppColors.textSecondary,
-                          height: 1.6,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _detailLabel('description'),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              product.description ??
+                                  _detailLabel('no_description'),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: AppColors.textSecondary,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -204,9 +219,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   Widget _buildAppBar(ProductModel product) {
     return SliverAppBar(
-      expandedHeight: 320,
+      expandedHeight: 350,
       pinned: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
         onPressed: () => context.pop(),
@@ -217,27 +232,29 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFFFDEFF3), AppColors.background],
+              colors: [AppColors.primaryMist, AppColors.background],
             ),
           ),
           child: Center(
             child: Container(
-              margin: const EdgeInsets.only(top: 60),
+              margin: const EdgeInsets.only(top: 64),
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.white, width: 5),
                 boxShadow: const [
                   BoxShadow(color: AppColors.cardShadow, blurRadius: 14),
                 ],
               ),
               child: SizedBox(
-                width: 190,
-                height: 190,
+                width: 210,
+                height: 210,
                 child: product.image != null
                     ? CachedNetworkImage(
                         imageUrl: product.image!,
                         fit: BoxFit.contain,
+                        memCacheWidth: 640,
                         fadeInDuration: Duration.zero,
                         placeholder: (context, url) => const Center(
                           child: CircularProgressIndicator(strokeWidth: 2),
@@ -310,9 +327,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             child: ElevatedButton(
               onPressed: () {
                 context.read<CartBloc>().add(CartItemAdded(product, _quantity));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(context.readTr('added_to_cart'))),
-                );
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 context.push('/cart');
               },
               child: Text(_detailLabel('add_to_cart')),
