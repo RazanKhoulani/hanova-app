@@ -28,17 +28,17 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Selling Price ($)</label>
+                    <label class="form-label fw-bold">سعر البيع (ل.س)</label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">ل.س</span>
                         <input type="number" step="0.01" name="price" class="form-control" value="{{ old('price', $product->price) }}" required>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Cost Price ($)</label>
+                    <label class="form-label fw-bold">سعر التكلفة (ل.س)</label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">ل.س</span>
                         <input type="number" step="0.01" name="cost" class="form-control" value="{{ old('cost', $product->cost) }}" required>
                     </div>
                 </div>

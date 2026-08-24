@@ -143,7 +143,7 @@ class OrderService
                 Notification::create([
                     'user_id' => $staffId,
                     'title' => 'طلب جديد',
-                    'body' => "تم استلام طلب جديد رقم #{$order->id} بقيمة {$order->total_amount}.",
+                    'body' => "تم استلام طلب جديد رقم #{$order->id} بقيمة {$order->total_amount} ل.س.",
                     'type' => 'new_order',
                     'data' => ['order_id' => $order->id],
                 ]);

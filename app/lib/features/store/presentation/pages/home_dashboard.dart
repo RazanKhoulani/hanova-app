@@ -9,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/hanova_auth_shell.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -707,7 +708,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${product.price.toStringAsFixed(2)}',
+                        CurrencyFormatter.syp(product.price),
                         style: const TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,

@@ -28,16 +28,16 @@
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">Selling Price ($) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">سعر البيع (ل.س) <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fas fa-dollar-sign text-secondary"></i></span>
+                        <span class="input-group-text bg-light">ل.س</span>
                         <input type="number" step="0.01" name="price" class="form-control" value="{{ old('price') }}" required placeholder="0.00">
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Cost ($) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">سعر التكلفة (ل.س) <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="fas fa-tag text-secondary"></i></span>
+                        <span class="input-group-text bg-light">ل.س</span>
                         <input type="number" step="0.01" name="cost" class="form-control" value="{{ old('cost') }}" required placeholder="0.00">
                     </div>
                 </div>

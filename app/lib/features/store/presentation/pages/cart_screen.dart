@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../bloc/cart_bloc.dart';
@@ -135,7 +136,7 @@ class _CartScreenState extends State<CartScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '\$${item.product.price.toStringAsFixed(2)}',
+                      CurrencyFormatter.syp(item.product.price),
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
@@ -218,7 +219,7 @@ class _CartScreenState extends State<CartScreen> {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               Text(
-                '\$${state.totalAmount.toStringAsFixed(2)}',
+                CurrencyFormatter.syp(state.totalAmount),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -252,7 +253,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
               Text(
-                '\$${state.totalAmount.toStringAsFixed(2)}',
+                CurrencyFormatter.syp(state.totalAmount),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

@@ -17,6 +17,8 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'status_label' => $this->statusLabel($this->status, $lang),
             'total_amount' => (float) $this->total_amount,
+            'currency_code' => config('app.currency_code', 'SYP'),
+            'currency_symbol' => config('app.currency_symbol', 'ل.س'),
             'payment_method' => $this->payment_method,
             'payment_status' => $this->payment_status,
             'delivery_method' => $this->delivery_method,

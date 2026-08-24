@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 class QVerifyClientTest extends TestCase
 {
-    public function test_send_otp_includes_hannova_as_the_template_app_name(): void
+    public function test_send_otp_includes_hanova_as_the_template_app_name(): void
     {
         Http::fake([
             'https://verify-api.example.test/api/sdk/v1/sendOTP' => Http::response([
@@ -29,7 +29,7 @@ class QVerifyClientTest extends TestCase
             expirySeconds: 300,
             locale: 'en',
             templateKey: 'verify_otp_app',
-            metadata: ['source' => 'Hanova', 'app_name' => 'Hannova'],
+            metadata: ['source' => 'Hanova', 'app_name' => 'Hanova'],
             referenceId: '+963945345844',
         );
 
@@ -40,7 +40,7 @@ class QVerifyClientTest extends TestCase
                 && $payload['channel'] === 'whatsapp'
                 && $payload['number_of_digits'] === 5
                 && $payload['template_key'] === 'verify_otp_app'
-                && data_get($payload, 'metadata.app_name') === 'Hannova';
+                && data_get($payload, 'metadata.app_name') === 'Hanova';
         });
 
         $this->assertSame('8d7f7f59-6e12-4e22-b2a4-0dbf52c5d5fb', $result['request_id']);

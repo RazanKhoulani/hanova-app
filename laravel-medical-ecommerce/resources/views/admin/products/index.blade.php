@@ -46,8 +46,8 @@
                                 <span class="text-muted small">No concerns</span>
                             @endforelse
                         </td>
-                        <td class="align-middle px-4"><span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1">${{ number_format($product->price, 2) }}</span></td>
-                        <td class="align-middle px-4"><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-2 py-1">${{ number_format($product->cost, 2) }}</span></td>
+                        <td class="align-middle px-4"><span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1">{{ number_format($product->price, 2) }} ل.س</span></td>
+                        <td class="align-middle px-4"><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-2 py-1">{{ number_format($product->cost, 2) }} ل.س</span></td>
                         <td class="align-middle px-4 text-end">
                             <div class="btn-group" role="group">
                                 <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-sm btn-outline-info" title="View Details">

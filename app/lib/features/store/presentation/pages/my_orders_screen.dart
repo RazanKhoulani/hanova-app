@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:app/injection_container.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../cubit/orders_cubit.dart';
@@ -294,7 +295,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('${item.quantity}x ${item.productName}'),
-                  Text('\$${(item.price * item.quantity).toStringAsFixed(2)}'),
+                  Text(CurrencyFormatter.syp(item.price * item.quantity)),
                 ],
               ),
             ),
@@ -304,13 +305,13 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
             if (order.discountAmount > 0)
               _buildAmountLine(
                 _isArabic ? 'الحسم' : 'Discount',
-                '-\$${order.discountAmount.toStringAsFixed(2)}',
+                '-${CurrencyFormatter.syp(order.discountAmount)}',
                 valueColor: AppColors.success,
               ),
             if (order.deliveryFee > 0)
               _buildAmountLine(
                 context.tr('delivery_fee'),
-                '\$${order.deliveryFee.toStringAsFixed(2)}',
+                CurrencyFormatter.syp(order.deliveryFee),
               ),
             const Divider(height: 24),
           ],
@@ -335,7 +336,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               Text(
-                '\$${order.totalAmount.toStringAsFixed(2)}',
+                CurrencyFormatter.syp(order.totalAmount),
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,

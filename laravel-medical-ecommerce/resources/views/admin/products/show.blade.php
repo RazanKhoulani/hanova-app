@@ -33,16 +33,16 @@
                 <div class="d-flex justify-content-center gap-2 mb-3">
                     <div class="bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-2 rounded">
                         <small class="d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Price</small>
-                        <span class="fw-bold fs-5">${{ number_format($product->price, 2) }}</span>
+                        <span class="fw-bold fs-5">{{ number_format($product->price, 2) }} ل.س</span>
                     </div>
                     <div class="bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-3 py-2 rounded">
                         <small class="d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Cost</small>
-                        <span class="fw-bold fs-5">${{ number_format($product->cost, 2) }}</span>
+                        <span class="fw-bold fs-5">{{ number_format($product->cost, 2) }} ل.س</span>
                     </div>
                 </div>
 
                 <div class="badge bg-{{ ($product->price - $product->cost) > 0 ? 'success' : 'danger' }} p-2">
-                    Profit: ${{ number_format($product->price - $product->cost, 2) }}
+                    Profit: {{ number_format($product->price - $product->cost, 2) }} ل.س
                 </div>
 
                 <div class="mt-4 text-start">

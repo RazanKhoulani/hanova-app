@@ -16,14 +16,14 @@ class QVerifyRegistrationTest extends TestCase
     public function test_registration_and_verification_are_completed_by_qverify(): void
     {
         $requestId = '8d7f7f59-6e12-4e22-b2a4-0dbf52c5d5fb';
-        Config::set('services.qverify.app_name', 'Hannova');
+        Config::set('services.qverify.app_name', 'Hanova');
 
         $this->mock(QVerifyClient::class, function (MockInterface $mock) use ($requestId) {
             $mock->shouldReceive('sendOtp')
                 ->once()
                 ->withArgs(static fn (...$arguments): bool => $arguments[0] === 'whatsapp'
                     && $arguments[3] === 5
-                    && data_get($arguments, '8.app_name') === 'Hannova')
+                    && data_get($arguments, '8.app_name') === 'Hanova')
                 ->andReturn([
                     'request_id' => $requestId,
                     'status' => 'sent',

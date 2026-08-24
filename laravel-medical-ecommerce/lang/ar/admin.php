@@ -45,7 +45,7 @@ return [
     'upcoming_appointments' => 'المواعيد القادمة',
     'total_revenue' => 'إجمالي الإيرادات',
     'completed_orders' => 'من الطلبات المكتملة',
-    'currency' => '$',
+    'currency' => 'ل.س',
     'recent_orders' => 'أحدث الطلبات',
     'recent_orders_hint' => 'آخر عمليات الشراء الواردة من التطبيق',
     'next_appointments' => 'المواعيد القادمة',

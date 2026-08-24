@@ -75,7 +75,7 @@
                                 <td class="px-4 py-3">
                                     <span class="badge bg-info px-2 py-1">{{ ucfirst($order->status) }}</span>
                                 </td>
-                                <td class="px-4 py-3 text-end fw-bold">${{ number_format($order->total_amount, 2) }}</td>
+                                <td class="px-4 py-3 text-end fw-bold">{{ number_format($order->total_amount, 2) }} ل.س</td>
                             </tr>
                             @empty
                             <tr>

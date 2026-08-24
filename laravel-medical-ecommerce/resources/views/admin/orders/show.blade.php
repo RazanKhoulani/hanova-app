@@ -40,9 +40,9 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 text-center">${{ number_format($item->price, 2) }}</td>
+                                <td class="px-4 py-3 text-center">{{ number_format($item->price, 2) }} ل.س</td>
                                 <td class="px-4 py-3 text-center">{{ $item->quantity }}</td>
-                                <td class="px-4 py-3 text-end fw-bold">${{ number_format($item->price * $item->quantity, 2) }}</td>
+                                <td class="px-4 py-3 text-end fw-bold">{{ number_format($item->price * $item->quantity, 2) }} ل.س</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -50,23 +50,23 @@
                         <tfoot class="bg-light">
                             <tr>
                                 <td colspan="3" class="text-end px-4 py-2">Items Subtotal:</td>
-                                <td class="text-end px-4 py-2">${{ number_format($itemsSubtotal, 2) }}</td>
+                                <td class="text-end px-4 py-2">{{ number_format($itemsSubtotal, 2) }} ل.س</td>
                             </tr>
                             @if(($order->discount_amount ?? 0) > 0)
                                 <tr>
                                     <td colspan="3" class="text-end px-4 py-2 text-success">Discount:</td>
-                                    <td class="text-end px-4 py-2 text-success">-${{ number_format($order->discount_amount, 2) }}</td>
+                                    <td class="text-end px-4 py-2 text-success">-{{ number_format($order->discount_amount, 2) }} ل.س</td>
                                 </tr>
                             @endif
                             @if(($order->delivery_fee ?? 0) > 0)
                                 <tr>
                                     <td colspan="3" class="text-end px-4 py-2">Delivery Fee:</td>
-                                    <td class="text-end px-4 py-2">${{ number_format($order->delivery_fee, 2) }}</td>
+                                    <td class="text-end px-4 py-2">{{ number_format($order->delivery_fee, 2) }} ل.س</td>
                                 </tr>
                             @endif
                             <tr>
                                 <td colspan="3" class="text-end fw-bold px-4 py-3">Total Amount:</td>
-                                <td class="text-end fw-bold text-primary fs-5 px-4 py-3">${{ number_format($order->total_amount, 2) }}</td>
+                                <td class="text-end fw-bold text-primary fs-5 px-4 py-3">{{ number_format($order->total_amount, 2) }} ل.س</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -154,7 +154,7 @@
                     </form>
                 @endif
                 @if($order->deliveryArea)
-                    <p class="mb-1 text-muted">{{ $order->deliveryArea->name_en }} - ${{ number_format($order->delivery_fee ?? 0, 2) }}</p>
+                    <p class="mb-1 text-muted">{{ $order->deliveryArea->name_en }} - {{ number_format($order->delivery_fee ?? 0, 2) }} ل.س</p>
                 @elseif($order->pickup_location)
                     <p class="mb-1 text-muted">{{ ucfirst($order->pickup_location) }}</p>
                 @endif
@@ -168,7 +168,7 @@
                     <p class="mb-0"><strong>Payment Status:</strong> {{ ucfirst($order->payment_status) }}</p>
                 @endif
                 @if($order->coupon)
-                    <p class="mb-0"><strong>Coupon:</strong> {{ $order->coupon->code }} (-{{ $order->coupon->discount_type === 'percentage' ? $order->coupon->discount_value . '%' : '$' . number_format($order->coupon->discount_value, 2) }})</p>
+                    <p class="mb-0"><strong>Coupon:</strong> {{ $order->coupon->code }} (-{{ $order->coupon->discount_type === 'percentage' ? $order->coupon->discount_value . '%' : number_format($order->coupon->discount_value, 2) . ' ل.س' }})</p>
                 @endif
             </div>
         </div>

@@ -61,6 +61,6 @@ class OfferModel {
       return '${discountValue.toStringAsFixed(0)}%';
     }
 
-    return '\$${discountValue.toStringAsFixed(2)}';
+    return '${discountValue.toStringAsFixed(2)} ل.س';
   }
 }

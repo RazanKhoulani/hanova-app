@@ -33,12 +33,12 @@
                             <small class="text-muted">{{ $order->user->phone ?? '' }}</small>
                         </td>
                         <td class="align-middle px-4 fw-medium">
-                            ${{ number_format($order->total_amount, 2) }}
+                            {{ number_format($order->total_amount, 2) }} ل.س
                             @if(($order->discount_amount ?? 0) > 0)
-                                <br><small class="text-success">Discount: -${{ number_format($order->discount_amount, 2) }}</small>
+                                <br><small class="text-success">Discount: -{{ number_format($order->discount_amount, 2) }} ل.س</small>
                             @endif
                             @if(($order->delivery_fee ?? 0) > 0)
-                                <br><small class="text-muted">Delivery: ${{ number_format($order->delivery_fee, 2) }}</small>
+                                <br><small class="text-muted">Delivery: {{ number_format($order->delivery_fee, 2) }} ل.س</small>
                             @endif
                         </td>
                         <td class="align-middle px-4">
@@ -53,7 +53,7 @@
                         <td class="align-middle px-4">
                             {{ ucfirst(str_replace('_', ' ', $order->delivery_method ?? 'home_delivery')) }}<br>
                             @if($order->deliveryArea)
-                                <small class="text-muted">{{ $order->deliveryArea->name_en }} - ${{ number_format($order->delivery_fee ?? 0, 2) }}</small>
+                                <small class="text-muted">{{ $order->deliveryArea->name_en }} - {{ number_format($order->delivery_fee ?? 0, 2) }} ل.س</small>
                             @elseif($order->pickup_location)
                                 <small class="text-muted">{{ ucfirst($order->pickup_location) }}</small>
                             @else

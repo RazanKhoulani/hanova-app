@@ -42,6 +42,8 @@ class ProductResource extends JsonResource
                 'warnings' => ['ar' => $this->warnings_ar, 'en' => $this->warnings_en],
             ],
             'price' => (float) $this->price,
+            'currency_code' => config('app.currency_code', 'SYP'),
+            'currency_symbol' => config('app.currency_symbol', 'ل.س'),
             'category' => $this->category,
             'concerns' => $this->whenLoaded('concerns', function () use ($lang) {
                 return $this->concerns->map(fn ($concern) => [

@@ -45,7 +45,7 @@ return [
     'upcoming_appointments' => 'Upcoming appointments',
     'total_revenue' => 'Total revenue',
     'completed_orders' => 'from completed orders',
-    'currency' => '$',
+    'currency' => 'ل.س',
     'recent_orders' => 'Recent orders',
     'recent_orders_hint' => 'Latest purchases received from the mobile app',
     'next_appointments' => 'Next appointments',

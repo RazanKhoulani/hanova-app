@@ -32,7 +32,7 @@
                                 <div class="text-muted small" dir="rtl">{{ $offer->title_ar }}</div>
                             </td>
                             <td class="align-middle px-4">
-                                {{ $offer->discount_type === 'percentage' ? $offer->discount_value . '%' : '$' . number_format($offer->discount_value, 2) }}
+                                {{ $offer->discount_type === 'percentage' ? $offer->discount_value . '%' : number_format($offer->discount_value, 2) . ' ل.س' }}
                             </td>
                             <td class="align-middle px-4"><code>{{ $offer->target_segment }}</code></td>
                             <td class="align-middle px-4 small">

@@ -90,6 +90,27 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     ),
                   ),
                   const SizedBox(height: 18),
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.phone_in_talk_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: SelectableText(
+                          ApiConstants.supportPhone,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(

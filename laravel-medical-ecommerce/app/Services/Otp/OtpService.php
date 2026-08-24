@@ -33,6 +33,7 @@ class OtpService
                 'source' => config('app.name'),
                 // QVerify reads the template service name from metadata.app_name.
                 'app_name' => config('services.qverify.app_name', config('app.name')),
+                'support_phone' => config('services.support_phone'),
                 'purpose' => $purpose,
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent,

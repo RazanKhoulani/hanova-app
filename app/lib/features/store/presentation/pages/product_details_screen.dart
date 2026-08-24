@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../injection_container.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/cart_bloc.dart';
@@ -128,7 +129,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              '\$${product.price.toStringAsFixed(2)}',
+                              CurrencyFormatter.syp(product.price),
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
@@ -159,16 +160,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               ),
                             ),
                             ...[
-                              ('usage', product.usage),
-                              ('suitable_for', product.suitableFor),
-                              ('active_ingredients', product.activeIngredients),
-                              ('warnings', product.warnings),
-                            ].where((item) => item.$2?.trim().isNotEmpty == true).expand((item) => [
-                              const SizedBox(height: 16),
-                              Text(_detailLabel(item.$1), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                              const SizedBox(height: 5),
-                              Text(item.$2!, style: const TextStyle(color: AppColors.textSecondary, height: 1.5)),
-                            ]),
+                                  ('usage', product.usage),
+                                  ('suitable_for', product.suitableFor),
+                                  (
+                                    'active_ingredients',
+                                    product.activeIngredients,
+                                  ),
+                                  ('warnings', product.warnings),
+                                ]
+                                .where(
+                                  (item) => item.$2?.trim().isNotEmpty == true,
+                                )
+                                .expand(
+                                  (item) => [
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      _detailLabel(item.$1),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      item.$2!,
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondary,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                             const SizedBox(height: 10),
                             Text(
                               product.description ??

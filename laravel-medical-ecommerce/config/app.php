@@ -13,7 +13,10 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Hanova'),
+
+    'currency_code' => env('CURRENCY_CODE', 'SYP'),
+    'currency_symbol' => env('CURRENCY_SYMBOL', 'ل.س'),
 
     /*
     |--------------------------------------------------------------------------

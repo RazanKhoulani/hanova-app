@@ -46,8 +46,10 @@ return [
         'api_key' => env('QVERIFY_API_KEY'),
         'template_key' => env('QVERIFY_TEMPLATE_KEY', 'verify_otp_app'),
         'locale' => env('QVERIFY_LOCALE', 'en'),
-        'app_name' => env('QVERIFY_APP_NAME', env('APP_NAME', 'Hannova')),
+        'app_name' => env('QVERIFY_APP_NAME', env('APP_NAME', 'Hanova')),
         'verify_ssl' => env('QVERIFY_VERIFY_SSL', true),
     ],
+
+    'support_phone' => env('SUPPORT_PHONE', '+963 951 582 835'),
 
 ];
