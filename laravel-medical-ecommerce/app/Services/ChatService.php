@@ -117,11 +117,12 @@ class ChatService
 
     private function notifyRecipient($conversation, $message): void
     {
-        $recipientId = (int) $message->sender_id === (int) $conversation->user_id
-            ? $conversation->doctor_id
-            : $conversation->user_id;
+        $isPatientMessage = (int) $message->sender_id === (int) $conversation->user_id;
+        $recipientIds = $isPatientMessage
+            ? User::role('admin')->pluck('id')->push($conversation->doctor_id)->filter()->unique()
+            : collect([$conversation->user_id])->filter();
 
-        if (! $recipientId) {
+        if ($recipientIds->isEmpty()) {
             return;
         }
 
@@ -131,18 +132,20 @@ class ChatService
             ? Str::limit((string) $message->body, 100)
             : 'مرفق طبي جديد';
 
-        Notification::create([
-            'user_id' => $recipientId,
-            'title' => "رسالة جديدة من {$senderName}",
-            'body' => $preview,
-            'type' => 'chat_message',
-            'data' => [
-                'conversation_id' => $conversation->id,
-                'message_id' => $message->id,
-                'title_en' => "New message from {$senderName}",
-                'body_en' => $message->type === 'text' ? Str::limit((string) $message->body, 100) : 'New medical attachment',
-            ],
-        ]);
+        foreach ($recipientIds as $recipientId) {
+            Notification::create([
+                'user_id' => $recipientId,
+                'title' => "رسالة جديدة من {$senderName}",
+                'body' => $preview,
+                'type' => 'chat_message',
+                'data' => [
+                    'conversation_id' => $conversation->id,
+                    'message_id' => $message->id,
+                    'title_en' => "New message from {$senderName}",
+                    'body_en' => $message->type === 'text' ? Str::limit((string) $message->body, 100) : 'New medical attachment',
+                ],
+            ]);
+        }
     }
 
     private function resolveDoctorId(?int $doctorId): int

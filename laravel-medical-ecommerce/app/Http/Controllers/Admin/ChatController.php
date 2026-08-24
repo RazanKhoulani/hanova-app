@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\Notification;
 use App\Services\PatientMedicalFactExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -55,6 +56,20 @@ class ChatController extends Controller
                 'error' => $exception->getMessage(),
             ]);
         }
+
+        $conversation = Conversation::findOrFail($id);
+        Notification::create([
+            'user_id' => $conversation->user_id,
+            'title' => 'رسالة جديدة من العيادة',
+            'body' => \Illuminate\Support\Str::limit($request->body, 100),
+            'type' => 'chat_message',
+            'data' => [
+                'conversation_id' => $conversation->id,
+                'message_id' => $message->id,
+                'title_en' => 'New message from the clinic',
+                'body_en' => \Illuminate\Support\Str::limit($request->body, 100),
+            ],
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json([

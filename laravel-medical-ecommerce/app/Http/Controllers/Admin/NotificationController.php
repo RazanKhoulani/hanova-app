@@ -11,10 +11,23 @@ class NotificationController extends Controller
 {
     public function index()
     {
+        $inboxNotifications = Notification::query()
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->limit(20)
+            ->get();
+        Notification::query()->where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true]);
         $notifications = Notification::with('user')->latest()->paginate(15);
         $users = User::all();
 
-        return view('admin.notifications.index', compact('notifications', 'users'));
+        return view('admin.notifications.index', compact('notifications', 'users', 'inboxNotifications'));
+    }
+
+    public function unreadCount()
+    {
+        return response()->json([
+            'count' => Notification::query()->where('user_id', auth()->id())->where('is_read', false)->count(),
+        ]);
     }
 
     public function store(Request $request)
@@ -23,7 +36,7 @@ class NotificationController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'title' => 'required|string|max:255',
             'body' => 'required|string',
-            'type' => 'nullable|in:general,offer,clinic,chat_message,order_status,order_created,order_accepted,order_ready,order_delivered',
+            'type' => 'nullable|string|max:100',
         ]);
 
         Notification::create([

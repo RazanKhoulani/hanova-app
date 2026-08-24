@@ -146,8 +146,10 @@
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </a>
                     @unless($isDelivery)
-                        <a href="{{ route('admin.notifications.index') }}" class="topbar-icon" title="{{ __('admin.notifications') }}">
+                        @php($adminUnreadNotifications = \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->count())
+                        <a href="{{ route('admin.notifications.index') }}" class="topbar-icon position-relative" title="{{ __('admin.notifications') }}">
                             <i class="fa-regular fa-bell"></i>
+                            <span id="adminNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {{ $adminUnreadNotifications ? '' : 'd-none' }}">{{ $adminUnreadNotifications }}</span>
                         </a>
                     @endunless
 
@@ -207,6 +209,25 @@
             </div>
         </main>
     </div>
+
+    @unless($isDelivery)
+    <script>
+        (() => {
+            const badge = document.getElementById('adminNotificationBadge');
+            const refreshNotifications = async () => {
+                try {
+                    const response = await fetch(@json(route('admin.notifications.unreadCount')), {headers: {'Accept': 'application/json'}});
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    const count = Number(data.count || 0);
+                    badge.textContent = count;
+                    badge.classList.toggle('d-none', count === 0);
+                } catch (_) {}
+            };
+            window.setInterval(refreshNotifications, 15000);
+        })();
+    </script>
+    @endunless
 
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered delete-confirm-dialog">

@@ -139,6 +139,15 @@ class OrderService
             }
 
             $this->createOrderNotification($order, 'order_created');
+            foreach (User::role('admin')->pluck('id') as $staffId) {
+                Notification::create([
+                    'user_id' => $staffId,
+                    'title' => 'طلب جديد',
+                    'body' => "تم استلام طلب جديد رقم #{$order->id} بقيمة {$order->total_amount}.",
+                    'type' => 'new_order',
+                    'data' => ['order_id' => $order->id],
+                ]);
+            }
 
             // Checkout always represents one unified order, so clear the
             // authenticated server cart even when the app sent its item list.

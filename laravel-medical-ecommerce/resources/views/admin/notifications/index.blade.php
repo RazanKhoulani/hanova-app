@@ -10,6 +10,28 @@
     </button>
 </div>
 
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white fw-bold py-3">التنبيهات الواردة</div>
+    <div class="list-group list-group-flush">
+        @forelse($inboxNotifications as $alert)
+            @php
+                $target = match($alert->type) {
+                    'chat_message' => isset($alert->data['conversation_id']) ? route('admin.chats.show', $alert->data['conversation_id']) : route('admin.chats.index'),
+                    'new_order' => isset($alert->data['order_id']) ? route('admin.orders.show', $alert->data['order_id']) : route('admin.orders.index'),
+                    'new_appointment' => isset($alert->data['appointment_id']) ? route('admin.appointments.show', $alert->data['appointment_id']) : route('admin.appointments.index'),
+                    default => '#',
+                };
+            @endphp
+            <a href="{{ $target }}" class="list-group-item list-group-item-action d-flex justify-content-between gap-3">
+                <div><strong>{{ $alert->title }}</strong><div class="text-muted small mt-1">{{ $alert->body }}</div></div>
+                <small class="text-muted text-nowrap">{{ $alert->created_at->diffForHumans() }}</small>
+            </a>
+        @empty
+            <div class="p-4 text-center text-muted">لا توجد تنبيهات واردة حالياً.</div>
+        @endforelse
+    </div>
+</div>
+
 <div class="card shadow-sm border-0">
     <div class="card-body p-0">
         <div class="table-responsive">

@@ -99,6 +99,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             // Notifications Management
             Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+            Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
             Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');
             Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 

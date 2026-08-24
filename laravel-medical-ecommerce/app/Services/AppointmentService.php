@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Consultation;
+use App\Models\Notification;
 use App\Models\User;
 use App\Repositories\AppointmentRepository;
 use Carbon\Carbon;
@@ -133,6 +134,20 @@ class AppointmentService
             );
         }
 
+        $appointment->loadMissing('patient');
+        $staffIds = User::role('admin')->pluck('id')
+            ->push($appointment->doctor_id)
+            ->filter()->unique();
+        foreach ($staffIds as $staffId) {
+            Notification::create([
+                'user_id' => $staffId,
+                'title' => 'موعد جديد',
+                'body' => 'تم حجز موعد جديد بواسطة '.($appointment->patient?->name ?? 'مراجعة').' بتاريخ '.$appointment->date.' '.$appointment->time.'.',
+                'type' => 'new_appointment',
+                'data' => ['appointment_id' => $appointment->id],
+            ]);
+        }
+
         return $appointment->load('consultation');
     }
 
@@ -208,7 +223,22 @@ class AppointmentService
             $data['status'] = 'pending';
         }
 
-        return $this->appointmentRepository->update($appointment, $data);
+        $updated = $this->appointmentRepository->update($appointment, $data);
+        if (array_key_exists('status', $data) || $isRescheduling) {
+            $updated->loadMissing('patient');
+            $staffIds = User::role('admin')->pluck('id')->push($updated->doctor_id)->filter()->unique();
+            foreach ($staffIds as $staffId) {
+                Notification::create([
+                    'user_id' => $staffId,
+                    'title' => $isRescheduling ? 'تم تعديل موعد' : 'تحديث موعد',
+                    'body' => 'موعد '.($updated->patient?->name ?? 'المراجعة').' بتاريخ '.$updated->date.' '.$updated->time.' أصبح '.$updated->status.'.',
+                    'type' => 'appointment_updated',
+                    'data' => ['appointment_id' => $updated->id, 'status' => $updated->status],
+                ]);
+            }
+        }
+
+        return $updated;
     }
 
     public function deleteAppointment($id)
