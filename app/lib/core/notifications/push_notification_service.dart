@@ -198,6 +198,9 @@ class PushNotificationService {
       AppRouter.router.go('/chat');
     } else if (type?.startsWith('order_') == true || data['order_id'] != null) {
       AppRouter.router.go('/orders');
+    } else if (type?.contains('appointment') == true ||
+        data['appointment_id'] != null) {
+      AppRouter.router.go('/clinic');
     } else {
       AppRouter.router.go('/notifications');
     }

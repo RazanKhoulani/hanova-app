@@ -39,6 +39,10 @@ return [
         'project_id' => env('FIREBASE_PROJECT_ID'),
         'credentials_path' => env('FIREBASE_CREDENTIALS_PATH'),
         'credentials_base64' => env('FIREBASE_CREDENTIALS_BASE64'),
+        'web_api_key' => env('FIREBASE_WEB_API_KEY', 'AIzaSyCx5k2Ex9fvtW4S6AAFSAvk-gw-D5xO3lk'),
+        'web_app_id' => env('FIREBASE_WEB_APP_ID', '1:1009458279788:web:b106e0341471b9dc68af49'),
+        'messaging_sender_id' => env('FIREBASE_MESSAGING_SENDER_ID', '1009458279788'),
+        'web_vapid_key' => env('FIREBASE_WEB_VAPID_KEY'),
     ],
 
     'qverify' => [

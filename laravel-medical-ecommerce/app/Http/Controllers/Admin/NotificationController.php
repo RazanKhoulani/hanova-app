@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\DeviceToken;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,6 @@ class NotificationController extends Controller
             ->latest()
             ->limit(20)
             ->get();
-        Notification::query()->where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true]);
         $notifications = Notification::with('user')->latest()->paginate(15);
         $users = User::all();
 
@@ -25,9 +25,56 @@ class NotificationController extends Controller
 
     public function unreadCount()
     {
+        $notifications = Notification::query()
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->limit(8)
+            ->get()
+            ->map(fn (Notification $notification) => [
+                'id' => $notification->id,
+                'title' => $notification->title,
+                'body' => $notification->body,
+                'is_read' => $notification->is_read,
+                'url' => $notification->adminUrl(),
+                'created_at' => $notification->created_at?->diffForHumans(),
+            ]);
+
         return response()->json([
             'count' => Notification::query()->where('user_id', auth()->id())->where('is_read', false)->count(),
+            'notifications' => $notifications,
         ]);
+    }
+
+    public function markAsRead(Notification $notification)
+    {
+        abort_unless((int) $notification->user_id === (int) auth()->id(), 403);
+        $notification->update(['is_read' => true]);
+
+        return response()->json(['url' => $notification->adminUrl()]);
+    }
+
+    public function markAllAsRead()
+    {
+        Notification::query()
+            ->where('user_id', auth()->id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['message' => 'Notifications marked as read.']);
+    }
+
+    public function registerDevice(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => ['required', 'string', 'max:4096'],
+        ]);
+
+        DeviceToken::updateOrCreate(
+            ['token' => $validated['token']],
+            ['user_id' => auth()->id(), 'platform' => 'web', 'last_used_at' => now()],
+        );
+
+        return response()->json(['message' => 'Browser notifications enabled.']);
     }
 
     public function store(Request $request)

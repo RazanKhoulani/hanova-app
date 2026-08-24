@@ -147,10 +147,30 @@
                     </a>
                     @unless($isDelivery)
                         @php($adminUnreadNotifications = \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->count())
-                        <a href="{{ route('admin.notifications.index') }}" class="topbar-icon position-relative" title="{{ __('admin.notifications') }}">
-                            <i class="fa-regular fa-bell"></i>
-                            <span id="adminNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {{ $adminUnreadNotifications ? '' : 'd-none' }}">{{ $adminUnreadNotifications }}</span>
-                        </a>
+                        @php($adminRecentNotifications = \App\Models\Notification::where('user_id', auth()->id())->latest()->limit(8)->get())
+                        <div class="dropdown">
+                            <button class="topbar-icon position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ __('admin.notifications') }}">
+                                <i class="fa-regular fa-bell"></i>
+                                <span id="adminNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {{ $adminUnreadNotifications ? '' : 'd-none' }}">{{ $adminUnreadNotifications }}</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown" id="adminNotificationDropdown">
+                                <div class="notification-dropdown-header">
+                                    <strong>{{ app()->getLocale() === 'ar' ? 'الإشعارات' : 'Notifications' }}</strong>
+                                    <button type="button" id="markAllNotificationsRead">{{ app()->getLocale() === 'ar' ? 'تعيين الكل كمقروء' : 'Mark all as read' }}</button>
+                                </div>
+                                <div id="adminNotificationItems">
+                                    @forelse($adminRecentNotifications as $alert)
+                                        <a href="{{ $alert->adminUrl() }}" class="notification-dropdown-item {{ $alert->is_read ? '' : 'unread' }}" data-notification-id="{{ $alert->id }}">
+                                            <span class="notification-type-icon"><i class="fa-solid {{ $alert->type === 'chat_message' ? 'fa-comment' : (str_contains($alert->type, 'appointment') ? 'fa-calendar-check' : (str_starts_with($alert->type, 'order_') ? 'fa-bag-shopping' : 'fa-bell')) }}"></i></span>
+                                            <span><strong>{{ $alert->title }}</strong><small>{{ \Illuminate\Support\Str::limit($alert->body, 75) }}</small><time>{{ $alert->created_at?->diffForHumans() }}</time></span>
+                                        </a>
+                                    @empty
+                                        <div class="notification-dropdown-empty">{{ app()->getLocale() === 'ar' ? 'لا توجد إشعارات' : 'No notifications' }}</div>
+                                    @endforelse
+                                </div>
+                                <a href="{{ route('admin.notifications.index') }}" class="notification-dropdown-footer">{{ app()->getLocale() === 'ar' ? 'عرض كل الإشعارات' : 'View all notifications' }}</a>
+                            </div>
+                        </div>
                     @endunless
 
                     <div class="dropdown">
@@ -214,6 +234,17 @@
     <script>
         (() => {
             const badge = document.getElementById('adminNotificationBadge');
+            const csrf = document.querySelector('meta[name="csrf-token"]').content;
+            const items = document.getElementById('adminNotificationItems');
+            const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[character]));
+            const iconFor = (notification) => notification.url.includes('/chats/') ? 'fa-comment' : (notification.url.includes('/appointments/') ? 'fa-calendar-check' : (notification.url.includes('/orders/') ? 'fa-bag-shopping' : 'fa-bell'));
+            const renderItems = (notifications) => {
+                if (!notifications.length) {
+                    items.innerHTML = '<div class="notification-dropdown-empty">{{ app()->getLocale() === 'ar' ? 'لا توجد إشعارات' : 'No notifications' }}</div>';
+                    return;
+                }
+                items.innerHTML = notifications.map(notification => `<a href="${escapeHtml(notification.url)}" class="notification-dropdown-item ${notification.is_read ? '' : 'unread'}" data-notification-id="${notification.id}"><span class="notification-type-icon"><i class="fa-solid ${iconFor(notification)}"></i></span><span><strong>${escapeHtml(notification.title)}</strong><small>${escapeHtml(notification.body)}</small><time>${escapeHtml(notification.created_at)}</time></span></a>`).join('');
+            };
             const refreshNotifications = async () => {
                 try {
                     const response = await fetch(@json(route('admin.notifications.unreadCount')), {headers: {'Accept': 'application/json'}});
@@ -222,9 +253,45 @@
                     const count = Number(data.count || 0);
                     badge.textContent = count;
                     badge.classList.toggle('d-none', count === 0);
+                    renderItems(data.notifications || []);
                 } catch (_) {}
             };
+            document.addEventListener('click', async (event) => {
+                const link = event.target.closest('[data-notification-id]');
+                if (!link) return;
+                event.preventDefault();
+                try {
+                    await fetch(`{{ url('/admin/notifications') }}/${link.dataset.notificationId}/read`, {method: 'PUT', headers: {'Accept':'application/json', 'X-CSRF-TOKEN':csrf}});
+                } finally {
+                    window.location.href = link.href;
+                }
+            });
+            document.getElementById('markAllNotificationsRead')?.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                await fetch(@json(route('admin.notifications.readAll')), {method:'PUT', headers:{'Accept':'application/json', 'X-CSRF-TOKEN':csrf}});
+                await refreshNotifications();
+            });
             window.setInterval(refreshNotifications, 15000);
+
+            const firebaseConfig = @json([
+                'apiKey' => config('services.firebase.web_api_key'),
+                'appId' => config('services.firebase.web_app_id'),
+                'messagingSenderId' => config('services.firebase.messaging_sender_id'),
+                'projectId' => config('services.firebase.project_id', 'hanva-app'),
+            ]);
+            const vapidKey = @json(config('services.firebase.web_vapid_key'));
+            if (vapidKey && 'serviceWorker' in navigator && 'Notification' in window) {
+                import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js').then(async ({initializeApp}) => {
+                    const {getMessaging, getToken, onMessage} = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js');
+                    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+                    if (permission !== 'granted') return;
+                    const messaging = getMessaging(initializeApp(firebaseConfig));
+                    const token = await getToken(messaging, {vapidKey, serviceWorkerRegistration: registration});
+                    if (token) await fetch(@json(route('admin.notifications.deviceToken')), {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf}, body:JSON.stringify({token})});
+                    onMessage(messaging, () => refreshNotifications());
+                }).catch(error => console.warn('Firebase web notifications are unavailable.', error));
+            }
         })();
     </script>
     @endunless

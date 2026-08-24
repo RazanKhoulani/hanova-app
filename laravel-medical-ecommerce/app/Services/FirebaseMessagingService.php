@@ -10,6 +10,7 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
+use Kreait\Firebase\Messaging\WebPushConfig;
 use Throwable;
 
 class FirebaseMessagingService
@@ -32,6 +33,7 @@ class FirebaseMessagingService
             $data = $this->stringifyData([
                 'notification_id' => $notification->id,
                 'type' => $notification->type,
+                'admin_url' => $notification->adminUrl(),
                 ...($notification->data ?? []),
             ]);
 
@@ -40,7 +42,10 @@ class FirebaseMessagingService
                     $notification->title,
                     $notification->body,
                 ))
-                ->withData($data);
+                ->withData($data)
+                ->withWebPushConfig(WebPushConfig::fromArray([
+                    'fcm_options' => ['link' => $notification->adminUrl()],
+                ]));
 
             $query->pluck('token')->chunk(500)->each(function ($tokens) use ($messaging, $message) {
                 $report = $messaging->sendMulticast($message, $tokens->all());
