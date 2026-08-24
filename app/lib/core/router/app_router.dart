@@ -59,7 +59,18 @@ class AppRouter {
       ),
       GoRoute(
         path: '/appointment',
-        builder: (context, state) => const AppointmentScreen(),
+        builder: (context, state) => AppointmentScreen(
+          initialSessionType: state.uri.queryParameters['type'],
+          initialAppointmentType: state.uri.queryParameters['appointment_type'],
+          openedFromBot: state.uri.queryParameters['source'] == 'bot',
+          appointmentId: int.tryParse(
+            state.uri.queryParameters['appointment_id'] ?? '',
+          ),
+          initialDate: DateTime.tryParse(
+            state.uri.queryParameters['date'] ?? '',
+          ),
+          initialTime: state.uri.queryParameters['time'],
+        ),
       ),
       GoRoute(
         path: '/bot',
@@ -76,7 +87,14 @@ class AppRouter {
         path: '/clinic',
         builder: (context, state) => const ClinicScreen(),
       ),
-      GoRoute(path: '/chat', builder: (context, state) => const ChatScreen()),
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) => ChatScreen(
+          consultationId: int.tryParse(
+            state.uri.queryParameters['consultation_id'] ?? '',
+          ),
+        ),
+      ),
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),

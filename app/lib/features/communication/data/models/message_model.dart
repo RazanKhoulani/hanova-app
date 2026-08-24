@@ -1,3 +1,5 @@
+import '../../../../core/constants/api_constants.dart';
+
 class BotOption {
   final String type;
   final int? id;
@@ -37,6 +39,7 @@ class MessageModel {
   final bool isMe;
   final DateTime timestamp;
   final List<BotOption>? options;
+  final String? attachmentUrl;
 
   MessageModel({
     this.id,
@@ -44,9 +47,16 @@ class MessageModel {
     required this.isMe,
     required this.timestamp,
     this.options,
+    this.attachmentUrl,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
+    final rawAttachment = (json['file_url'] ?? json['attachment'])?.toString();
+    final attachment = rawAttachment == null || rawAttachment.isEmpty
+        ? null
+        : rawAttachment.startsWith('http')
+        ? rawAttachment
+        : '${ApiConstants.backendUrl}${rawAttachment.startsWith('/') ? '' : '/'}$rawAttachment';
     return MessageModel(
       id: BotOption._integer(json['id']),
       text: (json['text'] ?? json['message'] ?? json['body'] ?? '').toString(),
@@ -55,6 +65,7 @@ class MessageModel {
           DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
       options: _optionsFrom(json),
+      attachmentUrl: attachment,
     );
   }
 

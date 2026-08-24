@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +17,9 @@ import '../bloc/communication_bloc.dart';
 import '../../data/models/message_model.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final int? consultationId;
+
+  const ChatScreen({super.key, this.consultationId});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -32,7 +35,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     if (context.read<AuthBloc>().state is AuthAuthenticated) {
-      context.read<CommunicationBloc>().add(CommunicationFetchChatMessages());
+      context.read<CommunicationBloc>().add(
+        CommunicationFetchChatMessages(consultationId: widget.consultationId),
+      );
       _initRealtime();
     }
   }
@@ -43,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final conversationId = await sl<CommunicationRepository>()
-          .getConversationId();
+          .getConversationId(consultationId: widget.consultationId);
       final channelName = 'private-conversation.$conversationId';
       _pusherChannelName = channelName;
 
@@ -81,7 +86,10 @@ class _ChatScreenState extends State<ChatScreen> {
     final eventName = event.eventName.replaceFirst('.', '');
     if (eventName == 'message.sent') {
       context.read<CommunicationBloc>().add(
-        CommunicationFetchChatMessages(showLoading: false),
+        CommunicationFetchChatMessages(
+          showLoading: false,
+          consultationId: widget.consultationId,
+        ),
       );
     }
   }
@@ -89,10 +97,32 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage() {
     if (_controller.text.trim().isNotEmpty) {
       context.read<CommunicationBloc>().add(
-        CommunicationSendChatMessage(_controller.text.trim()),
+        CommunicationSendChatMessage(
+          _controller.text.trim(),
+          consultationId: widget.consultationId,
+        ),
       );
       _controller.clear();
     }
+  }
+
+  Future<void> _pickAttachment() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
+    );
+    final path = result?.files.single.path;
+    if (path == null || !mounted) return;
+    context.read<CommunicationBloc>().add(
+      CommunicationSendChatAttachment(
+        path,
+        message: _controller.text.trim().isEmpty
+            ? null
+            : _controller.text.trim(),
+        consultationId: widget.consultationId,
+      ),
+    );
+    _controller.clear();
   }
 
   @override
@@ -111,7 +141,9 @@ class _ChatScreenState extends State<ChatScreen> {
       listenWhen: (previous, current) =>
           previous is! AuthAuthenticated && current is AuthAuthenticated,
       listener: (context, state) {
-        context.read<CommunicationBloc>().add(CommunicationFetchChatMessages());
+        context.read<CommunicationBloc>().add(
+          CommunicationFetchChatMessages(consultationId: widget.consultationId),
+        );
         _initRealtime();
       },
       builder: (context, authState) {
@@ -215,9 +247,12 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               const SizedBox(height: 16),
                               OutlinedButton(
-                                onPressed: () => context
-                                    .read<CommunicationBloc>()
-                                    .add(CommunicationFetchChatMessages()),
+                                onPressed: () =>
+                                    context.read<CommunicationBloc>().add(
+                                      CommunicationFetchChatMessages(
+                                        consultationId: widget.consultationId,
+                                      ),
+                                    ),
                                 child: Text(context.tr('try_again')),
                               ),
                             ],
@@ -288,7 +323,7 @@ class _ChatScreenState extends State<ChatScreen> {
       itemBuilder: (context, index) {
         final msg = messages[index];
         final time = _formatMessageTime(msg.timestamp);
-        return _buildMessage(msg.text, msg.isMe, time);
+        return _buildMessage(msg, time);
       },
     );
   }
@@ -304,7 +339,11 @@ class _ChatScreenState extends State<ChatScreen> {
     return '${hour.toString().padLeft(2, '0')}:$minute $period';
   }
 
-  Widget _buildMessage(String text, bool isMe, String time) {
+  Widget _buildMessage(MessageModel message, String time) {
+    final text = message.text;
+    final isMe = message.isMe;
+    final attachment = message.attachmentUrl;
+    final isImage = attachment != null && RegExp(r'\.(jpe?g|png|webp)(\?.*)?$', caseSensitive: false).hasMatch(attachment);
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -326,13 +365,28 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              text,
-              style: TextStyle(
-                color: isMe ? Colors.white : AppColors.textPrimary,
-                height: 1.45,
+            if (attachment != null) ...[
+              if (isImage)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(attachment, width: 240, height: 180, fit: BoxFit.cover, errorBuilder: (_, error, stackTrace) => const Icon(Icons.broken_image_outlined)),
+                )
+              else
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.insert_drive_file_rounded, color: isMe ? Colors.white : AppColors.primary),
+                  const SizedBox(width: 8),
+                  Flexible(child: Text(context.tr('medical_attachment'), style: TextStyle(color: isMe ? Colors.white : AppColors.textPrimary))),
+                ]),
+              if (text.isNotEmpty) const SizedBox(height: 8),
+            ],
+            if (text.isNotEmpty)
+              Text(
+                text,
+                style: TextStyle(
+                  color: isMe ? Colors.white : AppColors.textPrimary,
+                  height: 1.45,
+                ),
               ),
-            ),
             const SizedBox(height: 4),
             Text(
               time,
@@ -356,6 +410,14 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Row(
         children: [
+          IconButton(
+            tooltip: context.tr('attach_medical_file'),
+            onPressed: _pickAttachment,
+            icon: const Icon(
+              Icons.attach_file_rounded,
+              color: AppColors.primary,
+            ),
+          ),
           Expanded(
             child: TextField(
               controller: _controller,

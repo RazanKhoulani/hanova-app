@@ -143,6 +143,16 @@
 
                 <label class="form-label text-muted small text-uppercase fw-bold">Delivery</label>
                 <p class="mb-1">{{ ucfirst(str_replace('_', ' ', $order->delivery_method ?? 'home_delivery')) }}</p>
+                @if($order->delivery_method === 'qadmous')
+                    <div class="alert alert-light border">
+                        <strong>Qadmous:</strong> {{ $order->qadmous_governorate }} / {{ $order->qadmous_branch }}<br>
+                        <strong>Recipient:</strong> {{ $order->recipient_name }} — {{ $order->recipient_phone }}
+                    </div>
+                    <form method="POST" action="{{ route('admin.orders.updateTracking', $order->id) }}" class="input-group mb-3">@csrf @method('PUT')
+                        <input name="tracking_number" value="{{ $order->tracking_number }}" class="form-control" placeholder="Qadmous tracking number" required>
+                        <button class="btn btn-outline-primary">Save tracking</button>
+                    </form>
+                @endif
                 @if($order->deliveryArea)
                     <p class="mb-1 text-muted">{{ $order->deliveryArea->name_en }} - ${{ number_format($order->delivery_fee ?? 0, 2) }}</p>
                 @elseif($order->pickup_location)

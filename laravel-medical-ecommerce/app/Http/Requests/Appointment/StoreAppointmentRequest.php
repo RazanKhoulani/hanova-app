@@ -18,7 +18,7 @@ class StoreAppointmentRequest extends FormRequest
             'date' => 'required|date|after_or_equal:today',
             'time' => 'required|date_format:H:i',
             'type' => 'required|in:online,clinic',
-            'appointment_type' => 'nullable|in:session,treatment',
+            'appointment_type' => 'nullable|in:consultation,session,treatment',
         ];
     }
 }

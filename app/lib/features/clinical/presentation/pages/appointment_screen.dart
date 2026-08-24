@@ -5,14 +5,31 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../domain/repositories/clinical_repository.dart';
 import '../bloc/clinical_bloc.dart';
 import '../cubit/appointment_availability_cubit.dart';
 
 class AppointmentScreen extends StatefulWidget {
-  const AppointmentScreen({super.key});
+  final String? initialSessionType;
+  final String? initialAppointmentType;
+  final bool openedFromBot;
+  final int? appointmentId;
+  final DateTime? initialDate;
+  final String? initialTime;
+
+  const AppointmentScreen({
+    super.key,
+    this.initialSessionType,
+    this.initialAppointmentType,
+    this.openedFromBot = false,
+    this.appointmentId,
+    this.initialDate,
+    this.initialTime,
+  });
 
   @override
   State<AppointmentScreen> createState() => _AppointmentScreenState();
@@ -23,14 +40,20 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  String _sessionType = 'Clinic';
-  String _appointmentType = 'Treatment';
+  late String _sessionType;
+  late String _appointmentType;
   String? _selectedTime;
 
   @override
   void initState() {
     super.initState();
-    _selectedDay = DateTime.now();
+    _sessionType = _normalizedSessionType(widget.initialSessionType);
+    _appointmentType = _normalizedAppointmentType(
+      widget.initialAppointmentType,
+    );
+    _selectedDay = widget.initialDate ?? DateTime.now();
+    _focusedDay = _selectedDay!;
+    _selectedTime = widget.initialTime;
     _availabilityCubit = sl<AppointmentAvailabilityCubit>();
     _availabilityCubit.loadAvailableSlots(
       date: _selectedDay!,
@@ -86,7 +109,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         },
         child: Scaffold(
           backgroundColor: Colors.white,
-          appBar: AppBar(title: const Text('Book Appointment')),
+          appBar: AppBar(title: Text(context.tr('book_appointment'))),
           body: SingleChildScrollView(
             child: Column(
               children: [
@@ -96,9 +119,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Select Session Type',
-                        style: TextStyle(
+                      Text(
+                        context.tr('select_session_type'),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -106,9 +129,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       const SizedBox(height: 16),
                       _buildSessionTypeSelector(),
                       const SizedBox(height: 32),
-                      const Text(
-                        'Appointment Type',
-                        style: TextStyle(
+                      Text(
+                        context.tr('appointment_type'),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -116,9 +139,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       const SizedBox(height: 16),
                       _buildAppointmentTypeSelector(),
                       const SizedBox(height: 32),
-                      const Text(
-                        'Available Time',
-                        style: TextStyle(
+                      Text(
+                        context.tr('available_time'),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -135,7 +158,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                           return ElevatedButton(
                             onPressed: state is ClinicalLoading
                                 ? null
-                                : () {
+                                : () async {
                                     if (!isAuthenticated) {
                                       _showAuthRequired();
                                       return;
@@ -146,9 +169,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        const SnackBar(
+                                        SnackBar(
                                           content: Text(
-                                            'Please select date and time',
+                                            context.tr('select_date_time'),
                                           ),
                                         ),
                                       );
@@ -178,9 +201,19 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                         'doctor_id': availabilityState.doctorId,
                                     };
 
-                                    context.read<ClinicalBloc>().add(
-                                      ClinicalScheduleAppointment(payload),
-                                    );
+                                    if (widget.appointmentId != null) {
+                                      await sl<ClinicalRepository>()
+                                          .rescheduleAppointment(
+                                            widget.appointmentId!,
+                                            payload,
+                                          );
+                                      if (!context.mounted) return;
+                                      context.pop(true);
+                                    } else {
+                                      context.read<ClinicalBloc>().add(
+                                        ClinicalScheduleAppointment(payload),
+                                      );
+                                    }
                                   },
                             child: state is ClinicalLoading
                                 ? const SizedBox(
@@ -191,7 +224,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text('Confirm Booking'),
+                                : Text(context.tr('confirm_booking')),
                           );
                         },
                       ),
@@ -217,6 +250,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         ],
       ),
       child: TableCalendar(
+        locale: Localizations.localeOf(context).languageCode,
         firstDay: DateTime.now(),
         lastDay: DateTime.now().add(const Duration(days: 30)),
         focusedDay: _focusedDay,
@@ -254,29 +288,57 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   Widget _buildSessionTypeSelector() {
     return Row(
       children: [
-        Expanded(child: _buildTypeCard('Clinic', Icons.store_rounded)),
+        Expanded(
+          child: _buildTypeCard(
+            'Clinic',
+            context.tr('clinic_session'),
+            Icons.store_rounded,
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: _buildTypeCard('Online', Icons.videocam_rounded)),
+        Expanded(
+          child: _buildTypeCard(
+            'Online',
+            context.tr('online_session'),
+            Icons.videocam_rounded,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildAppointmentTypeSelector() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildAppointmentTypeCard(
-            'Treatment',
-            Icons.healing_rounded,
-            '30 min',
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildAppointmentTypeCard(
+                'Consultation',
+                context.tr('consultation_type'),
+                Icons.medical_information_outlined,
+                context.tr('duration_30_min'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildAppointmentTypeCard(
+                'Treatment',
+                context.tr('treatment_type'),
+                Icons.healing_rounded,
+                context.tr('duration_30_min'),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
           child: _buildAppointmentTypeCard(
             'Session',
+            context.tr('session_type'),
             Icons.spa_rounded,
-            '60 min',
+            context.tr('duration_60_min'),
           ),
         ),
       ],
@@ -285,6 +347,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
 
   Widget _buildAppointmentTypeCard(
     String type,
+    String label,
     IconData icon,
     String duration,
   ) {
@@ -321,7 +384,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              type,
+              label,
               style: TextStyle(
                 color: isSelected ? Colors.white : AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
@@ -341,7 +404,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     );
   }
 
-  Widget _buildTypeCard(String type, IconData icon) {
+  Widget _buildTypeCard(String type, String label, IconData icon) {
     final isSelected = _sessionType == type;
     return GestureDetector(
       onTap: () {
@@ -375,7 +438,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              type,
+              label,
               style: TextStyle(
                 color: isSelected ? Colors.white : AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
@@ -411,7 +474,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         }
 
         if (availabilityState.slots.isEmpty) {
-          return _buildAvailabilityMessage('No available times for this day.');
+          return _buildAvailabilityMessage(context.tr('no_available_times'));
         }
 
         return Wrap(
@@ -484,14 +547,14 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Login Required',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            Text(
+              context.tr('login_required'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Please login to book a consultation appointment.',
-              style: TextStyle(color: AppColors.textSecondary),
+            Text(
+              context.tr('login_required_appointment'),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -499,11 +562,23 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 Navigator.pop(context);
                 context.push('/login');
               },
-              child: const Text('Login'),
+              child: Text(context.tr('login')),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _normalizedSessionType(String? value) {
+    return value?.toLowerCase() == 'online' ? 'Online' : 'Clinic';
+  }
+
+  String _normalizedAppointmentType(String? value) {
+    return switch (value?.toLowerCase()) {
+      'consultation' => 'Consultation',
+      'session' => 'Session',
+      _ => 'Treatment',
+    };
   }
 }

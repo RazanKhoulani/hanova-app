@@ -57,6 +57,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
             Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
             Route::post('/orders/{id}/receipt', [OrderController::class, 'uploadReceipt'])->name('orders.uploadReceipt');
+            Route::put('/orders/{id}/tracking', [OrderController::class, 'updateTracking'])->name('orders.updateTracking');
         });
 
         Route::middleware(EnsureDashboardStaffRole::class)->group(function () {

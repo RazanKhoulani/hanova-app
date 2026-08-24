@@ -71,6 +71,12 @@
                     <textarea name="description_ar" class="form-control" dir="rtl" rows="4">{{ old('description_ar', $product->description_ar) }}</textarea>
                 </div>
 
+                <div class="col-12"><h5 class="mt-2">Bot Product Details / تفاصيل المنتج للبوت</h5></div>
+                @foreach(['usage' => 'طريقة الاستخدام', 'suitable_for' => 'لمن يناسب', 'active_ingredients' => 'المكونات الفعالة', 'warnings' => 'التحذيرات'] as $field => $label)
+                    <div class="col-md-6"><label class="form-label">{{ ucfirst(str_replace('_', ' ', $field)) }} (English)</label><textarea name="{{ $field }}_en" class="form-control" rows="2">{{ old($field.'_en', $product->{$field.'_en'}) }}</textarea></div>
+                    <div class="col-md-6"><label class="form-label">{{ $label }} (العربية)</label><textarea name="{{ $field }}_ar" class="form-control" dir="rtl" rows="2">{{ old($field.'_ar', $product->{$field.'_ar'}) }}</textarea></div>
+                @endforeach
+
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Product Image</label>
                     <input type="file" name="image" class="form-control mb-2">

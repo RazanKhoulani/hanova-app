@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
-    protected $fillable = ['user_id', 'doctor_id'];
+    protected $fillable = ['user_id', 'doctor_id', 'consultation_id'];
 
     public function user()
     {
@@ -16,6 +16,11 @@ class Conversation extends Model
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function consultation()
+    {
+        return $this->belongsTo(Consultation::class);
     }
 
     public function messages()

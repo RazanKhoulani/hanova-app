@@ -24,6 +24,8 @@ class PatientController extends Controller
             'user',
             'progressPhotos' => fn ($query) => $query->with('coupon')->latest(),
             'medicalFacts' => fn ($query) => $query->with('sourceMessage')->latest(),
+            'documents' => fn ($query) => $query->with('consultation')->latest(),
+            'appointments' => fn ($query) => $query->with('consultation')->latest('date'),
         ])->findOrFail($id);
         return view('admin.patients.show', compact('patient'));
     }

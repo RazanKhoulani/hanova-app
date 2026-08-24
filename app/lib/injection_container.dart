@@ -52,7 +52,7 @@ Future<void> init() async {
   sl.registerLazySingleton<StoreRepository>(() => StoreRepositoryImpl(sl()));
   sl.registerFactory(() => StoreBloc(sl()));
   sl.registerFactory(() => OrdersCubit(sl()));
-  sl.registerLazySingleton(() => CartBloc());
+  sl.registerLazySingleton(() => CartBloc(sl()));
 
   // Features - Clinical
   sl.registerLazySingleton<ClinicalRemoteDataSource>(

@@ -11,6 +11,10 @@ class ProductModel {
   final int stock;
   final List<String> concernSlugs;
   final String searchText;
+  final String? usage;
+  final String? suitableFor;
+  final String? activeIngredients;
+  final String? warnings;
 
   ProductModel({
     required this.id,
@@ -23,7 +27,14 @@ class ProductModel {
     required this.stock,
     this.concernSlugs = const [],
     this.searchText = '',
+    this.usage,
+    this.suitableFor,
+    this.activeIngredients,
+    this.warnings,
   });
+
+  String get botDescription => [description, usage, suitableFor, activeIngredients, warnings]
+      .whereType<String>().where((value) => value.trim().isNotEmpty).join('\n\n');
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     String resolveLocalized(dynamic value) {
@@ -112,6 +123,10 @@ class ProductModel {
       stock: parseInt(json['stock']),
       concernSlugs: concernSlugs,
       searchText: searchText,
+      usage: json['usage']?.toString(),
+      suitableFor: json['suitable_for']?.toString(),
+      activeIngredients: json['active_ingredients']?.toString(),
+      warnings: json['warnings']?.toString(),
     );
   }
 
@@ -125,6 +140,10 @@ class ProductModel {
       'category': category,
       'unit': unit,
       'stock': stock,
+      'usage': usage,
+      'suitable_for': suitableFor,
+      'active_ingredients': activeIngredients,
+      'warnings': warnings,
     };
   }
 }
@@ -155,4 +174,16 @@ class CategoryModel {
       type: json['type']?.toString() ?? 'category',
     );
   }
+}
+
+class RemoteCartItem {
+  final int id;
+  final ProductModel product;
+  final int quantity;
+  const RemoteCartItem({required this.id, required this.product, required this.quantity});
+  factory RemoteCartItem.fromJson(Map<String, dynamic> json) => RemoteCartItem(
+    id: json['id'] is num ? (json['id'] as num).toInt() : int.parse('${json['id']}'),
+    product: ProductModel.fromJson(Map<String, dynamic>.from(json['product'] as Map)),
+    quantity: json['quantity'] is num ? (json['quantity'] as num).toInt() : int.parse('${json['quantity']}'),
+  );
 }

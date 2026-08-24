@@ -17,4 +17,5 @@ abstract class ClinicalRepository {
   });
   Future<void> scheduleAppointment(Map<String, dynamic> data);
   Future<void> updateAppointmentStatus(int id, String status);
+  Future<void> rescheduleAppointment(int id, Map<String, dynamic> data);
 }

@@ -49,6 +49,7 @@ dependencies:
   badges: ^3.1.2
   smooth_page_indicator: ^1.2.0+3
   image_picker: ^1.2.3
+  file_picker: ^10.3.10
   pusher_channels_flutter: ^2.4.0
   firebase_core: ^4.13.0
   firebase_messaging: ^16.5.0

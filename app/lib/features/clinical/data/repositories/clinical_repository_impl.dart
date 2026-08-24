@@ -59,4 +59,9 @@ class ClinicalRepositoryImpl implements ClinicalRepository {
   Future<void> updateAppointmentStatus(int id, String status) async {
     await _remoteDataSource.updateAppointmentStatus(id, status);
   }
+
+  @override
+  Future<void> rescheduleAppointment(int id, Map<String, dynamic> data) async {
+    await _remoteDataSource.rescheduleAppointment(id, data);
+  }
 }

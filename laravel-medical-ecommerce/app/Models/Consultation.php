@@ -12,6 +12,8 @@ class Consultation extends Model
     protected $fillable = [
         'user_id',
         'doctor_id',
+        'patient_id',
+        'appointment_id',
         'type',
         'status',
         'notes',
@@ -25,5 +27,20 @@ class Consultation extends Model
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class);
+    }
+
+    public function conversation()
+    {
+        return $this->hasOne(Conversation::class);
     }
 }

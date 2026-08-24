@@ -91,8 +91,17 @@ class AppointmentController extends Controller
                 'status' => 'required|in:pending,confirmed,completed,cancelled',
             ])
             : $request->validate([
-                'status' => 'required|in:cancelled',
+                'status' => 'sometimes|in:cancelled',
+                'doctor_id' => 'sometimes|nullable|exists:users,id',
+                'date' => 'sometimes|date|after_or_equal:today',
+                'time' => 'sometimes|date_format:H:i',
+                'type' => 'sometimes|in:online,clinic',
+                'appointment_type' => 'sometimes|in:consultation,session,treatment',
             ]);
+
+        if (! $this->isStaff($user) && in_array($appointment->status, ['completed', 'cancelled'], true)) {
+            abort(422, 'Completed or cancelled appointments cannot be changed.');
+        }
 
         $updatedAppointment = $this->appointmentService->updateAppointment($id, $payload);
 

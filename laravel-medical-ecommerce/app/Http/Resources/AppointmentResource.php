@@ -32,6 +32,8 @@ class AppointmentResource extends JsonResource
             'duration_minutes' => $this->duration_minutes,
             'status' => $this->status,
             'status_label' => $this->statusLabel($this->status, $lang),
+            'consultation_id' => $this->consultation?->id,
+            'conversation_id' => $this->consultation?->conversation?->id,
             'created_at' => $this->created_at,
         ];
     }

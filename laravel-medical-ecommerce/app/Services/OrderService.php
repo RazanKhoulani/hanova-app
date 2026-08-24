@@ -119,6 +119,13 @@ class OrderService
                 $orderData['delivery_fee'] = $deliveryFee;
                 $orderData['delivery_user_id'] = $deliveryUserId;
             }
+            if ($deliveryMethod === 'qadmous') {
+                $orderData['qadmous_governorate'] = $data['qadmous_governorate'];
+                $orderData['qadmous_branch'] = $data['qadmous_branch'];
+                $orderData['recipient_name'] = $data['recipient_name'];
+                $orderData['recipient_phone'] = $data['recipient_phone'];
+                $orderData['shipping_address'] = $data['qadmous_governorate'].' - '.$data['qadmous_branch'];
+            }
 
             $order = $this->orderRepository->createOrder($orderData);
             $this->orderRepository->createOrderItems($order, $orderItems);
@@ -133,10 +140,10 @@ class OrderService
 
             $this->createOrderNotification($order, 'order_created');
 
-            if (!$usesClientItems) {
-                $cart = $this->cartRepository->getCartForUser($userId);
-                $this->cartRepository->clearCart($cart);
-            }
+            // Checkout always represents one unified order, so clear the
+            // authenticated server cart even when the app sent its item list.
+            $cart = $this->cartRepository->getCartForUser($userId);
+            $this->cartRepository->clearCart($cart);
 
             DB::commit();
 
@@ -209,7 +216,7 @@ class OrderService
     {
         $method = $method ?: 'home_delivery';
 
-        return in_array($method, ['clinic_pickup', 'pharmacy_pickup', 'home_delivery'], true)
+        return in_array($method, ['clinic_pickup', 'pharmacy_pickup', 'home_delivery', 'qadmous'], true)
             ? $method
             : 'home_delivery';
     }

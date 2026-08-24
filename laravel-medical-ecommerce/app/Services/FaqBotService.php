@@ -17,11 +17,12 @@ class FaqBotService
     {
         $lang = $this->language($lang);
         $productName = trim((string) ($context['product_name'] ?? ''));
+        $productDescription = trim((string) ($context['product_description'] ?? ''));
 
         if ($productName !== '') {
             $answer = $lang === 'en'
-                ? "I can help you with {$productName}. First choose the consultation topic that best matches your concern."
-                : "فيني ساعدك بخصوص {$productName}. اختاري أولًا موضوع الاستشارة الأقرب لمشكلتك.";
+                ? "Product: {$productName}".($productDescription !== '' ? "\n\n{$productDescription}" : '')."\n\nChoose a relevant consultation topic or book a consultation for personalized advice."
+                : "المنتج: {$productName}".($productDescription !== '' ? "\n\n{$productDescription}" : '')."\n\nاختاري موضوع الاستشارة المناسب أو احجزي استشارة لنصيحة مخصصة.";
         } else {
             $answer = $lang === 'en'
                 ? 'Choose the consultation topic that best matches your concern, then I will show you its questions.'

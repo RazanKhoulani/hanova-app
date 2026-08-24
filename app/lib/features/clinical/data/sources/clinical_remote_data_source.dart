@@ -21,6 +21,7 @@ abstract class ClinicalRemoteDataSource {
   });
   Future<void> scheduleAppointment(Map<String, dynamic> data);
   Future<void> updateAppointmentStatus(int id, String status);
+  Future<void> rescheduleAppointment(int id, Map<String, dynamic> data);
 }
 
 class ClinicalRemoteDataSourceImpl implements ClinicalRemoteDataSource {
@@ -103,5 +104,10 @@ class ClinicalRemoteDataSourceImpl implements ClinicalRemoteDataSource {
       '${ApiConstants.appointments}/$id',
       data: {'status': status},
     );
+  }
+
+  @override
+  Future<void> rescheduleAppointment(int id, Map<String, dynamic> data) async {
+    await _dioClient.put('${ApiConstants.appointments}/$id', data: data);
   }
 }

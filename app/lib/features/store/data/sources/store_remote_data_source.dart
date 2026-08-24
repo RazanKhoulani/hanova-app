@@ -16,6 +16,9 @@ abstract class StoreRemoteDataSource {
   Future<List<CategoryModel>> getCategories();
   Future<OfferModel?> getActiveOffer();
   Future<void> addToCart(int productId, int quantity);
+  Future<List<RemoteCartItem>> getCart();
+  Future<void> updateCartItem(int itemId, int quantity);
+  Future<void> removeCartItem(int itemId);
   Future<void> checkout(Map<String, dynamic> orderData);
   Future<List<OrderModel>> getOrders();
   Future<List<DeliveryAreaModel>> getDeliveryAreas();
@@ -88,6 +91,23 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
   }
 
   @override
+  Future<List<RemoteCartItem>> getCart() async {
+    final response = await _dioClient.get(ApiConstants.cart);
+    final payload = response.data['data'] ?? response.data;
+    return (payload as List? ?? []).map((item) => RemoteCartItem.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+  }
+
+  @override
+  Future<void> updateCartItem(int itemId, int quantity) async {
+    await _dioClient.put('${ApiConstants.cart}/$itemId', data: {'quantity': quantity});
+  }
+
+  @override
+  Future<void> removeCartItem(int itemId) async {
+    await _dioClient.delete('${ApiConstants.cart}/$itemId');
+  }
+
+  @override
   Future<void> checkout(Map<String, dynamic> orderData) async {
     String normalizePaymentMethod(String value) {
       switch (value.toLowerCase()) {
@@ -114,6 +134,10 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
         'pickup_location': orderData['pickup_location'],
       if (orderData['delivery_area_id'] != null)
         'delivery_area_id': orderData['delivery_area_id'],
+      if (orderData['qadmous_governorate'] != null) 'qadmous_governorate': orderData['qadmous_governorate'],
+      if (orderData['qadmous_branch'] != null) 'qadmous_branch': orderData['qadmous_branch'],
+      if (orderData['recipient_name'] != null) 'recipient_name': orderData['recipient_name'],
+      if (orderData['recipient_phone'] != null) 'recipient_phone': orderData['recipient_phone'],
       'items': orderData['items'] ?? [],
     };
 

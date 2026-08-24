@@ -1,12 +1,18 @@
 import '../../../../core/network/dio_client.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/network/api_interceptor.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../models/message_model.dart';
 
 abstract class CommunicationRemoteDataSource {
-  Future<int> getConversationId();
-  Future<List<MessageModel>> getChatMessages();
-  Future<void> sendChatMessage(String text);
+  Future<int> getConversationId({int? consultationId});
+  Future<List<MessageModel>> getChatMessages({int? consultationId});
+  Future<void> sendChatMessage(String text, {int? consultationId});
+  Future<void> sendChatAttachment(
+    String filePath, {
+    String? message,
+    int? consultationId,
+  });
   Future<List<MessageModel>> getBotMessages({
     String? productName,
     String? productDescription,
@@ -28,8 +34,8 @@ class CommunicationRemoteDataSourceImpl
     implements CommunicationRemoteDataSource {
   final DioClient _dioClient;
   final ApiInterceptor _apiInterceptor;
-  int? _chatConversationId;
-  Future<int>? _chatConversationRequest;
+  final Map<String, int> _chatConversationIds = {};
+  final Map<String, Future<int>> _chatConversationRequests = {};
   int? _botConversationId;
   late int _sessionVersion;
 
@@ -37,25 +43,28 @@ class CommunicationRemoteDataSourceImpl
     _sessionVersion = _apiInterceptor.sessionVersion;
   }
 
-  Future<int> _ensureConversationId() async {
+  Future<int> _ensureConversationId({int? consultationId}) async {
     _syncSessionCache();
-    if (_chatConversationId != null) return _chatConversationId!;
-    if (_chatConversationRequest != null) return _chatConversationRequest!;
+    final key = consultationId?.toString() ?? 'general';
+    if (_chatConversationIds[key] != null) return _chatConversationIds[key]!;
+    if (_chatConversationRequests[key] != null) {
+      return _chatConversationRequests[key]!;
+    }
 
-    final request = _loadConversationId();
-    _chatConversationRequest = request;
+    final request = _loadConversationId(consultationId: consultationId);
+    _chatConversationRequests[key] = request;
 
     try {
       final id = await request;
       _sessionVersion = _apiInterceptor.sessionVersion;
-      _chatConversationId = id;
+      _chatConversationIds[key] = id;
       return id;
     } finally {
-      _chatConversationRequest = null;
+      _chatConversationRequests.remove(key);
     }
   }
 
-  Future<int> _loadConversationId() async {
+  Future<int> _loadConversationId({int? consultationId}) async {
     final response = await _dioClient.get(ApiConstants.chatConversations);
     final conversationsEnvelope = response.data['data'];
 
@@ -64,14 +73,21 @@ class CommunicationRemoteDataSourceImpl
         ? (conversationsEnvelope['data'] as List? ?? [])
         : (conversationsEnvelope as List? ?? []);
 
-    if (conversations.isNotEmpty) {
-      final id = conversations.first['id'];
+    final matching = conversations.where((item) {
+      if (item is! Map) return false;
+      final rawConsultationId = item['consultation_id'];
+      if (consultationId == null) return rawConsultationId == null;
+      return rawConsultationId?.toString() == consultationId.toString();
+    }).toList();
+
+    if (matching.isNotEmpty) {
+      final id = matching.first['id'];
       return id is num ? id.toInt() : int.parse(id.toString());
     }
 
     final createResponse = await _dioClient.post(
       ApiConstants.chatConversations,
-      data: {},
+      data: {if (consultationId != null) 'consultation_id': consultationId},
     );
     final id = createResponse.data['data']['id'];
     return id is num ? id.toInt() : int.parse(id.toString());
@@ -81,19 +97,21 @@ class CommunicationRemoteDataSourceImpl
     if (_sessionVersion == _apiInterceptor.sessionVersion) return;
 
     _sessionVersion = _apiInterceptor.sessionVersion;
-    _chatConversationId = null;
-    _chatConversationRequest = null;
+    _chatConversationIds.clear();
+    _chatConversationRequests.clear();
     _botConversationId = null;
   }
 
   @override
-  Future<int> getConversationId() async {
-    return _ensureConversationId();
+  Future<int> getConversationId({int? consultationId}) async {
+    return _ensureConversationId(consultationId: consultationId);
   }
 
   @override
-  Future<List<MessageModel>> getChatMessages() async {
-    final conversationId = await _ensureConversationId();
+  Future<List<MessageModel>> getChatMessages({int? consultationId}) async {
+    final conversationId = await _ensureConversationId(
+      consultationId: consultationId,
+    );
     final response = await _dioClient.get(
       '${ApiConstants.chatMessages}$conversationId/messages',
     );
@@ -103,11 +121,38 @@ class CommunicationRemoteDataSourceImpl
   }
 
   @override
-  Future<void> sendChatMessage(String text) async {
-    final conversationId = await _ensureConversationId();
+  Future<void> sendChatMessage(String text, {int? consultationId}) async {
+    final conversationId = await _ensureConversationId(
+      consultationId: consultationId,
+    );
     await _dioClient.post(
       '${ApiConstants.chatMessages}$conversationId/messages',
       data: {'message': text},
+    );
+  }
+
+  @override
+  Future<void> sendChatAttachment(
+    String filePath, {
+    String? message,
+    int? consultationId,
+  }) async {
+    final conversationId = await _ensureConversationId(
+      consultationId: consultationId,
+    );
+    final lower = filePath.toLowerCase();
+    final type = RegExp(r'\.(jpg|jpeg|png)$').hasMatch(lower)
+        ? 'image'
+        : 'file';
+    final data = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+      'type': type,
+      if (message != null && message.trim().isNotEmpty)
+        'message': message.trim(),
+    });
+    await _dioClient.post(
+      '${ApiConstants.chatMessages}$conversationId/messages',
+      data: data,
     );
   }
 

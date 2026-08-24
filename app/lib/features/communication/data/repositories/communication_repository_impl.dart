@@ -8,18 +8,38 @@ class CommunicationRepositoryImpl implements CommunicationRepository {
   CommunicationRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<int> getConversationId() async {
-    return await _remoteDataSource.getConversationId();
+  Future<int> getConversationId({int? consultationId}) async {
+    return await _remoteDataSource.getConversationId(
+      consultationId: consultationId,
+    );
   }
 
   @override
-  Future<List<MessageModel>> getChatMessages() async {
-    return await _remoteDataSource.getChatMessages();
+  Future<List<MessageModel>> getChatMessages({int? consultationId}) async {
+    return await _remoteDataSource.getChatMessages(
+      consultationId: consultationId,
+    );
   }
 
   @override
-  Future<void> sendChatMessage(String text) async {
-    await _remoteDataSource.sendChatMessage(text);
+  Future<void> sendChatMessage(String text, {int? consultationId}) async {
+    await _remoteDataSource.sendChatMessage(
+      text,
+      consultationId: consultationId,
+    );
+  }
+
+  @override
+  Future<void> sendChatAttachment(
+    String filePath, {
+    String? message,
+    int? consultationId,
+  }) async {
+    await _remoteDataSource.sendChatAttachment(
+      filePath,
+      message: message,
+      consultationId: consultationId,
+    );
   }
 
   @override

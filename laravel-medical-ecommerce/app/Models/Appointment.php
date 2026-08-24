@@ -34,4 +34,9 @@ class Appointment extends Model
     {
         return $this->hasOneThrough(User::class, Patient::class, 'id', 'id', 'patient_id', 'user_id');
     }
+
+    public function consultation()
+    {
+        return $this->hasOne(Consultation::class);
+    }
 }

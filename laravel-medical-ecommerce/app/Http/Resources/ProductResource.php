@@ -31,6 +31,16 @@ class ProductResource extends JsonResource
                 'ar' => $this->description_ar,
                 'en' => $this->description_en,
             ],
+            'usage' => $lang === 'en' ? $this->usage_en : $this->usage_ar,
+            'suitable_for' => $lang === 'en' ? $this->suitable_for_en : $this->suitable_for_ar,
+            'active_ingredients' => $lang === 'en' ? $this->active_ingredients_en : $this->active_ingredients_ar,
+            'warnings' => $lang === 'en' ? $this->warnings_en : $this->warnings_ar,
+            'bot_details' => [
+                'usage' => ['ar' => $this->usage_ar, 'en' => $this->usage_en],
+                'suitable_for' => ['ar' => $this->suitable_for_ar, 'en' => $this->suitable_for_en],
+                'active_ingredients' => ['ar' => $this->active_ingredients_ar, 'en' => $this->active_ingredients_en],
+                'warnings' => ['ar' => $this->warnings_ar, 'en' => $this->warnings_en],
+            ],
             'price' => (float) $this->price,
             'category' => $this->category,
             'concerns' => $this->whenLoaded('concerns', function () use ($lang) {

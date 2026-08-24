@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Appointment;
+use App\Models\Consultation;
 use App\Models\User;
 use App\Repositories\AppointmentRepository;
 use Carbon\Carbon;
@@ -29,6 +30,7 @@ class AppointmentService
             ],
         ],
         'duration_minutes' => [
+            'consultation' => 30,
             'session' => 60,
             'treatment' => 30,
         ],
@@ -112,7 +114,26 @@ class AppointmentService
             unset($data['appointment_type']);
         }
 
-        return $this->appointmentRepository->create($data);
+        $appointment = $this->appointmentRepository->create($data);
+
+        if (($data['appointment_type'] ?? null) === 'consultation') {
+            $appointment->loadMissing('patient');
+            Consultation::firstOrCreate(
+                ['appointment_id' => $appointment->id],
+                [
+                    'user_id' => $appointment->patient->user_id,
+                    'patient_id' => $appointment->patient_id,
+                    'doctor_id' => $appointment->doctor_id,
+                    'type' => 'pre_booked',
+                    'status' => 'pending',
+                    'notes' => $appointment->type === 'online'
+                        ? 'Online consultation booked from the mobile application.'
+                        : 'Clinic consultation booked from the mobile application.',
+                ]
+            );
+        }
+
+        return $appointment->load('consultation');
     }
 
     public function getAvailableSlots(array $filters): array
@@ -166,6 +187,26 @@ class AppointmentService
     public function updateAppointment($id, array $data)
     {
         $appointment = $this->appointmentRepository->findById($id);
+
+        $isRescheduling = isset($data['date']) || isset($data['time']) || isset($data['type']) || isset($data['appointment_type']);
+        if ($isRescheduling) {
+            $date = (string) ($data['date'] ?? $appointment->date);
+            $time = (string) ($data['time'] ?? substr((string) $appointment->time, 0, 5));
+            $sessionType = (string) ($data['type'] ?? $appointment->type);
+            $appointmentType = $this->normalizeAppointmentType($data['appointment_type'] ?? $appointment->appointment_type);
+            $doctor = $this->resolveDoctor($data['doctor_id'] ?? $appointment->doctor_id);
+            $schedule = $this->resolveSchedule($doctor);
+            $duration = $this->resolveDurationMinutes($schedule, $appointmentType);
+
+            if (! $this->isTimeAvailable($doctor, $date, $time, $sessionType, $duration, $appointment->id)) {
+                throw ValidationException::withMessages(['time' => 'Selected time is no longer available.']);
+            }
+
+            $data['doctor_id'] = $doctor->id;
+            $data['appointment_type'] = $appointmentType;
+            $data['duration_minutes'] = $duration;
+            $data['status'] = 'pending';
+        }
 
         return $this->appointmentRepository->update($appointment, $data);
     }
@@ -223,7 +264,8 @@ class AppointmentService
         string $dateString,
         string $timeString,
         string $sessionType,
-        int $durationMinutes
+        int $durationMinutes,
+        ?int $ignoreAppointmentId = null
     ): bool {
         $date = Carbon::parse($dateString)->startOfDay();
         if ($this->isWeeklyHoliday($date)) {
@@ -245,6 +287,9 @@ class AppointmentService
         }
 
         $bookedAppointments = $this->getBookedAppointments($date->toDateString(), $doctor->id);
+        if ($ignoreAppointmentId) {
+            $bookedAppointments = $bookedAppointments->where('id', '!=', $ignoreAppointmentId);
+        }
 
         foreach ($windows as $window) {
             $windowStart = Carbon::parse(sprintf('%s %s', $date->toDateString(), $window['start']));
@@ -404,7 +449,7 @@ class AppointmentService
     {
         $appointmentType = strtolower((string) ($appointmentType ?: 'treatment'));
 
-        return in_array($appointmentType, ['session', 'treatment'], true)
+        return in_array($appointmentType, ['consultation', 'session', 'treatment'], true)
             ? $appointmentType
             : 'treatment';
     }

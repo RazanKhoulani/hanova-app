@@ -24,15 +24,35 @@
         </div>
 
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white fw-bold">Medical Files</div>
+            <div class="card-header bg-white fw-bold">الملفات الطبية</div>
             <div class="card-body">
                 @if($patient->medical_file)
                     <a href="{{ Storage::url($patient->medical_file) }}" target="_blank" class="btn btn-primary">
-                        <i class="fas fa-file-pdf me-2"></i> View Medical File
+                        <i class="fas fa-file-pdf me-2"></i> عرض الملف الأساسي
                     </a>
-                @else
-                    <p class="text-muted">No files uploaded</p>
                 @endif
+
+                @forelse($patient->documents as $document)
+                    <div class="border rounded p-2 mt-2">
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <div class="text-truncate">
+                                <i class="fas {{ str_starts_with((string) $document->mime_type, 'image/') ? 'fa-image' : 'fa-file-medical' }} text-primary me-2"></i>
+                                <span>{{ $document->original_name ?: 'مرفق طبي' }}</span>
+                            </div>
+                            <a href="{{ Storage::url($document->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">فتح</a>
+                        </div>
+                        <div class="small text-muted mt-1">
+                            {{ $document->created_at->format('Y-m-d H:i') }}
+                            @if($document->consultation_id)
+                                · استشارة #{{ $document->consultation_id }}
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    @if(!$patient->medical_file)
+                        <p class="text-muted mb-0">لا توجد ملفات مرفوعة</p>
+                    @endif
+                @endforelse
             </div>
         </div>
     </div>

@@ -14,6 +14,9 @@ abstract class StoreRepository {
   Future<List<CategoryModel>> getCategories();
   Future<OfferModel?> getActiveOffer();
   Future<void> addToCart(int productId, int quantity);
+  Future<List<RemoteCartItem>> getCart();
+  Future<void> updateCartItem(int itemId, int quantity);
+  Future<void> removeCartItem(int itemId);
   Future<void> checkout(Map<String, dynamic> orderData);
   Future<List<OrderModel>> getOrders();
   Future<List<DeliveryAreaModel>> getDeliveryAreas();

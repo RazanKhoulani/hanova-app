@@ -33,10 +33,13 @@ class AppointmentModel {
   final String patientName;
   final DateTime appointmentDate;
   final String appointmentType;
+  final String sessionType;
   final int durationMinutes;
   final String status;
   final String statusLabel;
   final String? notes;
+  final int? consultationId;
+  final int? conversationId;
 
   AppointmentModel({
     required this.id,
@@ -44,10 +47,13 @@ class AppointmentModel {
     required this.patientName,
     required this.appointmentDate,
     this.appointmentType = 'treatment',
+    this.sessionType = 'clinic',
     this.durationMinutes = 30,
     required this.status,
     this.statusLabel = '',
     this.notes,
+    this.consultationId,
+    this.conversationId,
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
@@ -68,11 +74,14 @@ class AppointmentModel {
           json['patient_name'] ?? json['patient']?['name'] ?? 'Unknown Patient',
       appointmentDate: parsedDate,
       appointmentType: json['appointment_type']?.toString() ?? 'treatment',
+      sessionType: json['type']?.toString() ?? 'clinic',
       durationMinutes:
           int.tryParse(json['duration_minutes']?.toString() ?? '') ?? 30,
       status: json['status']?.toString() ?? 'pending',
       statusLabel: json['status_label']?.toString() ?? '',
       notes: json['notes'],
+      consultationId: int.tryParse(json['consultation_id']?.toString() ?? ''),
+      conversationId: int.tryParse(json['conversation_id']?.toString() ?? ''),
     );
   }
 }

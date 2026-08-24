@@ -1,9 +1,14 @@
 import '../../data/models/message_model.dart';
 
 abstract class CommunicationRepository {
-  Future<int> getConversationId();
-  Future<List<MessageModel>> getChatMessages();
-  Future<void> sendChatMessage(String text);
+  Future<int> getConversationId({int? consultationId});
+  Future<List<MessageModel>> getChatMessages({int? consultationId});
+  Future<void> sendChatMessage(String text, {int? consultationId});
+  Future<void> sendChatAttachment(
+    String filePath, {
+    String? message,
+    int? consultationId,
+  });
   Future<List<MessageModel>> getBotMessages({
     String? productName,
     String? productDescription,

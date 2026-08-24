@@ -26,6 +26,7 @@ class Order extends Model
         'tracking_status',
         'shipping_receipt',
         'is_confirmed',
+        'qadmous_governorate', 'qadmous_branch', 'recipient_name', 'recipient_phone', 'tracking_number',
     ];
 
     public function user()

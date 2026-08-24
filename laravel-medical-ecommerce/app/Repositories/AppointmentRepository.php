@@ -11,18 +11,18 @@ class AppointmentRepository
         return Appointment::whereHas('patient', function ($q) use ($userId) {
             $q->where('user_id', $userId);
         })
-        ->with(['patient', 'doctor'])
+        ->with(['patient', 'doctor', 'consultation.conversation'])
         ->latest()->paginate($perPage);
     }
 
     public function getAllAppointments($perPage = 15)
     {
-        return Appointment::with(['patient', 'doctor'])->latest()->paginate($perPage);
+        return Appointment::with(['patient', 'doctor', 'consultation.conversation'])->latest()->paginate($perPage);
     }
 
     public function findById($id)
     {
-        return Appointment::with(['patient', 'doctor'])->findOrFail($id);
+        return Appointment::with(['patient', 'doctor', 'consultation.conversation'])->findOrFail($id);
     }
 
     public function create(array $data)

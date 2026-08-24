@@ -19,6 +19,10 @@ class Product extends Model
         'cost',
         'image',
         'category',
+        'usage_ar', 'usage_en',
+        'suitable_for_ar', 'suitable_for_en',
+        'active_ingredients_ar', 'active_ingredients_en',
+        'warnings_ar', 'warnings_en',
     ];
 
     public function concerns(): BelongsToMany

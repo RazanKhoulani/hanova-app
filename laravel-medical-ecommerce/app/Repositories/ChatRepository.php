@@ -23,11 +23,12 @@ class ChatRepository
             ->paginate($perPage);
     }
 
-    public function findOrCreateConversation($userId, $doctorId)
+    public function findOrCreateConversation($userId, $doctorId, $consultationId = null)
     {
         return Conversation::firstOrCreate([
             'user_id' => $userId,
-            'doctor_id' => $doctorId
+            'doctor_id' => $doctorId,
+            'consultation_id' => $consultationId,
         ]);
     }
 

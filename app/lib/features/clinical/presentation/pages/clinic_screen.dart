@@ -316,51 +316,228 @@ class _ClinicScreenState extends State<ClinicScreen> {
     final time = _formatTime(context, appointment.appointmentDate);
     final statusLabel = _statusLabel(context, appointment);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
+    return InkWell(
+      onTap: () => _showAppointmentDetails(appointment),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.event_available_rounded,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    date,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    time,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _StatusPill(status: appointment.status, label: statusLabel),
+          ],
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.event_available_rounded,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(date, style: const TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
+    );
+  }
+
+  Future<void> _showAppointmentDetails(AppointmentModel appointment) async {
+    final canChange = ![
+      'completed',
+      'cancelled',
+    ].contains(appointment.status.toLowerCase());
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 26),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                _clinicText('تفاصيل الموعد', 'Appointment Details'),
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _appointmentDetailRow(
+                Icons.calendar_today_outlined,
+                _formatDate(context, appointment.appointmentDate),
+              ),
+              _appointmentDetailRow(
+                Icons.schedule_rounded,
+                _formatTime(context, appointment.appointmentDate),
+              ),
+              _appointmentDetailRow(
+                Icons.medical_services_outlined,
+                _appointmentTypeLabel(appointment.appointmentType),
+              ),
+              _appointmentDetailRow(
+                Icons.info_outline_rounded,
+                _statusLabel(context, appointment),
+              ),
+              if (appointment.consultationId != null &&
+                  appointment.status == 'confirmed') ...[
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    context.push(
+                      '/chat?consultation_id=${appointment.consultationId}',
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  label: Text(
+                    _clinicText('بدء الاستشارة', 'Start consultation'),
                   ),
                 ),
               ],
-            ),
+              if (canChange) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(sheetContext);
+                          final date = DateFormat(
+                            'yyyy-MM-dd',
+                          ).format(appointment.appointmentDate);
+                          final time = DateFormat(
+                            'hh:mm a',
+                          ).format(appointment.appointmentDate);
+                          await context.push(
+                            '/appointment?appointment_id=${appointment.id}&date=$date&time=${Uri.encodeComponent(time)}&type=${appointment.sessionType}&appointment_type=${appointment.appointmentType}',
+                          );
+                          _fetchAppointmentsIfAllowed(force: true);
+                        },
+                        icon: const Icon(Icons.edit_calendar_outlined),
+                        label: Text(_clinicText('تعديل', 'Edit')),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _confirmCancelAppointment(
+                          sheetContext,
+                          appointment,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                        ),
+                        icon: const Icon(Icons.cancel_outlined),
+                        label: Text(_clinicText('إلغاء', 'Cancel')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
-          _StatusPill(status: appointment.status, label: statusLabel),
+        ),
+      ),
+    );
+  }
+
+  Widget _appointmentDetailRow(IconData icon, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Row(
+      children: [
+        Icon(icon, color: AppColors.primary, size: 21),
+        const SizedBox(width: 12),
+        Expanded(child: Text(value)),
+      ],
+    ),
+  );
+
+  String _appointmentTypeLabel(String type) => switch (type.toLowerCase()) {
+    'consultation' => _clinicText('استشارة', 'Consultation'),
+    'session' => _clinicText('جلسة عناية', 'Care session'),
+    _ => _clinicText('علاج', 'Treatment'),
+  };
+
+  Future<void> _confirmCancelAppointment(
+    BuildContext sheetContext,
+    AppointmentModel appointment,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(_clinicText('إلغاء الموعد؟', 'Cancel appointment?')),
+        content: Text(
+          _clinicText(
+            'هل أنت متأكدة من إلغاء هذا الموعد؟',
+            'Are you sure you want to cancel this appointment?',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(_clinicText('رجوع', 'Back')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(_clinicText('إلغاء الموعد', 'Cancel appointment')),
+          ),
         ],
       ),
     );
+    if (confirmed != true || !mounted) return;
+    await sl<ClinicalRepository>().updateAppointmentStatus(
+      appointment.id,
+      'cancelled',
+    );
+    if (!mounted || !sheetContext.mounted) return;
+    Navigator.pop(sheetContext);
+    _fetchAppointmentsIfAllowed(force: true);
   }
 
   String _formatDate(BuildContext context, DateTime value) {

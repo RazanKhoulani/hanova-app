@@ -158,6 +158,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 color: AppColors.textPrimary,
                               ),
                             ),
+                            ...[
+                              ('usage', product.usage),
+                              ('suitable_for', product.suitableFor),
+                              ('active_ingredients', product.activeIngredients),
+                              ('warnings', product.warnings),
+                            ].where((item) => item.$2?.trim().isNotEmpty == true).expand((item) => [
+                              const SizedBox(height: 16),
+                              Text(_detailLabel(item.$1), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                              const SizedBox(height: 5),
+                              Text(item.$2!, style: const TextStyle(color: AppColors.textSecondary, height: 1.5)),
+                            ]),
                             const SizedBox(height: 10),
                             Text(
                               product.description ??
@@ -181,10 +192,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   path: '/bot',
                                   queryParameters: {
                                     'product_name': product.name,
-                                    if (product.description != null &&
-                                        product.description!.isNotEmpty)
+                                    if (product.botDescription.isNotEmpty)
                                       'product_description':
-                                          product.description!,
+                                          product.botDescription,
                                   },
                                 );
                                 context.push(uri.toString());
@@ -349,6 +359,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     'description': 'Description',
     'no_description': 'No description available.',
     'ask_bot': 'Ask Bot',
+    'usage': 'How to use',
+    'suitable_for': 'Suitable for',
+    'active_ingredients': 'Active ingredients',
+    'warnings': 'Warnings',
     'add_to_cart': 'Add to Cart',
   };
 
@@ -359,6 +373,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     'no_description':
         '\u0644\u0627 \u064a\u0648\u062c\u062f \u0648\u0635\u0641 \u0645\u062a\u0627\u062d.',
     'ask_bot': '\u0627\u0633\u0623\u0644\u064a \u0627\u0644\u0628\u0648\u062a',
+    'usage': 'طريقة الاستخدام',
+    'suitable_for': 'لمن يناسب',
+    'active_ingredients': 'المكونات الفعالة',
+    'warnings': 'التحذيرات',
     'add_to_cart':
         '\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u0627\u0644\u0633\u0644\u0629',
   };

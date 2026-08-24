@@ -77,6 +77,12 @@ class StoreRepositoryImpl implements StoreRepository {
   Future<void> addToCart(int productId, int quantity) async {
     await _remoteDataSource.addToCart(productId, quantity);
   }
+  @override
+  Future<List<RemoteCartItem>> getCart() => _remoteDataSource.getCart();
+  @override
+  Future<void> updateCartItem(int itemId, int quantity) => _remoteDataSource.updateCartItem(itemId, quantity);
+  @override
+  Future<void> removeCartItem(int itemId) => _remoteDataSource.removeCartItem(itemId);
 
   @override
   Future<void> checkout(Map<String, dynamic> orderData) async {

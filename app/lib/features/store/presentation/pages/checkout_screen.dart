@@ -21,6 +21,10 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _qadmousGovernorateController = TextEditingController();
+  final TextEditingController _qadmousBranchController = TextEditingController();
+  final TextEditingController _recipientNameController = TextEditingController();
+  final TextEditingController _recipientPhoneController = TextEditingController();
   late final Future<List<DeliveryAreaModel>> _deliveryAreasFuture;
 
   String _selectedPayment = 'cash_on_delivery';
@@ -37,6 +41,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     _addressController.dispose();
+    _qadmousGovernorateController.dispose();
+    _qadmousBranchController.dispose();
+    _recipientNameController.dispose();
+    _recipientPhoneController.dispose();
     super.dispose();
   }
 
@@ -61,6 +69,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
     }
+    if (_deliveryMethod == 'qadmous' && [_qadmousGovernorateController, _qadmousBranchController, _recipientNameController, _recipientPhoneController].any((controller) => controller.text.trim().isEmpty)) {
+      _showCheckoutMessage(_checkoutLabel('qadmous_required'));
+      return;
+    }
 
     final orderData = {
       'payment_method': _selectedPayment,
@@ -68,6 +80,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (_deliveryMethod == 'home_delivery') ...{
         'delivery_area_id': _deliveryAreaId,
         'shipping_address': _addressController.text.trim(),
+      } else if (_deliveryMethod == 'qadmous') ...{
+        'qadmous_governorate': _qadmousGovernorateController.text.trim(),
+        'qadmous_branch': _qadmousBranchController.text.trim(),
+        'recipient_name': _recipientNameController.text.trim(),
+        'recipient_phone': _recipientPhoneController.text.trim(),
+        'shipping_address': '${_qadmousGovernorateController.text.trim()} - ${_qadmousBranchController.text.trim()}',
       } else ...{
         'pickup_location': _deliveryMethod == 'clinic_pickup'
             ? 'clinic'
@@ -228,6 +246,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'icon': Icons.delivery_dining_rounded,
         'subtitle': _checkoutLabel('area_fee'),
       },
+      {
+        'label': _checkoutLabel('qadmous_shipping'),
+        'value': 'qadmous',
+        'icon': Icons.local_shipping_rounded,
+        'subtitle': _checkoutLabel('qadmous_note'),
+      },
     ];
 
     return Column(
@@ -285,6 +309,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildDeliveryDetails() {
+    if (_deliveryMethod == 'qadmous') {
+      InputDecoration decoration(String label) => InputDecoration(labelText: label, filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)));
+      return Column(children: [
+        TextField(controller: _qadmousGovernorateController, decoration: decoration(_checkoutLabel('governorate'))),
+        const SizedBox(height: 12),
+        TextField(controller: _qadmousBranchController, decoration: decoration(_checkoutLabel('qadmous_branch'))),
+        const SizedBox(height: 12),
+        TextField(controller: _recipientNameController, decoration: decoration(_checkoutLabel('recipient_name'))),
+        const SizedBox(height: 12),
+        TextField(controller: _recipientPhoneController, keyboardType: TextInputType.phone, decoration: decoration(_checkoutLabel('recipient_phone'))),
+        const SizedBox(height: 10),
+        _buildInfoCard(icon: Icons.info_outline, text: _checkoutLabel('qadmous_fee_note')),
+      ]);
+    }
     if (_deliveryMethod != 'home_delivery') {
       return _buildInfoCard(
         icon: Icons.storefront_rounded,
@@ -585,6 +623,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     'no_areas': 'No delivery areas are available yet.',
     'choose_area': 'Please choose a delivery area.',
     'enter_address': 'Please enter your delivery address.',
+    'qadmous_shipping': 'Qadmous Shipping', 'qadmous_note': 'Ship to the Qadmous branch you choose.',
+    'governorate': 'Governorate', 'qadmous_branch': 'Qadmous branch', 'recipient_name': 'Recipient name', 'recipient_phone': 'Recipient phone',
+    'qadmous_required': 'Please complete all Qadmous shipping details.', 'qadmous_fee_note': 'The clinic will confirm the Qadmous shipping fee and tracking number.',
   };
 
   static const _arabicLabels = {
@@ -600,5 +641,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     'no_areas': 'لا توجد مناطق توصيل متاحة حالياً.',
     'choose_area': 'يرجى اختيار منطقة التوصيل.',
     'enter_address': 'يرجى كتابة عنوان التوصيل.',
+    'qadmous_shipping': 'شحن قدموس', 'qadmous_note': 'شحن الطلب إلى فرع قدموس الذي تختارينه.',
+    'governorate': 'المحافظة', 'qadmous_branch': 'فرع قدموس', 'recipient_name': 'اسم المستلم', 'recipient_phone': 'رقم هاتف المستلم',
+    'qadmous_required': 'يرجى تعبئة جميع معلومات شحن قدموس.', 'qadmous_fee_note': 'تؤكد العيادة أجور الشحن ورقم التتبع بعد تجهيز الطلب.',
   };
 }

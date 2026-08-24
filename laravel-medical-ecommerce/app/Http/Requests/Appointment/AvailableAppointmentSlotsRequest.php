@@ -17,7 +17,7 @@ class AvailableAppointmentSlotsRequest extends FormRequest
             'doctor_id' => 'nullable|exists:users,id',
             'date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'type' => 'nullable|in:clinic,online',
-            'appointment_type' => 'nullable|in:session,treatment',
+            'appointment_type' => 'nullable|in:consultation,session,treatment',
         ];
     }
 }

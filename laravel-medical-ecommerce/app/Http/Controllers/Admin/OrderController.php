@@ -84,4 +84,11 @@ class OrderController extends Controller
 
         return redirect()->back()->with('success', 'Shipping receipt uploaded successfully');
     }
+
+    public function updateTracking(Request $request, $id)
+    {
+        $validated = $request->validate(['tracking_number' => 'required|string|max:100']);
+        Order::findOrFail($id)->update($validated);
+        return redirect()->back()->with('success', 'Qadmous tracking number saved successfully');
+    }
 }

@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Events\MessageSent;
+use App\Models\Consultation;
 use App\Models\Notification;
+use App\Models\Patient;
+use App\Models\PatientDocument;
 use App\Models\User;
 use App\Repositories\ChatRepository;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -47,11 +50,25 @@ class ChatService
         return $conversation;
     }
 
-    public function startConversation($userId, $doctorId)
+    public function startConversation($userId, $doctorId, $consultationId = null)
     {
+        $consultation = null;
+        if ($consultationId) {
+            $consultation = Consultation::query()
+                ->where('user_id', $userId)
+                ->findOrFail($consultationId);
+            $doctorId = $consultation->doctor_id ?: $doctorId;
+        }
+
+        $resolvedDoctorId = $this->resolveDoctorId($doctorId);
+        if ($consultation && ! $consultation->doctor_id) {
+            $consultation->update(['doctor_id' => $resolvedDoctorId]);
+        }
+
         return $this->chatRepository->findOrCreateConversation(
             $userId,
-            $this->resolveDoctorId($doctorId),
+            $resolvedDoctorId,
+            $consultation?->id,
         );
     }
 
@@ -65,8 +82,9 @@ class ChatService
             'type' => $data['type'] ?? 'text',
         ];
 
-        if (isset($data['file']) && $data['file'] instanceof UploadedFile) {
-            $path = $data['file']->store('chat_files', 'public');
+        $uploadedFile = $data['file'] ?? null;
+        if ($uploadedFile instanceof UploadedFile) {
+            $path = $uploadedFile->store('chat_files', 'public');
             $messageData['attachment'] = $path;
             $messageData['body'] = $data['message'] ?? null;
         } else {
@@ -74,6 +92,9 @@ class ChatService
         }
 
         $message = $this->chatRepository->createMessage($messageData);
+        if ($uploadedFile instanceof UploadedFile) {
+            $this->storePatientDocument($conversation, $message, $uploadedFile, $path);
+        }
         $this->factExtractor->extractFromMessage($message);
         $this->broadcastMessage($message);
         $this->notifyRecipient($conversation, $message);
@@ -108,16 +129,18 @@ class ChatService
         $senderName = $message->sender?->name ?? 'Hanova';
         $preview = $message->type === 'text'
             ? Str::limit((string) $message->body, 100)
-            : 'New attachment';
+            : 'مرفق طبي جديد';
 
         Notification::create([
             'user_id' => $recipientId,
-            'title' => "New message from {$senderName}",
+            'title' => "رسالة جديدة من {$senderName}",
             'body' => $preview,
             'type' => 'chat_message',
             'data' => [
                 'conversation_id' => $conversation->id,
                 'message_id' => $message->id,
+                'title_en' => "New message from {$senderName}",
+                'body_en' => $message->type === 'text' ? Str::limit((string) $message->body, 100) : 'New medical attachment',
             ],
         ]);
     }
@@ -136,5 +159,32 @@ class ChatService
         }
 
         return $doctor->id;
+    }
+
+    private function storePatientDocument($conversation, $message, UploadedFile $file, string $path): void
+    {
+        $conversation->loadMissing('user');
+        $patient = Patient::firstOrCreate(
+            ['user_id' => $conversation->user_id],
+            [
+                'name' => $conversation->user?->name ?? 'Patient',
+                'phone' => $conversation->user?->phone ?? '',
+            ]
+        );
+
+        $mimeType = $file->getClientMimeType();
+        PatientDocument::firstOrCreate(
+            ['message_id' => $message->id],
+            [
+                'patient_id' => $patient->id,
+                'user_id' => $conversation->user_id,
+                'consultation_id' => $conversation->consultation_id,
+                'conversation_id' => $conversation->id,
+                'document_type' => str_starts_with((string) $mimeType, 'image/') ? 'image' : 'analysis',
+                'file_path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $mimeType,
+            ]
+        );
     }
 }

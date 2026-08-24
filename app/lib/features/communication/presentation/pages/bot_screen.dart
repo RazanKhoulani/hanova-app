@@ -56,7 +56,9 @@ class _BotScreenState extends State<BotScreen> {
     if (option?.type == 'book_consultation' || _isBookConsultation(msgText)) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
-        context.go('/home?tab=1');
+        context.push(
+          '/appointment?type=online&appointment_type=consultation&source=bot',
+        );
         return;
       }
 

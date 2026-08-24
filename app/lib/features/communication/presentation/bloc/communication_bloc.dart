@@ -8,8 +8,12 @@ abstract class CommunicationEvent {}
 
 class CommunicationFetchChatMessages extends CommunicationEvent {
   final bool showLoading;
+  final int? consultationId;
 
-  CommunicationFetchChatMessages({this.showLoading = true});
+  CommunicationFetchChatMessages({
+    this.showLoading = true,
+    this.consultationId,
+  });
 }
 
 class CommunicationInitializeBot extends CommunicationEvent {
@@ -26,7 +30,19 @@ class CommunicationInitializeBot extends CommunicationEvent {
 
 class CommunicationSendChatMessage extends CommunicationEvent {
   final String text;
-  CommunicationSendChatMessage(this.text);
+  final int? consultationId;
+  CommunicationSendChatMessage(this.text, {this.consultationId});
+}
+
+class CommunicationSendChatAttachment extends CommunicationEvent {
+  final String filePath;
+  final String? message;
+  final int? consultationId;
+  CommunicationSendChatAttachment(
+    this.filePath, {
+    this.message,
+    this.consultationId,
+  });
 }
 
 class CommunicationSendBotMessage extends CommunicationEvent {
@@ -70,11 +86,13 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
   final CommunicationRepository _repository;
   final List<MessageModel> _chatMessages = [];
   final List<MessageModel> _botMessages = [];
+  int? _activeChatConsultationId;
 
   CommunicationBloc(this._repository) : super(CommunicationInitial()) {
     on<CommunicationFetchChatMessages>(_onFetchChatMessages);
     on<CommunicationInitializeBot>(_onInitializeBot);
     on<CommunicationSendChatMessage>(_onSendChatMessage);
+    on<CommunicationSendChatAttachment>(_onSendChatAttachment);
     on<CommunicationSendBotMessage>(_onSendBotMessage);
   }
 
@@ -82,11 +100,17 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
     CommunicationFetchChatMessages event,
     Emitter<CommunicationState> emit,
   ) async {
+    if (_activeChatConsultationId != event.consultationId) {
+      _activeChatConsultationId = event.consultationId;
+      _chatMessages.clear();
+    }
     if (event.showLoading && _chatMessages.isEmpty) {
       emit(CommunicationLoading());
     }
     try {
-      final messages = await _repository.getChatMessages();
+      final messages = await _repository.getChatMessages(
+        consultationId: event.consultationId,
+      );
       _chatMessages.clear();
       _chatMessages.addAll(messages);
       emit(CommunicationChatLoaded(List.from(_chatMessages)));
@@ -136,7 +160,10 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
     emit(CommunicationChatLoaded(List.from(_chatMessages)));
 
     try {
-      await _repository.sendChatMessage(event.text);
+      await _repository.sendChatMessage(
+        event.text,
+        consultationId: event.consultationId,
+      );
     } catch (e) {
       _chatMessages.remove(newMessage);
       _chatMessages.add(
@@ -147,6 +174,27 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
         ),
       );
       emit(CommunicationChatLoaded(List.from(_chatMessages)));
+    }
+  }
+
+  Future<void> _onSendChatAttachment(
+    CommunicationSendChatAttachment event,
+    Emitter<CommunicationState> emit,
+  ) async {
+    try {
+      await _repository.sendChatAttachment(
+        event.filePath,
+        message: event.message,
+        consultationId: event.consultationId,
+      );
+      add(
+        CommunicationFetchChatMessages(
+          showLoading: false,
+          consultationId: event.consultationId,
+        ),
+      );
+    } catch (e) {
+      emit(CommunicationFailure(ApiErrorMessage.from(e)));
     }
   }
 
