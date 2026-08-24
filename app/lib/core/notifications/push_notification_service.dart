@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -28,6 +29,10 @@ class PushNotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications;
   Map<String, dynamic>? _initialMessageData;
   bool _initialized = false;
+  final StreamController<Map<String, dynamic>> _events =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  Stream<Map<String, dynamic>> get events => _events.stream;
 
   PushNotificationService(
     this._dioClient, {
@@ -158,6 +163,7 @@ class PushNotificationService {
   }
 
   Future<void> _showForegroundNotification(RemoteMessage message) async {
+    _events.add(message.data);
     final notification = message.notification;
     final title = notification?.title ?? message.data['title'];
     final body = notification?.body ?? message.data['body'];

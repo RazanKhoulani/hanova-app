@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/notifications/push_notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -19,19 +22,44 @@ class ClinicScreen extends StatefulWidget {
   State<ClinicScreen> createState() => _ClinicScreenState();
 }
 
-class _ClinicScreenState extends State<ClinicScreen> {
+class _ClinicScreenState extends State<ClinicScreen>
+    with WidgetsBindingObserver {
   bool _requestedAppointments = false;
   XFile? _beforeProgressImage;
   XFile? _afterProgressImage;
   bool _progressPhotoConsent = true;
   bool _uploadingProgressPhotos = false;
+  StreamSubscription<Map<String, dynamic>>? _notificationSubscription;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _notificationSubscription = sl<PushNotificationService>().events.listen(
+      (data) {
+        final type = data['type']?.toString() ?? '';
+        if (type.startsWith('appointment_') || data['appointment_id'] != null) {
+          _fetchAppointmentsIfAllowed(force: true);
+        }
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _fetchAppointmentsIfAllowed(),
     );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _fetchAppointmentsIfAllowed(force: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _notificationSubscription?.cancel();
+    super.dispose();
   }
 
   void _fetchAppointmentsIfAllowed({bool force = false}) {
