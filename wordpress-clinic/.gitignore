@@ -1,0 +1,10 @@
+# A local WordPress installation contains runtime, uploads, databases, and credentials.
+*
+!.gitignore
+!LOCAL_SETUP.md
+!wp-content/
+wp-content/*
+!wp-content/themes/
+wp-content/themes/*
+!wp-content/themes/hanan-clinic/
+!wp-content/themes/hanan-clinic/**

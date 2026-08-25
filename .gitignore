@@ -3,8 +3,16 @@
 /.codex/
 /.downloads/
 
-# WordPress is a separate local installation and contains wp-config secrets
-/wordpress-clinic/
+# Keep the WordPress installation local. Version only the Hanova theme and setup guide.
+/wordpress-clinic/*
+!/wordpress-clinic/.gitignore
+!/wordpress-clinic/LOCAL_SETUP.md
+!/wordpress-clinic/wp-content/
+/wordpress-clinic/wp-content/*
+!/wordpress-clinic/wp-content/themes/
+/wordpress-clinic/wp-content/themes/*
+!/wordpress-clinic/wp-content/themes/hanan-clinic/
+!/wordpress-clinic/wp-content/themes/hanan-clinic/**
 
 # Operating system and editor files
 .DS_Store
