@@ -28,6 +28,8 @@ class ProductController extends Controller
             'query' => 'nullable|string|max:100',
             'category' => 'nullable|string|max:100',
             'concern' => 'nullable|string|max:100',
+            'brand' => 'nullable|string|max:100',
+            'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
             'per_page' => 'nullable|integer|min:1|max:50',
         ]);
 
@@ -45,6 +47,14 @@ class ProductController extends Controller
 
         if (!empty($filters['category'])) {
             $productsQuery->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['brand'])) {
+            $productsQuery->where('brand', $filters['brand']);
+        }
+
+        if (!empty($filters['catalog_type'])) {
+            $productsQuery->where('catalog_type', $filters['catalog_type']);
         }
 
         if (!empty($filters['concern'])) {
@@ -86,6 +96,29 @@ class ProductController extends Controller
         return response()->json(['data' => $categories]);
     }
 
+    public function catalogFilters()
+    {
+        $brands = Product::query()
+            ->whereNotNull('brand')
+            ->where('brand', '!=', '')
+            ->distinct()
+            ->orderBy('brand')
+            ->pluck('brand')
+            ->values();
+
+        return response()->json([
+            'data' => [
+                'brands' => $brands,
+                'catalog_types' => [
+                    ['key' => 'product', 'label_ar' => 'منتجات العناية', 'label_en' => 'Care products'],
+                    ['key' => 'bundle', 'label_ar' => 'البكجات', 'label_en' => 'Bundles'],
+                    ['key' => 'session', 'label_ar' => 'الجلسات', 'label_en' => 'Sessions'],
+                    ['key' => 'nutrition', 'label_ar' => 'التغذية', 'label_en' => 'Nutrition'],
+                ],
+            ],
+        ]);
+    }
+
     /**
      * Store a newly created product.
      */
@@ -99,9 +132,13 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'cost' => 'required|numeric|min:0',
             'category' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:100',
+            'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
+            'bundle_product_ids' => 'nullable|array',
+            'bundle_product_ids.*' => 'integer|exists:products,id',
             'concern_ids' => 'nullable|array',
             'concern_ids.*' => 'exists:concerns,id',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -135,9 +172,13 @@ class ProductController extends Controller
             'price' => 'sometimes|numeric|min:0',
             'cost' => 'sometimes|numeric|min:0',
             'category' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:100',
+            'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
+            'bundle_product_ids' => 'nullable|array',
+            'bundle_product_ids.*' => 'integer|exists:products,id',
             'concern_ids' => 'nullable|array',
             'concern_ids.*' => 'exists:concerns,id',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
         ]);
 
         if ($validator->fails()) {

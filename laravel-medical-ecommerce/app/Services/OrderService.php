@@ -19,7 +19,11 @@ class OrderService
     protected OrderRepository $orderRepository;
     protected CartRepository $cartRepository;
 
-    public function __construct(OrderRepository $orderRepository, CartRepository $cartRepository)
+    public function __construct(
+        OrderRepository $orderRepository,
+        CartRepository $cartRepository,
+        private readonly OfferService $offerService,
+    )
     {
         $this->orderRepository = $orderRepository;
         $this->cartRepository = $cartRepository;
@@ -85,6 +89,10 @@ class OrderService
                 ? $this->resolveDefaultDeliveryUserId()
                 : null;
             [$coupon, $discountAmount] = $this->resolveNextOrderCoupon($userId, $subtotal);
+            $appliedOffer = null;
+            if (! $coupon) {
+                [$appliedOffer, $discountAmount] = $this->resolveActiveOfferDiscount($userId, $subtotal);
+            }
 
             $paymentMethod = $data['payment_method'] ?? 'cash';
             $orderData = [
@@ -97,6 +105,13 @@ class OrderService
 
             if (Schema::hasColumn('orders', 'coupon_id')) {
                 $orderData['coupon_id'] = $coupon?->id;
+            }
+
+            if (Schema::hasColumn('orders', 'applied_offer_id')) {
+                $orderData['applied_offer_id'] = $appliedOffer?->id;
+            }
+
+            if (Schema::hasColumn('orders', 'discount_amount')) {
                 $orderData['discount_amount'] = $discountAmount;
             }
 
@@ -156,7 +171,7 @@ class OrderService
 
             DB::commit();
 
-            return $order->load('items');
+            return $order->load(['items', 'coupon', 'appliedOffer']);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -280,6 +295,20 @@ class OrderService
             : (float) $coupon->discount_value;
 
         return [$coupon, min($subtotal, round($discountAmount, 2))];
+    }
+
+    private function resolveActiveOfferDiscount(int $userId, float $subtotal): array
+    {
+        $offer = $this->offerService->getActiveForUser(User::find($userId));
+        if (! $offer || $subtotal <= 0) {
+            return [null, 0.0];
+        }
+
+        $discountAmount = $offer->discount_type === 'percentage'
+            ? $subtotal * ((float) $offer->discount_value / 100)
+            : (float) $offer->discount_value;
+
+        return [$offer, min($subtotal, round($discountAmount, 2))];
     }
 
     private function createOrderNotification($order, string $type): void

@@ -30,6 +30,7 @@ class HomeDashboard extends StatefulWidget {
 
 class _HomeDashboardState extends State<HomeDashboard> {
   String? _selectedConcernSlug;
+  String? _selectedCatalogType;
   final TextEditingController _searchController = TextEditingController();
   final PageController _bannerController = PageController();
   final ScrollController _categoryController = ScrollController();
@@ -38,6 +39,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
   Timer? _bannerTimer;
   String? _searchQuery;
   bool _hasSearchText = false;
+  bool _showAllProducts = false;
   bool _categoryHintScheduled = false;
   bool _categoryHintCancelled = false;
   int _bannerIndex = 0;
@@ -73,6 +75,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     context.read<StoreBloc>().add(
       StoreFetchProducts(
         concern: _selectedConcernSlug,
+        catalogType: _selectedCatalogType,
         query: _searchQuery,
         force: force,
       ),
@@ -84,6 +87,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     setState(() {
       _hasSearchText = value.isNotEmpty;
       _searchQuery = query.isEmpty ? null : query;
+      _showAllProducts = false;
     });
     _fetchProducts();
   }
@@ -91,8 +95,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
   void _clearFilters() {
     setState(() {
       _selectedConcernSlug = null;
+      _selectedCatalogType = null;
       _searchQuery = null;
       _hasSearchText = false;
+      _showAllProducts = true;
       _searchController.clear();
     });
     _fetchProducts();
@@ -105,7 +111,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
   }
 
   void _scrollToProducts() {
-    if (_selectedConcernSlug != null || _searchQuery != null) {
+    if (_selectedConcernSlug != null ||
+        _selectedCatalogType != null ||
+        _searchQuery != null) {
       _clearFilters();
     }
 
@@ -193,6 +201,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AppSettingsCubit, AppSettingsState>(
+      listenWhen: (previous, current) =>
+          previous.locale.languageCode != current.locale.languageCode,
       listener: (context, state) {
         setState(() {
           _homeFuture = _requestHomeData(force: true);
@@ -215,6 +225,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
                     children: [
                       _buildBanner(),
                       const SizedBox(height: 14),
+                      _buildCatalogTypeSelector(),
+                      const SizedBox(height: 18),
                       _buildSectionHeader(
                         context.tr('categories'),
                         _clearFilters,
@@ -530,10 +542,12 @@ class _HomeDashboardState extends State<HomeDashboard> {
                           _selectedConcernSlug = isSelected
                               ? null
                               : filterValue;
+                          _showAllProducts = false;
                         });
                         context.read<StoreBloc>().add(
                           StoreFetchProducts(
                             concern: _selectedConcernSlug,
+                            catalogType: _selectedCatalogType,
                             query: _searchQuery,
                           ),
                         );
@@ -580,6 +594,49 @@ class _HomeDashboardState extends State<HomeDashboard> {
     );
   }
 
+  Widget _buildCatalogTypeSelector() {
+    final options = [
+      (null, context.tr('all_catalog')),
+      ('product', context.tr('care_products')),
+      ('bundle', context.tr('bundles')),
+      ('session', context.tr('care_sessions')),
+      ('nutrition', context.tr('nutrition')),
+    ];
+
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: options.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final option = options[index];
+          final isSelected = _selectedCatalogType == option.$1;
+          return ChoiceChip(
+            label: Text(option.$2),
+            selected: isSelected,
+            selectedColor: AppColors.primarySoft,
+            side: BorderSide(
+              color: isSelected ? AppColors.primary : AppColors.divider,
+            ),
+            labelStyle: TextStyle(
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
+            onSelected: (_) {
+              setState(() {
+                _selectedCatalogType = option.$1;
+                _showAllProducts = false;
+              });
+              _fetchProducts();
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildProductsSection() {
     return BlocBuilder<StoreBloc, StoreState>(
       builder: (context, state) {
@@ -593,18 +650,27 @@ class _HomeDashboardState extends State<HomeDashboard> {
             );
           }
 
+          final isTopProductsView =
+              _selectedConcernSlug == null &&
+              _selectedCatalogType == null &&
+              _searchQuery == null &&
+              !_showAllProducts;
+          final visibleProducts = isTopProductsView
+              ? state.products.take(12).toList(growable: false)
+              : state.products;
+
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.72,
+              childAspectRatio: 0.64,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
-            itemCount: state.products.length,
+            itemCount: visibleProducts.length,
             itemBuilder: (context, index) {
-              final product = state.products[index];
+              final product = visibleProducts[index];
               return _buildProductCard(context, product);
             },
           );
@@ -692,29 +758,40 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    overflow: TextOverflow.fade,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.unit ?? '',
-                    style: const TextStyle(
-                      color: AppColors.textLight,
-                      fontSize: 11,
+                  if (product.unit?.trim().isNotEmpty == true) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      product.unit!,
+                      style: const TextStyle(
+                        color: AppColors.textLight,
+                        fontSize: 11,
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        CurrencyFormatter.syp(product.price),
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      Expanded(
+                        child: Text(
+                          CurrencyFormatter.display(
+                            product.price,
+                            context.watch<AppSettingsCubit>().state,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            height: 1.2,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () {
                           context.read<CartBloc>().add(

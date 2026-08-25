@@ -21,6 +21,7 @@ class Order extends Model
         'delivery_fee',
         'delivery_user_id',
         'coupon_id',
+        'applied_offer_id',
         'discount_amount',
         'shipping_address',
         'tracking_status',
@@ -52,5 +53,10 @@ class Order extends Model
     public function coupon()
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    public function appliedOffer()
+    {
+        return $this->belongsTo(Offer::class, 'applied_offer_id');
     }
 }

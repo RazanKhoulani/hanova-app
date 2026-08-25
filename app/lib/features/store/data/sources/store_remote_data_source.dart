@@ -10,6 +10,7 @@ abstract class StoreRemoteDataSource {
   Future<List<ProductModel>> getProducts({
     String? category,
     String? concern,
+    String? catalogType,
     String? query,
   });
   Future<ProductModel> getProductDetails(int id);
@@ -41,6 +42,7 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
   Future<List<ProductModel>> getProducts({
     String? category,
     String? concern,
+    String? catalogType,
     String? query,
   }) async {
     final response = await _dioClient.get(
@@ -48,6 +50,7 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
       queryParameters: {
         if (category != null) 'category': category,
         if (concern != null) 'concern': concern,
+        if (catalogType != null) 'catalog_type': catalogType,
         if (query != null) 'query': query,
       },
     );

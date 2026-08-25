@@ -31,7 +31,7 @@ class AppointmentService
             ],
         ],
         'duration_minutes' => [
-            'consultation' => 30,
+            'consultation' => 15,
             'session' => 60,
             'treatment' => 30,
         ],
@@ -63,6 +63,20 @@ class AppointmentService
     {
         $data['status'] = 'pending';
         $data['appointment_type'] = $this->normalizeAppointmentType($data['appointment_type'] ?? null);
+        $data['specialty'] = $this->normalizeSpecialty($data['specialty'] ?? null);
+
+        if ($data['specialty'] === 'nutrition') {
+            if (($data['type'] ?? null) !== 'online') {
+                throw ValidationException::withMessages([
+                    'type' => 'Nutrition consultations are available online only.',
+                ]);
+            }
+            if ($data['appointment_type'] !== 'consultation') {
+                throw ValidationException::withMessages([
+                    'appointment_type' => 'Nutrition appointments must be booked as consultations.',
+                ]);
+            }
+        }
 
         if (!empty($data['patient_id']) && $this->patientHasActiveAppointment((int) $data['patient_id'])) {
             throw ValidationException::withMessages([
@@ -203,12 +217,19 @@ class AppointmentService
     {
         $appointment = $this->appointmentRepository->findById($id);
 
-        $isRescheduling = isset($data['date']) || isset($data['time']) || isset($data['type']) || isset($data['appointment_type']);
+        $isRescheduling = isset($data['date']) || isset($data['time']) || isset($data['type']) || isset($data['appointment_type']) || isset($data['specialty']);
         if ($isRescheduling) {
             $date = (string) ($data['date'] ?? $appointment->date);
             $time = (string) ($data['time'] ?? substr((string) $appointment->time, 0, 5));
             $sessionType = (string) ($data['type'] ?? $appointment->type);
             $appointmentType = $this->normalizeAppointmentType($data['appointment_type'] ?? $appointment->appointment_type);
+            $specialty = $this->normalizeSpecialty($data['specialty'] ?? $appointment->specialty);
+            $sessionType = strtolower((string) ($data['type'] ?? $appointment->type));
+            if ($specialty === 'nutrition' && ($sessionType !== 'online' || $appointmentType !== 'consultation')) {
+                throw ValidationException::withMessages([
+                    'specialty' => 'Nutrition is available as an online consultation only.',
+                ]);
+            }
             $doctor = $this->resolveDoctor($data['doctor_id'] ?? $appointment->doctor_id);
             $schedule = $this->resolveSchedule($doctor);
             $duration = $this->resolveDurationMinutes($schedule, $appointmentType);
@@ -219,6 +240,7 @@ class AppointmentService
 
             $data['doctor_id'] = $doctor->id;
             $data['appointment_type'] = $appointmentType;
+            $data['specialty'] = $specialty;
             $data['duration_minutes'] = $duration;
             $data['status'] = 'pending';
         }
@@ -482,6 +504,15 @@ class AppointmentService
         return in_array($appointmentType, ['consultation', 'session', 'treatment'], true)
             ? $appointmentType
             : 'treatment';
+    }
+
+    private function normalizeSpecialty(?string $specialty): string
+    {
+        $specialty = strtolower((string) ($specialty ?: 'skin'));
+
+        return in_array($specialty, ['skin', 'hair', 'nutrition'], true)
+            ? $specialty
+            : 'skin';
     }
 
     private function resolveDurationMinutes(array $schedule, string $appointmentType): int

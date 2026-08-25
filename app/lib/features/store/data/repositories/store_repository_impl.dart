@@ -49,11 +49,13 @@ class StoreRepositoryImpl implements StoreRepository {
   Future<List<ProductModel>> getProducts({
     String? category,
     String? concern,
+    String? catalogType,
     String? query,
   }) async {
     return await _remoteDataSource.getProducts(
       category: category,
       concern: concern,
+      catalogType: catalogType,
       query: query,
     );
   }

@@ -29,6 +29,7 @@ class AppointmentResource extends JsonResource
             'time' => $this->time,
             'type' => $this->type,
             'appointment_type' => $this->appointment_type,
+            'specialty' => $this->specialty ?? 'skin',
             'duration_minutes' => $this->duration_minutes,
             'status' => $this->status,
             'status_label' => $this->statusLabel($this->status, $lang),

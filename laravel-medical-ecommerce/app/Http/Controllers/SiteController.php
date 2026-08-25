@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Concern;
+use App\Models\AppSetting;
 use App\Models\Product;
 use App\Services\OfferService;
 use Illuminate\Contracts\View\View;
@@ -30,6 +31,7 @@ class SiteController extends Controller
             'activeOffer' => $offerService->getActiveForUser(null),
             'productCount' => Product::count(),
             'concernCount' => Concern::where('is_active', true)->count(),
+            'siteContent' => AppSetting::siteContentValues(),
         ]);
     }
 }

@@ -36,7 +36,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ApiInterceptor(sl()));
   sl.registerLazySingleton(() => DioClient(sl(), sl()));
   sl.registerLazySingleton(() => PushNotificationService(sl()));
-  sl.registerLazySingleton(() => AppSettingsCubit(sl(), sl()));
+  sl.registerLazySingleton(() => AppSettingsCubit(sl(), sl(), sl()));
 
   // Features - Auth
   sl.registerLazySingleton(() => AuthRemoteDataSource(sl()));

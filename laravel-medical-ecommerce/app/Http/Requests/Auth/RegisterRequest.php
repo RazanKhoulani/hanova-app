@@ -16,8 +16,10 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email',
             'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
-            'password' => 'required|string|min:6|confirmed',
+            'phone_confirmation' => ['required', 'string', 'same:phone'],
+            'password' => 'required|string|min:6',
         ];
     }
 
@@ -25,6 +27,7 @@ class RegisterRequest extends FormRequest
     {
         $this->merge([
             'phone' => SyrianPhoneNumber::normalize($this->input('phone')),
+            'phone_confirmation' => SyrianPhoneNumber::normalize($this->input('phone_confirmation')),
         ]);
     }
 }

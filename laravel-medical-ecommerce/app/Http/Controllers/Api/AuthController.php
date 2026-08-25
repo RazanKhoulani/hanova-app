@@ -35,6 +35,7 @@ class AuthController extends Controller
         $isNewUser = $user === null;
         $user ??= new User;
         $user->name = $request->name;
+        $user->email = $request->validated('email');
         $user->phone = $request->phone;
         $user->password = Hash::make($request->password);
         $user->otp = null;
@@ -125,12 +126,13 @@ class AuthController extends Controller
         ], 202);
     }
 
-    /**
-     * Login using phone and password without OTP.
-     */
+    /** Login using a verified phone number or the account email. */
     public function login(LoginRequest $request)
     {
-        $user = User::where('phone', $request->phone)->first();
+        $identifier = (string) $request->validated('identifier');
+        $user = filter_var($identifier, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $identifier)->first()
+            : User::where('phone', $identifier)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);

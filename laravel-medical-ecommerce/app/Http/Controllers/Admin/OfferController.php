@@ -75,7 +75,7 @@ class OfferController extends Controller
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
             'priority' => 'nullable|integer|min:0',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
             'is_active' => 'nullable|boolean',
         ]);
 

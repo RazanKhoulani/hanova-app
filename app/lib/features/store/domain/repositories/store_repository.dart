@@ -8,6 +8,7 @@ abstract class StoreRepository {
   Future<List<ProductModel>> getProducts({
     String? category,
     String? concern,
+    String? catalogType,
     String? query,
   });
   Future<ProductModel> getProductDetails(int id);

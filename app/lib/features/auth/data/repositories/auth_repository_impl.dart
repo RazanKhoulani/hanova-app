@@ -33,15 +33,17 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AuthResponseModel> register(
     String name,
+    String? email,
     String phone,
     String password,
-    String passwordConfirmation,
+    String phoneConfirmation,
   ) async {
     return _remoteDataSource.register(
       name,
+      email,
       phone,
       password,
-      passwordConfirmation,
+      phoneConfirmation,
     );
   }
 

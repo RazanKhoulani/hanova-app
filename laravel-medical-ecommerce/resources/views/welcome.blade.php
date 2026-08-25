@@ -18,6 +18,8 @@
         $concernName = fn ($concern) => $isArabic ? $concern->name_ar : $concern->name_en;
         $offerTitle = $activeOffer ? ($isArabic ? $activeOffer->title_ar : $activeOffer->title_en) : null;
         $offerDescription = $activeOffer ? ($isArabic ? $activeOffer->description_ar : $activeOffer->description_en) : null;
+        $siteAbout = $siteContent[$isArabic ? 'site_about_ar' : 'site_about_en'];
+        $siteGoal = $siteContent[$isArabic ? 'site_goal_ar' : 'site_goal_en'];
     @endphp
 
     <header class="site-header">
@@ -48,9 +50,7 @@
             <div class="hero-copy reveal">
                 <span class="eyebrow">HANOVA CONNECTED CARE</span>
                 <h1>{{ $isArabic ? 'العناية التي' : 'Care that feels' }} <em>{{ $isArabic ? 'تشبهك.' : 'personal.' }}</em></h1>
-                <p>{{ $isArabic
-                    ? 'تجربة واحدة تجمع العيادة، الاستشارات، المواعيد، ومنتجات العناية المختارة لتكون رحلتك أوضح وأسهل.'
-                    : 'One connected experience for clinic visits, consultations, appointments, and carefully selected skincare.' }}</p>
+                <p>{{ $siteAbout }}</p>
                 <div class="hero-actions">
                     <a class="button button-primary" href="#products">{{ $isArabic ? 'اكتشفي المنتجات' : 'Explore products' }}</a>
                     <a class="button button-ghost" href="#care">{{ $isArabic ? 'كيف تعمل Hanova؟' : 'How Hanova works' }}</a>
@@ -115,7 +115,7 @@
             <div class="section-heading">
                 <span>{{ $isArabic ? 'عناية مترابطة' : 'CONNECTED CARE' }}</span>
                 <h2>{{ $isArabic ? 'كل ما تحتاجينه، ضمن رحلة واحدة.' : 'Everything you need, in one clear journey.' }}</h2>
-                <p>{{ $isArabic ? 'كل خطوة في التطبيق مرتبطة بالداشبورد وملفك، من الحجز حتى استلام الطلب.' : 'Every app step connects to the dashboard and your profile, from booking to order delivery.' }}</p>
+                <p>{{ $siteGoal }}</p>
             </div>
             <div class="care-grid">
                 <article class="care-card featured"><span>01</span><div class="care-icon">✦</div><h3>{{ $isArabic ? 'العيادة والمواعيد' : 'Clinic & appointments' }}</h3><p>{{ $isArabic ? 'مواعيد حسب دوام الطبيبة والحجوزات الفعلية، مع متابعة نوع ومدة الجلسة.' : 'Real availability based on doctor schedules, bookings, visit type, and duration.' }}</p></article>

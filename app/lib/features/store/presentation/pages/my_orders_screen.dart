@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app/injection_container.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -295,7 +296,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('${item.quantity}x ${item.productName}'),
-                  Text(CurrencyFormatter.syp(item.price * item.quantity)),
+                  Text(
+                    CurrencyFormatter.display(
+                      item.price * item.quantity,
+                      context.watch<AppSettingsCubit>().state,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -305,13 +311,16 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
             if (order.discountAmount > 0)
               _buildAmountLine(
                 _isArabic ? 'الحسم' : 'Discount',
-                '-${CurrencyFormatter.syp(order.discountAmount)}',
+                '-${CurrencyFormatter.display(order.discountAmount, context.watch<AppSettingsCubit>().state)}',
                 valueColor: AppColors.success,
               ),
             if (order.deliveryFee > 0)
               _buildAmountLine(
                 context.tr('delivery_fee'),
-                CurrencyFormatter.syp(order.deliveryFee),
+                CurrencyFormatter.display(
+                  order.deliveryFee,
+                  context.watch<AppSettingsCubit>().state,
+                ),
               ),
             const Divider(height: 24),
           ],
@@ -336,7 +345,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               Text(
-                CurrencyFormatter.syp(order.totalAmount),
+                CurrencyFormatter.display(
+                  order.totalAmount,
+                  context.watch<AppSettingsCubit>().state,
+                ),
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,

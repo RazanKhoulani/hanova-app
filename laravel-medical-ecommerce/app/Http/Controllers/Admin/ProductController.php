@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Concern;
+use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 
@@ -25,7 +26,8 @@ class ProductController extends Controller
     public function create()
     {
         $concerns = Concern::where('is_active', true)->orderBy('name_ar')->get();
-        return view('admin.products.create', compact('concerns'));
+        $bundleProducts = Product::orderBy('name_ar')->get(['id', 'name_ar', 'name_en']);
+        return view('admin.products.create', compact('concerns', 'bundleProducts'));
     }
 
     public function store(Request $request)
@@ -42,9 +44,13 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'cost' => 'required|numeric|min:0',
             'category' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:100',
+            'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
+            'bundle_product_ids' => 'nullable|array',
+            'bundle_product_ids.*' => 'integer|exists:products,id',
             'concern_ids' => 'nullable|array',
             'concern_ids.*' => 'exists:concerns,id',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
         ]);
 
         $this->productService->createProduct($validated);
@@ -64,7 +70,10 @@ class ProductController extends Controller
     {
         $product = $this->productService->getProductById($id);
         $concerns = Concern::where('is_active', true)->orderBy('name_ar')->get();
-        return view('admin.products.edit', compact('product', 'concerns'));
+        $bundleProducts = Product::where('id', '!=', $product->id)
+            ->orderBy('name_ar')
+            ->get(['id', 'name_ar', 'name_en']);
+        return view('admin.products.edit', compact('product', 'concerns', 'bundleProducts'));
     }
 
     public function update(Request $request, $id)
@@ -81,13 +90,18 @@ class ProductController extends Controller
             'price' => 'sometimes|numeric|min:0',
             'cost' => 'sometimes|numeric|min:0',
             'category' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:100',
+            'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
+            'bundle_product_ids' => 'nullable|array',
+            'bundle_product_ids.*' => 'integer|exists:products,id',
             'concern_ids' => 'nullable|array',
             'concern_ids.*' => 'exists:concerns,id',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
         ]);
 
         $product = $this->productService->getProductById($id);
         $validated['concern_ids'] = $request->input('concern_ids', []);
+        $validated['bundle_product_ids'] = $request->input('bundle_product_ids', []);
         $this->productService->updateProduct($product, $validated);
 
         return redirect()->route('admin.products.index')

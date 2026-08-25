@@ -14,9 +14,13 @@ class ProductResource extends JsonResource
         $lang = str_starts_with((string) $lang, 'en') ? 'en' : 'ar';
         $name = $lang === 'en' ? $this->name_en : $this->name_ar;
         $description = $lang === 'en' ? $this->description_en : $this->description_ar;
-        $imageUrl = $this->image ? Storage::url($this->image) : null;
-        if ($imageUrl && str_starts_with($imageUrl, 'http')) {
-            $imageUrl = parse_url($imageUrl, PHP_URL_PATH) ?: $imageUrl;
+        $imageUrl = $this->image ? Storage::disk('public')->url($this->image) : null;
+        if ($imageUrl && ! str_starts_with($imageUrl, 'http')) {
+            $imageUrl = url($imageUrl);
+        }
+        if ($imageUrl) {
+            $separator = str_contains($imageUrl, '?') ? '&' : '?';
+            $imageUrl .= $separator.'v='.($this->updated_at?->timestamp ?? $this->id);
         }
 
         return [
@@ -45,6 +49,9 @@ class ProductResource extends JsonResource
             'currency_code' => config('app.currency_code', 'SYP'),
             'currency_symbol' => config('app.currency_symbol', 'ل.س'),
             'category' => $this->category,
+            'brand' => $this->brand,
+            'catalog_type' => $this->catalog_type ?? 'product',
+            'bundle_product_ids' => $this->bundle_product_ids ?? [],
             'concerns' => $this->whenLoaded('concerns', function () use ($lang) {
                 return $this->concerns->map(fn ($concern) => [
                     'id' => $concern->id,

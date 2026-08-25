@@ -19,11 +19,11 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _confirmPhoneController = TextEditingController();
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
 
   bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
   String _label(String ar, String en) => _isArabic ? ar : en;
@@ -31,22 +31,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _confirmPhoneController.dispose();
     super.dispose();
   }
 
   void _submit() {
     final name = _nameController.text.trim();
     final phone = SyrianPhoneNumber.tryInternational(_phoneController.text);
+    final phoneConfirmation = SyrianPhoneNumber.tryInternational(_confirmPhoneController.text);
     final password = _passwordController.text;
-    final confirmation = _confirmPasswordController.text;
+    final email = _emailController.text.trim();
 
     if (name.isEmpty ||
         phone == null ||
         password.isEmpty ||
-        confirmation.isEmpty) {
+        phoneConfirmation == null) {
       _showMessage(
         _label(
           'أكملي جميع الحقول وأدخلي رقماً سورياً صحيحاً',
@@ -64,15 +66,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       return;
     }
-    if (password != confirmation) {
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
       _showMessage(
-        _label('تأكيد كلمة المرور غير مطابق', 'Passwords do not match'),
+        _label('أدخلي بريداً إلكترونياً صحيحاً', 'Enter a valid email address'),
+      );
+      return;
+    }
+    if (phone != phoneConfirmation) {
+      _showMessage(
+        _label('تأكيد رقم الموبايل غير مطابق', 'Phone numbers do not match'),
       );
       return;
     }
 
     context.read<AuthBloc>().add(
-      AuthRegisterRequested(name, phone, password, confirmation),
+      AuthRegisterRequested(
+        name,
+        email.isEmpty ? null : email,
+        phone,
+        password,
+        phoneConfirmation,
+      ),
     );
   }
 
@@ -128,6 +143,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                HanovaFieldLabel(_label('البريد الإلكتروني (اختياري)', 'Email (optional)')),
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: InputDecoration(
+                    hintText: _label('name@example.com', 'name@example.com'),
+                    prefixIcon: const Icon(Icons.email_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 HanovaFieldLabel(_label('رقم الموبايل', 'Phone number')),
                 TextField(
                   controller: _phoneController,
@@ -145,11 +172,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                HanovaFieldLabel(_label('تأكيد رقم الموبايل', 'Confirm phone number')),
+                TextField(
+                  controller: _confirmPhoneController,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(9),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: '9XXXXXXXX',
+                    prefixText: '+963  ',
+                    prefixIcon: Icon(Icons.phone_android_rounded),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 HanovaFieldLabel(_label('كلمة المرور', 'Password')),
                 TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.next,
+                  textInputAction: TextInputAction.done,
                   autofillHints: const [AutofillHints.newPassword],
                   decoration: InputDecoration(
                     hintText: _label(
@@ -165,36 +208,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                HanovaFieldLabel(
-                  _label('تأكيد كلمة المرور', 'Confirm password'),
-                ),
-                TextField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) {
-                    if (!isLoading) _submit();
-                  },
-                  decoration: InputDecoration(
-                    hintText: _label(
-                      'أعيدي كلمة المرور',
-                      'Repeat your password',
-                    ),
-                    prefixIcon: const Icon(Icons.lock_person_outlined),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                      ),
-                      onPressed: () => setState(
-                        () =>
-                            _obscureConfirmPassword = !_obscureConfirmPassword,
-                      ),
                     ),
                   ),
                 ),

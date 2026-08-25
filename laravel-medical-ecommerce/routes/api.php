@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AppointmentController;
+use App\Http\Controllers\Api\AppSettingsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BotController;
 use App\Http\Controllers\Api\CartController;
@@ -30,8 +31,10 @@ Route::prefix('auth')->group(function () {
 
 // Public browsing/chatbot routes for guest mode
 Route::get('/home', HomeController::class);
+Route::get('/app-settings', AppSettingsController::class);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/categories', [ProductController::class, 'categories']);
+Route::get('/catalog-filters', [ProductController::class, 'catalogFilters']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/faqs', [FaqController::class, 'index']);
 Route::get('/bot/bootstrap', [BotController::class, 'bootstrap']);

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -407,7 +408,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     (area) => DropdownMenuItem<int>(
                       value: area.id,
                       child: Text(
-                        '${area.name} - ${CurrencyFormatter.syp(area.fee)}',
+                        '${area.name} - ${CurrencyFormatter.display(area.fee, context.watch<AppSettingsCubit>().state)}',
                       ),
                     ),
                   )
@@ -597,7 +598,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 '${context.tr('items')} (${cartState.items.length})',
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
-              Text(CurrencyFormatter.syp(cartState.totalAmount)),
+              Text(
+                CurrencyFormatter.display(
+                  cartState.totalAmount,
+                  context.watch<AppSettingsCubit>().state,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -608,7 +614,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 context.tr('delivery'),
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
-              Text(CurrencyFormatter.syp(_deliveryFee)),
+              Text(
+                CurrencyFormatter.display(
+                  _deliveryFee,
+                  context.watch<AppSettingsCubit>().state,
+                ),
+              ),
             ],
           ),
           const Divider(height: 32),
@@ -623,7 +634,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
               Text(
-                CurrencyFormatter.syp(total),
+                CurrencyFormatter.display(
+                  total,
+                  context.watch<AppSettingsCubit>().state,
+                ),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,

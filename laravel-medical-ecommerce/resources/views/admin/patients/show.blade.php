@@ -16,6 +16,7 @@
             <div class="card-header bg-white fw-bold">Basic Information</div>
             <div class="card-body">
                 <p><strong>Name:</strong> {{ $patient->name }}</p>
+                <p><strong>Record:</strong> <span class="badge bg-light text-dark">{{ $patient->record_code }}</span></p>
                 <p><strong>Age:</strong> {{ $patient->age ?? 'N/A' }}</p>
                 <p><strong>Phone:</strong> {{ $patient->phone }}</p>
                 <p><strong>Address:</strong> {{ $patient->address ?? 'N/A' }}</p>
@@ -53,6 +54,17 @@
                         <p class="text-muted mb-0">لا توجد ملفات مرفوعة</p>
                     @endif
                 @endforelse
+
+                <form action="{{ route('admin.patients.documents.store', $patient) }}" method="POST" enctype="multipart/form-data" class="border-top mt-3 pt-3">
+                    @csrf
+                    <label class="form-label fw-bold">التقاط أو رفع ملف جديد</label>
+                    <input type="file" name="file" class="form-control mb-2" accept="image/*,.pdf" capture="environment" required>
+                    <input type="text" name="notes" class="form-control mb-2" placeholder="ملاحظة اختيارية">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-camera me-1"></i> رفع إلى ملف المريضة
+                    </button>
+                    <div class="form-text">يمكن التقاط صورة مباشرة من كاميرا الموبايل أو اختيار ملف حتى 10MB.</div>
+                </form>
             </div>
         </div>
     </div>

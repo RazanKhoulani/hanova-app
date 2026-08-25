@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -38,12 +37,15 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _submitted = true);
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final phone = SyrianPhoneNumber.tryInternational(_phoneController.text);
-    if (phone == null) return;
+    final rawIdentifier = _phoneController.text.trim();
+    final identifier = rawIdentifier.contains('@')
+        ? rawIdentifier.toLowerCase()
+        : SyrianPhoneNumber.tryInternational(rawIdentifier);
+    if (identifier == null) return;
 
     FocusScope.of(context).unfocus();
     context.read<AuthBloc>().add(
-      AuthLoginRequested(phone, _passwordController.text),
+      AuthLoginRequested(identifier, _passwordController.text),
     );
   }
 
@@ -116,28 +118,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ],
-                  HanovaFieldLabel(_label('رقم الموبايل', 'Phone number')),
+                  HanovaFieldLabel(_label('رقم الموبايل أو البريد الإلكتروني', 'Phone number or email')),
                   TextFormField(
                     controller: _phoneController,
-                    keyboardType: TextInputType.phone,
+                    keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     scrollPadding: const EdgeInsets.only(bottom: 150),
-                    autofillHints: const [AutofillHints.telephoneNumber],
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(9),
-                    ],
-                    decoration: const InputDecoration(
-                      hintText: '9XXXXXXXX',
-                      prefixText: '+963  ',
-                      prefixIcon: Icon(Icons.phone_iphone_rounded),
+                    autofillHints: const [AutofillHints.username],
+                    decoration: InputDecoration(
+                      hintText: _label('9XXXXXXXX أو name@example.com', '9XXXXXXXX or name@example.com'),
+                      prefixIcon: const Icon(Icons.alternate_email_rounded),
                     ),
                     validator: (value) {
-                      if (SyrianPhoneNumber.tryInternational(value ?? '') ==
-                          null) {
+                      final raw = value?.trim() ?? '';
+                      final isEmail = raw.contains('@') &&
+                          RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(raw);
+                      if (!isEmail && SyrianPhoneNumber.tryInternational(raw) == null) {
                         return _label(
-                          'أدخلي رقم موبايل سوري صحيح',
-                          'Enter a valid Syrian mobile number',
+                          'أدخلي رقم موبايل سوري صحيح أو بريداً إلكترونياً صحيحاً',
+                          'Enter a valid Syrian mobile number or email address',
                         );
                       }
                       return null;

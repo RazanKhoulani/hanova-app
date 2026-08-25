@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\ProductRepository;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class ProductService
 {
@@ -30,6 +31,7 @@ class ProductService
         unset($data['concern_ids']);
 
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $this->deleteStoredImage($product->image);
             $data['image'] = $data['image']->store('products', 'public');
         }
 
@@ -59,6 +61,17 @@ class ProductService
 
     public function deleteProduct($product)
     {
+        $this->deleteStoredImage($product->image);
+
         return $this->productRepository->delete($product);
+    }
+
+    private function deleteStoredImage(?string $image): void
+    {
+        if (!$image || str_starts_with($image, 'http')) {
+            return;
+        }
+
+        Storage::disk('public')->delete($image);
     }
 }

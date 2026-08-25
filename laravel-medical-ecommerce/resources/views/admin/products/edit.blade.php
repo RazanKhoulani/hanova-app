@@ -49,6 +49,20 @@
                 </div>
 
                 <div class="col-md-6">
+                    <label class="form-label fw-bold">البراند</label>
+                    <input type="text" name="brand" class="form-control" value="{{ old('brand', $product->brand) }}" placeholder="مثال: Hanova Care">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">نوع الكتالوج</label>
+                    <select name="catalog_type" class="form-select">
+                        @foreach(['product' => 'منتج عناية', 'bundle' => 'بكج كامل', 'session' => 'جلسة', 'nutrition' => 'تغذية'] as $value => $label)
+                            <option value="{{ $value }}" @selected(old('catalog_type', $product->catalog_type ?? 'product') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-6">
                     <label class="form-label fw-bold">Treatment Concerns</label>
                     @php($selectedConcerns = old('concern_ids', $product->concerns->pluck('id')->all()))
                     <div class="border rounded p-3 bg-light" style="max-height: 180px; overflow-y: auto;">
@@ -59,6 +73,17 @@
                             </label>
                         @endforeach
                     </div>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-bold">مكونات البكج</label>
+                    @php($selectedBundleProducts = old('bundle_product_ids', $product->bundle_product_ids ?? []))
+                    <select name="bundle_product_ids[]" class="form-select" multiple size="5">
+                        @foreach($bundleProducts as $bundleProduct)
+                            <option value="{{ $bundleProduct->id }}" @selected(in_array($bundleProduct->id, $selectedBundleProducts))>{{ $bundleProduct->name_ar }} / {{ $bundleProduct->name_en }}</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">تظهر هذه المكونات للعملاء عند عرض البكج.</div>
                 </div>
 
                 <div class="col-md-6">
@@ -79,12 +104,12 @@
 
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Product Image</label>
-                    <input type="file" name="image" class="form-control mb-2">
+                    <input type="file" name="image" class="form-control mb-2" accept="image/*" capture="environment">
                     @if($product->image)
                         <div class="mt-2 text-muted small">Current Image:</div>
                         <img src="{{ asset('storage/'.$product->image) }}" class="rounded shadow-sm mt-1" width="100">
                     @endif
-                    <div class="form-text">Leave blank to keep current image.</div>
+                    <div class="form-text">يمكن التقاط صورة جديدة بالكاميرا مباشرة. اتركي الحقل فارغاً للاحتفاظ بالصورة الحالية. الحد الأقصى 10MB.</div>
                 </div>
 
                 <div class="col-12 mt-5">

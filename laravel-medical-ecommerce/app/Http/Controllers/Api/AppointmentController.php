@@ -97,6 +97,7 @@ class AppointmentController extends Controller
                 'time' => 'sometimes|date_format:H:i',
                 'type' => 'sometimes|in:online,clinic',
                 'appointment_type' => 'sometimes|in:consultation,session,treatment',
+                'specialty' => 'sometimes|in:skin,hair,nutrition',
             ]);
 
         if (! $this->isStaff($user) && in_array($appointment->status, ['completed', 'cancelled'], true)) {

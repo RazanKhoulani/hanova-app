@@ -19,6 +19,7 @@ class StoreAppointmentRequest extends FormRequest
             'time' => 'required|date_format:H:i',
             'type' => 'required|in:online,clinic',
             'appointment_type' => 'nullable|in:consultation,session,treatment',
+            'specialty' => 'nullable|in:skin,hair,nutrition',
         ];
     }
 }

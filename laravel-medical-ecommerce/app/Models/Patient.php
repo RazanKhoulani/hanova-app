@@ -14,6 +14,7 @@ class Patient extends Model
 
     protected $fillable = [
         'user_id',
+        'record_code',
         'name',
         'age',
         'phone',
@@ -29,6 +30,19 @@ class Patient extends Model
         return Attribute::make(
             set: fn ($value) => SyrianPhoneNumber::normalize($value),
         );
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (Patient $patient) {
+            if ($patient->record_code) {
+                return;
+            }
+
+            $patient->updateQuietly([
+                'record_code' => sprintf('HNV-%06d', $patient->id),
+            ]);
+        });
     }
 
     public function user()

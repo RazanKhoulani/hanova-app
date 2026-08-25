@@ -28,6 +28,31 @@
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
+                    <label class="form-label fw-bold">البراند</label>
+                    <input type="text" name="brand" class="form-control" value="{{ old('brand') }}" placeholder="مثال: Hanova Care">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">نوع الكتالوج</label>
+                    <select name="catalog_type" class="form-select">
+                        @foreach(['product' => 'منتج عناية', 'bundle' => 'بكج كامل', 'session' => 'جلسة', 'nutrition' => 'تغذية'] as $value => $label)
+                            <option value="{{ $value }}" @selected(old('catalog_type', 'product') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">مكونات البكج</label>
+                <select name="bundle_product_ids[]" class="form-select" multiple size="5">
+                    @foreach($bundleProducts as $bundleProduct)
+                        <option value="{{ $bundleProduct->id }}" @selected(in_array($bundleProduct->id, old('bundle_product_ids', [])))>{{ $bundleProduct->name_ar }} / {{ $bundleProduct->name_en }}</option>
+                    @endforeach
+                </select>
+                <div class="form-text">اختاري مكونات البكج عند اختيار نوع «بكج كامل».</div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3 mb-md-0">
                     <label class="form-label fw-bold">سعر البيع (ل.س) <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text bg-light">ل.س</span>
@@ -84,8 +109,8 @@
 
             <div class="mb-4">
                 <label class="form-label fw-bold">Product Image</label>
-                <input type="file" name="image" class="form-control" accept="image/*">
-                <div class="form-text text-muted">Recommended: square PNG/JPG, max 2MB.</div>
+                <input type="file" name="image" class="form-control" accept="image/*" capture="environment">
+                <div class="form-text text-muted">يمكن التقاط الصورة بالكاميرا مباشرة. يوصى بصورة مربعة PNG/JPG حتى 10MB، وتُحفظ بالدقة الأصلية.</div>
             </div>
 
             <hr class="my-4 text-muted">

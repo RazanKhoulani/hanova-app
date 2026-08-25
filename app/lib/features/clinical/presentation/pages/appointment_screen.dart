@@ -42,6 +42,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   DateTime? _selectedDay;
   late String _sessionType;
   late String _appointmentType;
+  String _specialty = 'Skin';
   String? _selectedTime;
 
   @override
@@ -137,7 +138,19 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildAppointmentTypeSelector(),
+                       _buildAppointmentTypeSelector(),
+                      if (_appointmentType == 'Consultation') ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          context.tr('consultation_subject'),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildSpecialtySelector(),
+                      ],
                       const SizedBox(height: 32),
                       Text(
                         context.tr('available_time'),
@@ -195,8 +208,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                       'date': apiDate,
                                       'time': apiTime,
                                       'type': _sessionType.toLowerCase(),
-                                      'appointment_type': _appointmentType
-                                          .toLowerCase(),
+                                       'appointment_type': _appointmentType
+                                           .toLowerCase(),
+                                       'specialty': _specialty.toLowerCase(),
                                       if (availabilityState.doctorId != null)
                                         'doctor_id': availabilityState.doctorId,
                                     };
@@ -317,7 +331,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 'Consultation',
                 context.tr('consultation_type'),
                 Icons.medical_information_outlined,
-                context.tr('duration_30_min'),
+                context.tr('duration_15_min'),
               ),
             ),
             const SizedBox(width: 12),
@@ -345,6 +359,38 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     );
   }
 
+  Widget _buildSpecialtySelector() {
+    const specialties = [
+      ('Skin', 'skin_consultation_subject', Icons.face_retouching_natural),
+      ('Hair', 'hair_consultation_subject', Icons.content_cut_rounded),
+      ('Nutrition', 'nutrition_consultation_subject', Icons.restaurant_menu_rounded),
+    ];
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: specialties.map((specialty) {
+        final isSelected = _specialty == specialty.$1;
+        return ChoiceChip(
+          label: Text(context.tr(specialty.$2)),
+          avatar: Icon(specialty.$3, size: 18),
+          selected: isSelected,
+          selectedColor: AppColors.primarySoft,
+          onSelected: (_) {
+            setState(() {
+              _specialty = specialty.$1;
+              if (_specialty == 'Nutrition') {
+                _sessionType = 'Online';
+                _appointmentType = 'Consultation';
+              }
+            });
+            _loadAvailableSlots();
+          },
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildAppointmentTypeCard(
     String type,
     String label,
@@ -354,7 +400,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     final isSelected = _appointmentType == type;
     return GestureDetector(
       onTap: () {
-        setState(() => _appointmentType = type);
+        setState(() {
+          _appointmentType = type;
+          if (type != 'Consultation' && _specialty == 'Nutrition') {
+            _specialty = 'Skin';
+          }
+        });
         _loadAvailableSlots();
       },
       child: Container(
@@ -408,7 +459,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     final isSelected = _sessionType == type;
     return GestureDetector(
       onTap: () {
-        setState(() => _sessionType = type);
+        setState(() {
+          _sessionType = type;
+          if (type != 'Online' && _specialty == 'Nutrition') {
+            _specialty = 'Skin';
+          }
+        });
         _loadAvailableSlots();
       },
       child: Container(

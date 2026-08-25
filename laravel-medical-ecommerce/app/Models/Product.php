@@ -19,10 +19,17 @@ class Product extends Model
         'cost',
         'image',
         'category',
+        'brand',
+        'catalog_type',
+        'bundle_product_ids',
         'usage_ar', 'usage_en',
         'suitable_for_ar', 'suitable_for_en',
         'active_ingredients_ar', 'active_ingredients_en',
         'warnings_ar', 'warnings_en',
+    ];
+
+    protected $casts = [
+        'bundle_product_ids' => 'array',
     ];
 
     public function concerns(): BelongsToMany

@@ -8,14 +8,16 @@ class AuthLoginRequested extends AuthEvent {
 
 class AuthRegisterRequested extends AuthEvent {
   final String name;
+  final String? email;
   final String phone;
   final String password;
-  final String passwordConfirmation;
+  final String phoneConfirmation;
   AuthRegisterRequested(
     this.name,
+    this.email,
     this.phone,
     this.password,
-    this.passwordConfirmation,
+    this.phoneConfirmation,
   );
 }
 

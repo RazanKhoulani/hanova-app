@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -30,6 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final PusherChannelsFlutter _pusher = PusherChannelsFlutter.getInstance();
   String? _pusherChannelName;
   bool _realtimeStarted = false;
+  Timer? _messageRefreshTimer;
 
   @override
   void initState() {
@@ -39,7 +42,22 @@ class _ChatScreenState extends State<ChatScreen> {
         CommunicationFetchChatMessages(consultationId: widget.consultationId),
       );
       _initRealtime();
+      _startMessageRefreshFallback();
     }
+  }
+
+  void _startMessageRefreshFallback() {
+    // Pusher is immediate when connected; polling keeps an open chat current
+    // if a mobile network temporarily drops the private-channel subscription.
+    _messageRefreshTimer ??= Timer.periodic(const Duration(seconds: 8), (_) {
+      if (!mounted) return;
+      context.read<CommunicationBloc>().add(
+        CommunicationFetchChatMessages(
+          showLoading: false,
+          consultationId: widget.consultationId,
+        ),
+      );
+    });
   }
 
   Future<void> _initRealtime() async {
@@ -131,6 +149,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (channelName != null) {
       _pusher.unsubscribe(channelName: channelName);
     }
+    _messageRefreshTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -145,6 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
           CommunicationFetchChatMessages(consultationId: widget.consultationId),
         );
         _initRealtime();
+        _startMessageRefreshFallback();
       },
       builder: (context, authState) {
         if (authState is AuthLoading || authState is AuthInitial) {

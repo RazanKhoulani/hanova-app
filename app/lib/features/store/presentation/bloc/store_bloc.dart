@@ -9,11 +9,13 @@ abstract class StoreEvent {}
 class StoreFetchProducts extends StoreEvent {
   final String? category;
   final String? concern;
+  final String? catalogType;
   final String? query;
   final bool force;
   StoreFetchProducts({
     this.category,
     this.concern,
+    this.catalogType,
     this.query,
     this.force = false,
   });
@@ -79,6 +81,7 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
   List<ProductModel> _cachedProducts = const [];
   String? _cachedCategory;
   String? _cachedConcern;
+  String? _cachedCatalogType;
   String? _cachedQuery;
 
   StoreBloc(this._repository) : super(StoreInitial()) {
@@ -95,6 +98,7 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
     _cachedProducts = _filterCatalog(
       category: _cachedCategory,
       concern: _cachedConcern,
+      catalogType: _cachedCatalogType,
       query: _cachedQuery,
     );
     emit(StoreProductsLoaded(_cachedProducts));
@@ -107,6 +111,7 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
     final sameFilter =
         _cachedCategory == event.category &&
         _cachedConcern == event.concern &&
+        _cachedCatalogType == event.catalogType &&
         _cachedQuery == event.query;
 
     if (!event.force && sameFilter && _cachedProducts.isNotEmpty) {
@@ -117,10 +122,12 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
     if (!event.force && _catalogProducts.isNotEmpty) {
       _cachedCategory = event.category;
       _cachedConcern = event.concern;
+      _cachedCatalogType = event.catalogType;
       _cachedQuery = event.query;
       _cachedProducts = _filterCatalog(
         category: event.category,
         concern: event.concern,
+        catalogType: event.catalogType,
         query: event.query,
       );
       emit(StoreProductsLoaded(_cachedProducts));
@@ -132,14 +139,17 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
       final products = await _repository.getProducts(
         category: event.category,
         concern: event.concern,
+        catalogType: event.catalogType,
         query: event.query,
       );
       _cachedProducts = products;
       _cachedCategory = event.category;
       _cachedConcern = event.concern;
+      _cachedCatalogType = event.catalogType;
       _cachedQuery = event.query;
       if (event.category == null &&
           event.concern == null &&
+          event.catalogType == null &&
           event.query == null) {
         _catalogProducts = products;
       }
@@ -152,10 +162,12 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
   List<ProductModel> _filterCatalog({
     String? category,
     String? concern,
+    String? catalogType,
     String? query,
   }) {
     final normalizedCategory = category?.trim().toLowerCase();
     final normalizedConcern = concern?.trim().toLowerCase();
+    final normalizedCatalogType = catalogType?.trim().toLowerCase();
     final normalizedQuery = _normalizeSearch(query ?? '');
 
     return _catalogProducts
@@ -170,6 +182,11 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
               !product.concernSlugs.any(
                 (slug) => slug.toLowerCase() == normalizedConcern,
               )) {
+            return false;
+          }
+          if (normalizedCatalogType != null &&
+              normalizedCatalogType.isNotEmpty &&
+              product.catalogType.toLowerCase() != normalizedCatalogType) {
             return false;
           }
           if (normalizedQuery.isNotEmpty &&

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/network/api_error_message.dart';
+import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../injection_container.dart';
@@ -129,7 +130,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              CurrencyFormatter.syp(product.price),
+                              CurrencyFormatter.display(
+                                product.price,
+                                context.watch<AppSettingsCubit>().state,
+                              ),
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,

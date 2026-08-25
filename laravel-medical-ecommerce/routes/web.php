@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\AppSettingsController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ConcernController;
 use App\Http\Controllers\Admin\OfferController;
@@ -65,10 +66,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::resource('products', ProductController::class);
             Route::resource('concerns', ConcernController::class)->except(['show']);
             Route::resource('offers', OfferController::class)->except(['show']);
+            Route::get('settings/currency', [AppSettingsController::class, 'edit'])
+                ->name('settings.currency.edit');
+            Route::put('settings/currency', [AppSettingsController::class, 'update'])
+                ->name('settings.currency.update');
 
             // Patients Management
             Route::get('patients', [PatientController::class, 'index'])->name('patients.index');
+            Route::get('patients/export', [PatientController::class, 'export'])->name('patients.export');
             Route::get('patients/{id}', [PatientController::class, 'show'])->name('patients.show');
+            Route::post('patients/{patient}/documents', [PatientController::class, 'storeDocument'])->name('patients.documents.store');
             Route::post('patients/progress-photos/{photo}/approve', [PatientController::class, 'approveProgressPhoto'])->name('patients.progressPhotos.approve');
             Route::post('patients/progress-photos/{photo}/reject', [PatientController::class, 'rejectProgressPhoto'])->name('patients.progressPhotos.reject');
             Route::post('patients/medical-facts/{fact}/status', [PatientController::class, 'updateMedicalFactStatus'])->name('patients.medicalFacts.status');

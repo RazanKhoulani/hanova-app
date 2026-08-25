@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -136,7 +137,10 @@ class _CartScreenState extends State<CartScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      CurrencyFormatter.syp(item.product.price),
+                      CurrencyFormatter.display(
+                        item.product.price,
+                        context.watch<AppSettingsCubit>().state,
+                      ),
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
@@ -219,7 +223,10 @@ class _CartScreenState extends State<CartScreen> {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               Text(
-                CurrencyFormatter.syp(state.totalAmount),
+                CurrencyFormatter.display(
+                  state.totalAmount,
+                  context.watch<AppSettingsCubit>().state,
+                ),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -253,7 +260,10 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
               Text(
-                CurrencyFormatter.syp(state.totalAmount),
+                CurrencyFormatter.display(
+                  state.totalAmount,
+                  context.watch<AppSettingsCubit>().state,
+                ),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

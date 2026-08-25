@@ -9,11 +9,13 @@ class AuthRemoteDataSource {
 
   AuthRemoteDataSource(this._dioClient);
 
-  Future<AuthResponseModel> login(String phone, String password) async {
+  Future<AuthResponseModel> login(String identifier, String password) async {
     final response = await _dioClient.post(
       ApiConstants.login,
       data: {
-        'phone': SyrianPhoneNumber.international(phone),
+        'identifier': identifier.contains('@')
+            ? identifier.trim().toLowerCase()
+            : SyrianPhoneNumber.international(identifier),
         'password': password,
       },
     );
@@ -22,17 +24,19 @@ class AuthRemoteDataSource {
 
   Future<AuthResponseModel> register(
     String name,
+    String? email,
     String phone,
     String password,
-    String passwordConfirmation,
+    String phoneConfirmation,
   ) async {
     final response = await _dioClient.post(
       ApiConstants.register,
       data: {
         'name': name,
+        if (email != null && email.trim().isNotEmpty) 'email': email.trim().toLowerCase(),
         'phone': SyrianPhoneNumber.international(phone),
+        'phone_confirmation': SyrianPhoneNumber.international(phoneConfirmation),
         'password': password,
-        'password_confirmation': passwordConfirmation,
       },
     );
     return AuthResponseModel.fromJson(response.data);

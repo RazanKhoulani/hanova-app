@@ -16,6 +16,7 @@ class Appointment extends Model
         'time',
         'type',
         'appointment_type',
+        'specialty',
         'duration_minutes',
         'status',
     ];

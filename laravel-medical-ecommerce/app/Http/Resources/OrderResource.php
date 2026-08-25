@@ -40,6 +40,14 @@ class OrderResource extends JsonResource
                     'source' => $this->coupon->source,
                 ] : null;
             }),
+            'applied_offer' => $this->whenLoaded('appliedOffer', function () {
+                return $this->appliedOffer ? [
+                    'id' => $this->appliedOffer->id,
+                    'title' => $this->appliedOffer->title_ar,
+                    'discount_type' => $this->appliedOffer->discount_type,
+                    'discount_value' => (float) $this->appliedOffer->discount_value,
+                ] : null;
+            }),
             'delivery_area' => $this->whenLoaded('deliveryArea', function () use ($lang) {
                 if (!$this->deliveryArea) {
                     return null;

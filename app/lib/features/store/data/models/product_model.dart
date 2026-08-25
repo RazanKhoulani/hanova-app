@@ -7,6 +7,9 @@ class ProductModel {
   final double price;
   final String? image;
   final String? category;
+  final String? brand;
+  final String catalogType;
+  final List<int> bundleProductIds;
   final String? unit;
   final int stock;
   final List<String> concernSlugs;
@@ -23,6 +26,9 @@ class ProductModel {
     required this.price,
     this.image,
     this.category,
+    this.brand,
+    this.catalogType = 'product',
+    this.bundleProductIds = const [],
     this.unit,
     required this.stock,
     this.concernSlugs = const [],
@@ -119,6 +125,12 @@ class ProductModel {
       price: parseDouble(json['price']),
       image: resolveImage(json['image'] ?? json['image_url']),
       category: json['category'],
+      brand: json['brand']?.toString(),
+      catalogType: json['catalog_type']?.toString() ?? 'product',
+      bundleProductIds: (json['bundle_product_ids'] as List? ?? const [])
+          .map((id) => parseInt(id))
+          .where((id) => id > 0)
+          .toList(growable: false),
       unit: json['unit'],
       stock: parseInt(json['stock']),
       concernSlugs: concernSlugs,
@@ -138,6 +150,9 @@ class ProductModel {
       'price': price,
       'image': image,
       'category': category,
+      'brand': brand,
+      'catalog_type': catalogType,
+      'bundle_product_ids': bundleProductIds,
       'unit': unit,
       'stock': stock,
       'usage': usage,

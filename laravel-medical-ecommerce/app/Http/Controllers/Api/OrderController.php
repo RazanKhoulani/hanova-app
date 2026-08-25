@@ -35,7 +35,7 @@ class OrderController extends Controller
         $order = $this->orderService->checkout(auth()->id(), $request->validated());
 
         return (new OrderResource(
-            $order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon'])
+            $order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer'])
         ))->response()->setStatusCode(201);
     }
 
@@ -47,7 +47,7 @@ class OrderController extends Controller
         $order = $this->orderService->getOrderById($id);
         $this->authorizeOrderAccess($order, request()->user());
 
-        return new OrderResource($order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon']));
+        return new OrderResource($order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer']));
     }
 
     public function confirm(Request $request, $id)
@@ -80,7 +80,7 @@ class OrderController extends Controller
 
         $order = $this->orderService->updateOrderStatus($id, 'delivered');
 
-        return new OrderResource($order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon']));
+        return new OrderResource($order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer']));
     }
 
     private function authorizeOrderAccess(Order $order, $user): void

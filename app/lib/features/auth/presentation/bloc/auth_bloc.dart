@@ -62,9 +62,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final response = await _authRepository.register(
         event.name,
+        event.email,
         event.phone,
         event.password,
-        event.passwordConfirmation,
+        event.phoneConfirmation,
       );
       emit(
         AuthOtpRequired(

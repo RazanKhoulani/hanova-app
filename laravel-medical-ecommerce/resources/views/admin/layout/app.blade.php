@@ -105,6 +105,10 @@
                             <i class="fa-solid fa-users-gear"></i>
                             <span>{{ __('admin.users') }}</span>
                         </a>
+                        <a href="{{ route('admin.settings.currency.edit') }}" class="sidebar-link {{ request()->routeIs('admin.settings.currency.*') ? 'active' : '' }}">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                            <span>{{ __('admin.currency_settings') }}</span>
+                        </a>
                     </nav>
                 @endunless
             </div>
