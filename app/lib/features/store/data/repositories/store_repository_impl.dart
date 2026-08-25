@@ -3,6 +3,7 @@ import '../models/product_model.dart';
 import '../models/order_model.dart';
 import '../models/offer_model.dart';
 import '../models/home_data_model.dart';
+import '../models/product_review_model.dart';
 import '../sources/store_remote_data_source.dart';
 
 class StoreRepositoryImpl implements StoreRepository {
@@ -66,6 +67,19 @@ class StoreRepositoryImpl implements StoreRepository {
   }
 
   @override
+  Future<ProductReviewSubmission> submitProductReview(
+    int productId, {
+    required int rating,
+    String? comment,
+  }) async {
+    return await _remoteDataSource.submitProductReview(
+      productId,
+      rating: rating,
+      comment: comment,
+    );
+  }
+
+  @override
   Future<List<CategoryModel>> getCategories() async {
     return await _remoteDataSource.getCategories();
   }
@@ -79,12 +93,15 @@ class StoreRepositoryImpl implements StoreRepository {
   Future<void> addToCart(int productId, int quantity) async {
     await _remoteDataSource.addToCart(productId, quantity);
   }
+
   @override
   Future<List<RemoteCartItem>> getCart() => _remoteDataSource.getCart();
   @override
-  Future<void> updateCartItem(int itemId, int quantity) => _remoteDataSource.updateCartItem(itemId, quantity);
+  Future<void> updateCartItem(int itemId, int quantity) =>
+      _remoteDataSource.updateCartItem(itemId, quantity);
   @override
-  Future<void> removeCartItem(int itemId) => _remoteDataSource.removeCartItem(itemId);
+  Future<void> removeCartItem(int itemId) =>
+      _remoteDataSource.removeCartItem(itemId);
 
   @override
   Future<void> checkout(Map<String, dynamic> orderData) async {

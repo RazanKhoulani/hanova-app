@@ -725,26 +725,67 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
                 ),
-                child: product.image != null
-                    ? CachedNetworkImage(
-                        imageUrl: product.image!,
-                        fit: BoxFit.contain,
-                        memCacheWidth: 360,
-                        fadeInDuration: Duration.zero,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: product.image != null
+                          ? CachedNetworkImage(
+                              imageUrl: product.image!,
+                              fit: BoxFit.contain,
+                              memCacheWidth: 360,
+                              fadeInDuration: Duration.zero,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => const Icon(
+                                Icons.image_outlined,
+                                color: AppColors.textLight,
+                                size: 40,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.image_outlined,
+                              color: AppColors.textLight,
+                              size: 40,
+                            ),
+                    ),
+                    if (product.ratingCount > 0)
+                      PositionedDirectional(
+                        top: 8,
+                        start: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.star_rounded,
+                                color: Color(0xFFE9B949),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                product.ratingAverage.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        errorWidget: (context, url, error) => const Icon(
-                          Icons.image_outlined,
-                          color: AppColors.textLight,
-                          size: 40,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.image_outlined,
-                        color: AppColors.textLight,
-                        size: 40,
                       ),
+                  ],
+                ),
               ),
             ),
             Padding(

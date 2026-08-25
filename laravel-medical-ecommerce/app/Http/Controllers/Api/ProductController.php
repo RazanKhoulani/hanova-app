@@ -33,7 +33,9 @@ class ProductController extends Controller
             'per_page' => 'nullable|integer|min:1|max:50',
         ]);
 
-        $productsQuery = Product::with('concerns');
+        $productsQuery = Product::with('concerns')
+            ->withCount('visibleReviews')
+            ->withAvg('visibleReviews as visible_reviews_avg_rating', 'rating');
 
         if (!empty($filters['query'])) {
             $search = trim($filters['query']);
@@ -153,9 +155,28 @@ class ProductController extends Controller
     /**
      * Display the specified product.
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $product = $this->productService->getProductById($id);
+        $user = $request->user('sanctum');
+
+        if ($user) {
+            $product->setRelation(
+                'currentUserReview',
+                $product->reviews()->where('user_id', $user->id)->first(),
+            );
+            $product->setAttribute('can_review', $product->relationLoaded('currentUserReview')
+                ? $product->currentUserReview !== null
+                : false);
+
+            if (! $product->can_review) {
+                $product->setAttribute('can_review', $user->orders()
+                    ->where('status', 'delivered')
+                    ->whereHas('items', fn ($query) => $query->where('product_id', $product->id))
+                    ->exists());
+            }
+        }
+
         return new ProductResource($product);
     }
 

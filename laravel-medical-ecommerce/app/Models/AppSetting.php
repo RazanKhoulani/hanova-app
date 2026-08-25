@@ -35,6 +35,25 @@ class AppSetting extends Model
         );
     }
 
+    public static function reviewRewardDefaults(): array
+    {
+        return [
+            'review_reward_percentage' => '10',
+            'review_reward_expiry_days' => '90',
+        ];
+    }
+
+    public static function reviewRewardValues(): array
+    {
+        return array_replace(
+            self::reviewRewardDefaults(),
+            self::query()
+                ->whereIn('key', array_keys(self::reviewRewardDefaults()))
+                ->pluck('value', 'key')
+                ->all(),
+        );
+    }
+
     public static function siteContentDefaults(): array
     {
         return [

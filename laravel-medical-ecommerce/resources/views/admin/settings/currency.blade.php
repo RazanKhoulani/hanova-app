@@ -61,6 +61,40 @@
         </div>
 
         <hr class="my-4">
+        <h2 class="h5 mb-3">{{ __('admin.review_rewards') }}</h2>
+        <p class="text-muted small">{{ __('admin.review_rewards_hint') }}</p>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label for="review_reward_percentage">{{ __('admin.review_reward_percentage') }}</label>
+                <input
+                    id="review_reward_percentage"
+                    name="review_reward_percentage"
+                    class="form-control"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value="{{ old('review_reward_percentage', $settings['review_reward_percentage']) }}"
+                    required
+                >
+            </div>
+            <div class="col-md-6">
+                <label for="review_reward_expiry_days">{{ __('admin.review_reward_expiry_days') }}</label>
+                <input
+                    id="review_reward_expiry_days"
+                    name="review_reward_expiry_days"
+                    class="form-control"
+                    type="number"
+                    min="1"
+                    max="365"
+                    step="1"
+                    value="{{ old('review_reward_expiry_days', $settings['review_reward_expiry_days']) }}"
+                    required
+                >
+            </div>
+        </div>
+
+        <hr class="my-4">
         <h2 class="h5 mb-3">{{ __('admin.site_content') }}</h2>
         <div class="row g-4">
             <div class="col-md-6">

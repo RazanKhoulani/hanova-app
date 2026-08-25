@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -35,5 +36,15 @@ class Product extends Model
     public function concerns(): BelongsToMany
     {
         return $this->belongsToMany(Concern::class)->withTimestamps();
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function visibleReviews(): HasMany
+    {
+        return $this->reviews()->where('is_visible', true);
     }
 }

@@ -16,7 +16,12 @@ class HomeController extends Controller
     {
         $lang = $request->header('Accept-Language', 'ar');
         $lang = str_starts_with((string) $lang, 'en') ? 'en' : 'ar';
-        $products = Product::with('concerns')->latest()->limit(50)->get();
+        $products = Product::with('concerns')
+            ->withCount('visibleReviews')
+            ->withAvg('visibleReviews as visible_reviews_avg_rating', 'rating')
+            ->latest()
+            ->limit(50)
+            ->get();
         $categories = Concern::query()
             ->where('is_active', true)
             ->orderBy($lang === 'en' ? 'name_en' : 'name_ar')

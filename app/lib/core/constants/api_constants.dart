@@ -32,6 +32,7 @@ class ApiConstants {
   static const String home = '/home';
   static const String products = '/products';
   static const String productDetails = '/products/'; // Append ID
+  static String productReviews(int id) => '/products/$id/reviews';
   static const String categories = '/categories';
   static const String catalogFilters = '/catalog-filters';
   static const String activeOffer = '/offers/active';

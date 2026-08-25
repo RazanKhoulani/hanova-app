@@ -52,6 +52,18 @@ class ProductResource extends JsonResource
             'brand' => $this->brand,
             'catalog_type' => $this->catalog_type ?? 'product',
             'bundle_product_ids' => $this->bundle_product_ids ?? [],
+            'rating_average' => round((float) ($this->visible_reviews_avg_rating ?? 0), 1),
+            'rating_count' => (int) ($this->visible_reviews_count ?? 0),
+            'can_review' => (bool) ($this->can_review ?? false),
+            'current_user_review' => $this->when(
+                $this->relationLoaded('currentUserReview') && $this->currentUserReview,
+                fn () => [
+                    'id' => $this->currentUserReview->id,
+                    'rating' => $this->currentUserReview->rating,
+                    'comment' => $this->currentUserReview->comment,
+                    'created_at' => $this->currentUserReview->created_at,
+                ],
+            ),
             'concerns' => $this->whenLoaded('concerns', function () use ($lang) {
                 return $this->concerns->map(fn ($concern) => [
                     'id' => $concern->id,

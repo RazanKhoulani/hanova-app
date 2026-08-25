@@ -8,12 +8,19 @@ class ProductRepository
 {
     public function getAllPaginated($perPage = 15)
     {
-        return Product::with('concerns')->latest()->paginate($perPage);
+        return Product::with('concerns')
+            ->withCount('visibleReviews')
+            ->withAvg('visibleReviews as visible_reviews_avg_rating', 'rating')
+            ->latest()
+            ->paginate($perPage);
     }
 
     public function findById($id)
     {
-        return Product::with('concerns')->findOrFail($id);
+        return Product::with('concerns')
+            ->withCount('visibleReviews')
+            ->withAvg('visibleReviews as visible_reviews_avg_rating', 'rating')
+            ->findOrFail($id);
     }
 
     public function create(array $data)

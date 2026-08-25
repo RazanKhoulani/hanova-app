@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AppSettingsController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductReviewController;
 use App\Http\Controllers\Admin\ConcernController;
 use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController;
@@ -66,6 +67,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::resource('products', ProductController::class);
             Route::resource('concerns', ConcernController::class)->except(['show']);
             Route::resource('offers', OfferController::class)->except(['show']);
+            Route::get('reviews', [ProductReviewController::class, 'index'])->name('reviews.index');
+            Route::put('reviews/{review}/visibility', [ProductReviewController::class, 'toggleVisibility'])
+                ->name('reviews.visibility');
             Route::get('settings/currency', [AppSettingsController::class, 'edit'])
                 ->name('settings.currency.edit');
             Route::put('settings/currency', [AppSettingsController::class, 'update'])

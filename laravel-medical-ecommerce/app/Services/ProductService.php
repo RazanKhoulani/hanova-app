@@ -31,7 +31,6 @@ class ProductService
         unset($data['concern_ids']);
 
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-            $this->deleteStoredImage($product->image);
             $data['image'] = $data['image']->store('products', 'public');
         }
 
@@ -46,11 +45,17 @@ class ProductService
         $concernIds = $data['concern_ids'] ?? null;
         unset($data['concern_ids']);
 
+        $previousImage = $product->image;
+
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
             $data['image'] = $data['image']->store('products', 'public');
         }
 
         $updatedProduct = $this->productRepository->update($product, $data);
+
+        if (isset($data['image']) && $data['image'] !== $previousImage) {
+            $this->deleteStoredImage($previousImage);
+        }
 
         if (is_array($concernIds)) {
             $updatedProduct->concerns()->sync($concernIds);

@@ -1,4 +1,5 @@
 import '../../../../core/constants/api_constants.dart';
+import 'product_review_model.dart';
 
 class ProductModel {
   final int id;
@@ -18,6 +19,10 @@ class ProductModel {
   final String? suitableFor;
   final String? activeIngredients;
   final String? warnings;
+  final double ratingAverage;
+  final int ratingCount;
+  final bool canReview;
+  final ProductReviewModel? currentUserReview;
 
   ProductModel({
     required this.id,
@@ -37,10 +42,19 @@ class ProductModel {
     this.suitableFor,
     this.activeIngredients,
     this.warnings,
+    this.ratingAverage = 0,
+    this.ratingCount = 0,
+    this.canReview = false,
+    this.currentUserReview,
   });
 
-  String get botDescription => [description, usage, suitableFor, activeIngredients, warnings]
-      .whereType<String>().where((value) => value.trim().isNotEmpty).join('\n\n');
+  String get botDescription => [
+    description,
+    usage,
+    suitableFor,
+    activeIngredients,
+    warnings,
+  ].whereType<String>().where((value) => value.trim().isNotEmpty).join('\n\n');
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     String resolveLocalized(dynamic value) {
@@ -104,6 +118,11 @@ class ProductModel {
         .map((concern) => concern['slug']?.toString() ?? '')
         .where((slug) => slug.isNotEmpty)
         .toList(growable: false);
+    final currentUserReview = json['current_user_review'] is Map
+        ? ProductReviewModel.fromJson(
+            Map<String, dynamic>.from(json['current_user_review'] as Map),
+          )
+        : null;
     final searchText = [
       name,
       description,
@@ -139,6 +158,11 @@ class ProductModel {
       suitableFor: json['suitable_for']?.toString(),
       activeIngredients: json['active_ingredients']?.toString(),
       warnings: json['warnings']?.toString(),
+      ratingAverage: parseDouble(json['rating_average']),
+      ratingCount: parseInt(json['rating_count']),
+      canReview:
+          json['can_review'] == true || json['can_review']?.toString() == '1',
+      currentUserReview: currentUserReview,
     );
   }
 
@@ -159,6 +183,10 @@ class ProductModel {
       'suitable_for': suitableFor,
       'active_ingredients': activeIngredients,
       'warnings': warnings,
+      'rating_average': ratingAverage,
+      'rating_count': ratingCount,
+      'can_review': canReview,
+      'current_user_review': currentUserReview?.toJson(),
     };
   }
 }
@@ -195,10 +223,20 @@ class RemoteCartItem {
   final int id;
   final ProductModel product;
   final int quantity;
-  const RemoteCartItem({required this.id, required this.product, required this.quantity});
+  const RemoteCartItem({
+    required this.id,
+    required this.product,
+    required this.quantity,
+  });
   factory RemoteCartItem.fromJson(Map<String, dynamic> json) => RemoteCartItem(
-    id: json['id'] is num ? (json['id'] as num).toInt() : int.parse('${json['id']}'),
-    product: ProductModel.fromJson(Map<String, dynamic>.from(json['product'] as Map)),
-    quantity: json['quantity'] is num ? (json['quantity'] as num).toInt() : int.parse('${json['quantity']}'),
+    id: json['id'] is num
+        ? (json['id'] as num).toInt()
+        : int.parse('${json['id']}'),
+    product: ProductModel.fromJson(
+      Map<String, dynamic>.from(json['product'] as Map),
+    ),
+    quantity: json['quantity'] is num
+        ? (json['quantity'] as num).toInt()
+        : int.parse('${json['quantity']}'),
   );
 }

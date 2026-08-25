@@ -89,6 +89,10 @@
                             <i class="fa-solid fa-tags"></i>
                             <span>{{ __('admin.offers') }}</span>
                         </a>
+                        <a href="{{ route('admin.reviews.index') }}" class="sidebar-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
+                            <i class="fa-solid fa-star"></i>
+                            <span>{{ __('admin.reviews') }}</span>
+                        </a>
                     </nav>
 
                     <div class="nav-section-label">{{ __('admin.system') }}</div>

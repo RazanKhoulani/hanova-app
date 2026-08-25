@@ -2,6 +2,7 @@ import '../../data/models/product_model.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/offer_model.dart';
 import '../../data/models/home_data_model.dart';
+import '../../data/models/product_review_model.dart';
 
 abstract class StoreRepository {
   Future<HomeDataModel> getHomeData({bool force = false});
@@ -12,6 +13,11 @@ abstract class StoreRepository {
     String? query,
   });
   Future<ProductModel> getProductDetails(int id);
+  Future<ProductReviewSubmission> submitProductReview(
+    int productId, {
+    required int rating,
+    String? comment,
+  });
   Future<List<CategoryModel>> getCategories();
   Future<OfferModel?> getActiveOffer();
   Future<void> addToCart(int productId, int quantity);

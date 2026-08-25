@@ -4,6 +4,7 @@ import '../models/product_model.dart';
 import '../models/order_model.dart';
 import '../models/offer_model.dart';
 import '../models/home_data_model.dart';
+import '../models/product_review_model.dart';
 
 abstract class StoreRemoteDataSource {
   Future<HomeDataModel> getHomeData();
@@ -14,6 +15,11 @@ abstract class StoreRemoteDataSource {
     String? query,
   });
   Future<ProductModel> getProductDetails(int id);
+  Future<ProductReviewSubmission> submitProductReview(
+    int productId, {
+    required int rating,
+    String? comment,
+  });
   Future<List<CategoryModel>> getCategories();
   Future<OfferModel?> getActiveOffer();
   Future<void> addToCart(int productId, int quantity);
@@ -67,6 +73,25 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
   }
 
   @override
+  Future<ProductReviewSubmission> submitProductReview(
+    int productId, {
+    required int rating,
+    String? comment,
+  }) async {
+    final response = await _dioClient.post(
+      ApiConstants.productReviews(productId),
+      data: {
+        'rating': rating,
+        if (comment?.trim().isNotEmpty == true) 'comment': comment!.trim(),
+      },
+    );
+    final payload = response.data['data'] ?? response.data;
+    return ProductReviewSubmission.fromJson(
+      Map<String, dynamic>.from(payload as Map),
+    );
+  }
+
+  @override
   Future<List<CategoryModel>> getCategories() async {
     final response = await _dioClient.get(ApiConstants.categories);
     final items = response.data['data'] as List? ?? [];
@@ -97,12 +122,20 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
   Future<List<RemoteCartItem>> getCart() async {
     final response = await _dioClient.get(ApiConstants.cart);
     final payload = response.data['data'] ?? response.data;
-    return (payload as List? ?? []).map((item) => RemoteCartItem.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+    return (payload as List? ?? [])
+        .map(
+          (item) =>
+              RemoteCartItem.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
+        .toList();
   }
 
   @override
   Future<void> updateCartItem(int itemId, int quantity) async {
-    await _dioClient.put('${ApiConstants.cart}/$itemId', data: {'quantity': quantity});
+    await _dioClient.put(
+      '${ApiConstants.cart}/$itemId',
+      data: {'quantity': quantity},
+    );
   }
 
   @override
@@ -137,10 +170,14 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
         'pickup_location': orderData['pickup_location'],
       if (orderData['delivery_area_id'] != null)
         'delivery_area_id': orderData['delivery_area_id'],
-      if (orderData['qadmous_governorate'] != null) 'qadmous_governorate': orderData['qadmous_governorate'],
-      if (orderData['qadmous_branch'] != null) 'qadmous_branch': orderData['qadmous_branch'],
-      if (orderData['recipient_name'] != null) 'recipient_name': orderData['recipient_name'],
-      if (orderData['recipient_phone'] != null) 'recipient_phone': orderData['recipient_phone'],
+      if (orderData['qadmous_governorate'] != null)
+        'qadmous_governorate': orderData['qadmous_governorate'],
+      if (orderData['qadmous_branch'] != null)
+        'qadmous_branch': orderData['qadmous_branch'],
+      if (orderData['recipient_name'] != null)
+        'recipient_name': orderData['recipient_name'],
+      if (orderData['recipient_phone'] != null)
+        'recipient_phone': orderData['recipient_phone'],
       'items': orderData['items'] ?? [],
     };
 
