@@ -50,3 +50,22 @@ Only the custom theme in `wp-content/themes/hanan-clinic`, this setup guide,
 and the WordPress-specific `.gitignore` are versioned. WordPress core,
 plugins, uploads, databases, and `wp-config.php` remain local so no credentials
 or runtime data are pushed to GitHub.
+
+## Railway deployment
+
+The `Dockerfile` uses the official WordPress Apache image and copies only the
+Hanova theme. Railway must run it as a separate service with this directory as
+the root directory: `wordpress-clinic`.
+
+Create a dedicated Railway MySQL service and set these variables on the
+WordPress service using Railway service references:
+
+- `WORDPRESS_DB_HOST=${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}`
+- `WORDPRESS_DB_NAME=${{MySQL.MYSQLDATABASE}}`
+- `WORDPRESS_DB_USER=${{MySQL.MYSQLUSER}}`
+- `WORDPRESS_DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}`
+- `WORDPRESS_CONFIG_EXTRA` with the public domain, HTTPS, and WordPress
+  hardening constants.
+
+Attach a Railway volume at `/var/www/html/wp-content/uploads` before uploading
+any media. This keeps product-independent WordPress uploads between deployments.

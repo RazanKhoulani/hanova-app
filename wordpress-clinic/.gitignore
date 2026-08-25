@@ -2,6 +2,9 @@
 *
 !.gitignore
 !LOCAL_SETUP.md
+!Dockerfile
+!docker/
+!docker/**
 !wp-content/
 wp-content/*
 !wp-content/themes/
