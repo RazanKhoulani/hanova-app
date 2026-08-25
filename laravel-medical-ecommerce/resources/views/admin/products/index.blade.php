@@ -8,6 +8,13 @@
     <a href="{{ route('admin.products.create') }}" class="btn btn-primary"><i class="fas fa-plus me-2"></i> Add Product</a>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">Tracked products</small><div class="fs-3 fw-bold">{{ $inventorySummary['tracked'] }}</div></div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">Available</small><div class="fs-3 fw-bold text-success">{{ $inventorySummary['available'] }}</div></div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">Low stock</small><div class="fs-3 fw-bold text-warning">{{ $inventorySummary['low'] }}</div></div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">Out of stock</small><div class="fs-3 fw-bold text-danger">{{ $inventorySummary['out'] }}</div></div></div></div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -21,6 +28,7 @@
                         <th class="border-0 px-4 py-3 text-secondary">Concerns</th>
                         <th class="border-0 px-4 py-3 text-secondary">Price</th>
                         <th class="border-0 px-4 py-3 text-secondary">Cost</th>
+                        <th class="border-0 px-4 py-3 text-secondary">Stock</th>
                         <th class="border-0 px-4 py-3 text-secondary text-end">Actions</th>
                     </tr>
                 </thead>
@@ -48,6 +56,22 @@
                         </td>
                         <td class="align-middle px-4"><span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1">{{ number_format($product->price, 2) }} ل.س</span></td>
                         <td class="align-middle px-4"><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-2 py-1">{{ number_format($product->cost, 2) }} ل.س</span></td>
+                        <td class="align-middle px-4" style="min-width: 190px;">
+                            @if(!$product->track_inventory)
+                                <span class="badge bg-secondary">Not tracked</span>
+                            @else
+                                @php($stockClass = $product->stock_quantity <= 0 ? 'danger' : ($product->stock_quantity <= $product->low_stock_threshold ? 'warning text-dark' : 'success'))
+                                <span class="badge bg-{{ $stockClass }} mb-2">
+                                    {{ $product->stock_quantity <= 0 ? 'Out of stock' : $product->stock_quantity . ' units' }}
+                                </span>
+                                <form action="{{ route('admin.products.stock.update', $product->id) }}" method="POST" class="d-flex gap-1" onclick="event.stopPropagation()">
+                                    @csrf
+                                    @method('PUT')
+                                    <input type="number" min="0" step="1" name="stock_quantity" class="form-control form-control-sm" value="{{ $product->stock_quantity }}" aria-label="Stock quantity for {{ $product->name_en }}">
+                                    <button class="btn btn-sm btn-outline-primary" type="submit" title="Save stock"><i class="fas fa-check"></i></button>
+                                </form>
+                            @endif
+                        </td>
                         <td class="align-middle px-4 text-end">
                             <div class="btn-group" role="group">
                                 <a href="{{ route('admin.products.show', $product->id) }}" class="btn btn-sm btn-outline-info" title="View Details">
@@ -68,7 +92,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-5 text-muted">
+                        <td colspan="9" class="text-center py-5 text-muted">
                             <i class="fas fa-box-open fa-3x mb-3 text-light"></i>
                             <p class="mb-0 fs-5">No products found</p>
                             <small>Click "Add Product" to create your first item.</small>

@@ -65,6 +65,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::middleware(EnsureDashboardStaffRole::class)->group(function () {
             // Products Management
             Route::resource('products', ProductController::class);
+            Route::put('products/{id}/stock', [ProductController::class, 'updateStock'])
+                ->name('products.stock.update');
             Route::resource('concerns', ConcernController::class)->except(['show']);
             Route::resource('offers', OfferController::class)->except(['show']);
             Route::get('reviews', [ProductReviewController::class, 'index'])->name('reviews.index');

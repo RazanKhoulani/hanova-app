@@ -43,6 +43,25 @@
                     </div>
                 </div>
 
+                <div class="col-md-4">
+                    <label class="form-label fw-bold d-block">Inventory tracking</label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="track_inventory" name="track_inventory" value="1" @checked(old('track_inventory', $product->track_inventory))>
+                        <label class="form-check-label" for="track_inventory">Track available units</label>
+                    </div>
+                    <div class="form-text">Turn this off for appointments and services.</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Current stock</label>
+                    <input type="number" min="0" step="1" name="stock_quantity" class="form-control" value="{{ old('stock_quantity', $product->stock_quantity ?? 0) }}" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Low-stock alert at</label>
+                    <input type="number" min="0" step="1" name="low_stock_threshold" class="form-control" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}" required>
+                </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Commercial Category</label>
                     <input type="text" name="category" class="form-control" value="{{ old('category', $product->category) }}" placeholder="e.g. Cleansers, Serums, Sun Protection">

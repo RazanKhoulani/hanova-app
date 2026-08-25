@@ -52,6 +52,12 @@ class ProductResource extends JsonResource
             'brand' => $this->brand,
             'catalog_type' => $this->catalog_type ?? 'product',
             'bundle_product_ids' => $this->bundle_product_ids ?? [],
+            'stock' => (int) ($this->stock_quantity ?? 0),
+            'tracks_inventory' => (bool) ($this->track_inventory ?? true),
+            'is_in_stock' => ! ($this->track_inventory ?? true) || (int) ($this->stock_quantity ?? 0) > 0,
+            'is_low_stock' => (bool) ($this->track_inventory ?? true)
+                && (int) ($this->stock_quantity ?? 0) > 0
+                && (int) ($this->stock_quantity ?? 0) <= (int) ($this->low_stock_threshold ?? 5),
             'rating_average' => round((float) ($this->visible_reviews_avg_rating ?? 0), 1),
             'rating_count' => (int) ($this->visible_reviews_count ?? 0),
             'can_review' => (bool) ($this->can_review ?? false),

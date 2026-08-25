@@ -23,6 +23,9 @@ class Product extends Model
         'brand',
         'catalog_type',
         'bundle_product_ids',
+        'track_inventory',
+        'stock_quantity',
+        'low_stock_threshold',
         'usage_ar', 'usage_en',
         'suitable_for_ar', 'suitable_for_en',
         'active_ingredients_ar', 'active_ingredients_en',
@@ -31,6 +34,9 @@ class Product extends Model
 
     protected $casts = [
         'bundle_product_ids' => 'array',
+        'track_inventory' => 'boolean',
+        'stock_quantity' => 'integer',
+        'low_stock_threshold' => 'integer',
     ];
 
     public function concerns(): BelongsToMany

@@ -45,6 +45,18 @@
                     Profit: {{ number_format($product->price - $product->cost, 2) }} ل.س
                 </div>
 
+                <div class="mt-3">
+                    @if(!$product->track_inventory)
+                        <span class="badge bg-secondary px-3 py-2">Inventory not tracked</span>
+                    @elseif($product->stock_quantity <= 0)
+                        <span class="badge bg-danger px-3 py-2">Out of stock</span>
+                    @elseif($product->stock_quantity <= $product->low_stock_threshold)
+                        <span class="badge bg-warning text-dark px-3 py-2">Low stock: {{ $product->stock_quantity }} units</span>
+                    @else
+                        <span class="badge bg-success px-3 py-2">Available: {{ $product->stock_quantity }} units</span>
+                    @endif
+                </div>
+
                 <div class="mt-4 text-start">
                     <label class="text-muted small text-uppercase fw-bold d-block mb-2">Commercial Category</label>
                     <div>{{ $product->category ?? 'No commercial category' }}</div>

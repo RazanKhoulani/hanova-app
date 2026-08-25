@@ -20,7 +20,20 @@ class ProductController extends Controller
     public function index()
     {
         $products = $this->productService->getAllProducts(10);
-        return view('admin.products.index', compact('products'));
+        $trackedProducts = Product::query()->where('track_inventory', true);
+        $inventorySummary = [
+            'tracked' => (clone $trackedProducts)->count(),
+            'available' => (clone $trackedProducts)
+                ->whereColumn('stock_quantity', '>', 'low_stock_threshold')
+                ->count(),
+            'low' => (clone $trackedProducts)
+                ->where('stock_quantity', '>', 0)
+                ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
+                ->count(),
+            'out' => (clone $trackedProducts)->where('stock_quantity', '<=', 0)->count(),
+        ];
+
+        return view('admin.products.index', compact('products', 'inventorySummary'));
     }
 
     public function create()
@@ -48,10 +61,17 @@ class ProductController extends Controller
             'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
             'bundle_product_ids' => 'nullable|array',
             'bundle_product_ids.*' => 'integer|exists:products,id',
+            'track_inventory' => 'nullable|boolean',
+            'stock_quantity' => 'nullable|integer|min:0|max:1000000',
+            'low_stock_threshold' => 'nullable|integer|min:0|max:1000000',
             'concern_ids' => 'nullable|array',
             'concern_ids.*' => 'exists:concerns,id',
             'image' => 'nullable|image|max:10240',
         ]);
+
+        $validated['track_inventory'] = $request->boolean('track_inventory');
+        $validated['stock_quantity'] = (int) ($validated['stock_quantity'] ?? 0);
+        $validated['low_stock_threshold'] = (int) ($validated['low_stock_threshold'] ?? 5);
 
         $this->productService->createProduct($validated);
 
@@ -94,6 +114,9 @@ class ProductController extends Controller
             'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
             'bundle_product_ids' => 'nullable|array',
             'bundle_product_ids.*' => 'integer|exists:products,id',
+            'track_inventory' => 'nullable|boolean',
+            'stock_quantity' => 'nullable|integer|min:0|max:1000000',
+            'low_stock_threshold' => 'nullable|integer|min:0|max:1000000',
             'concern_ids' => 'nullable|array',
             'concern_ids.*' => 'exists:concerns,id',
             'image' => 'nullable|image|max:10240',
@@ -102,6 +125,9 @@ class ProductController extends Controller
         $product = $this->productService->getProductById($id);
         $validated['concern_ids'] = $request->input('concern_ids', []);
         $validated['bundle_product_ids'] = $request->input('bundle_product_ids', []);
+        $validated['track_inventory'] = $request->boolean('track_inventory');
+        $validated['stock_quantity'] = (int) ($validated['stock_quantity'] ?? 0);
+        $validated['low_stock_threshold'] = (int) ($validated['low_stock_threshold'] ?? 5);
         $this->productService->updateProduct($product, $validated);
 
         return redirect()->route('admin.products.index')
@@ -115,5 +141,17 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Product deleted successfully');
+    }
+
+    public function updateStock(Request $request, $id)
+    {
+        $data = $request->validate([
+            'stock_quantity' => ['required', 'integer', 'min:0', 'max:1000000'],
+        ]);
+
+        $product = $this->productService->getProductById($id);
+        $this->productService->updateProduct($product, $data);
+
+        return back()->with('success', 'Stock quantity updated successfully.');
     }
 }

@@ -69,6 +69,26 @@
             </div>
 
             <div class="row mb-4">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <label class="form-label fw-bold d-block">Inventory tracking</label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="track_inventory" name="track_inventory" value="1" @checked(old('track_inventory', true))>
+                        <label class="form-check-label" for="track_inventory">Track available units for this item</label>
+                    </div>
+                    <div class="form-text">Turn this off for services that do not have physical stock.</div>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <label class="form-label fw-bold">Current stock</label>
+                    <input type="number" min="0" step="1" name="stock_quantity" class="form-control" value="{{ old('stock_quantity', 0) }}" required>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <label class="form-label fw-bold">Low-stock alert at</label>
+                    <input type="number" min="0" step="1" name="low_stock_threshold" class="form-control" value="{{ old('low_stock_threshold', 5) }}" required>
+                    <div class="form-text">The dashboard marks the product as low at this quantity or below.</div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
                     <label class="form-label fw-bold">Commercial Category</label>
                     <input type="text" name="category" class="form-control" value="{{ old('category') }}" placeholder="e.g. Cleansers, Serums, Sun Protection">
