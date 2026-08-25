@@ -1,6 +1,7 @@
 FROM wordpress:php8.3-apache
 
-RUN a2enmod expires headers rewrite \
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork expires headers rewrite \
     && printf '%s\n' \
         'upload_max_filesize=16M' \
         'post_max_size=16M' \
