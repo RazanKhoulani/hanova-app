@@ -231,6 +231,14 @@
     </div>
 
     @unless($isDelivery)
+    @php
+        $firebaseWebConfig = [
+            'apiKey' => config('services.firebase.web_api_key'),
+            'appId' => config('services.firebase.web_app_id'),
+            'messagingSenderId' => config('services.firebase.messaging_sender_id'),
+            'projectId' => config('services.firebase.project_id', 'hanva-app'),
+        ];
+    @endphp
     <script>
         (() => {
             const badge = document.getElementById('adminNotificationBadge');
@@ -273,12 +281,7 @@
             });
             window.setInterval(refreshNotifications, 15000);
 
-            const firebaseConfig = @json([
-                'apiKey' => config('services.firebase.web_api_key'),
-                'appId' => config('services.firebase.web_app_id'),
-                'messagingSenderId' => config('services.firebase.messaging_sender_id'),
-                'projectId' => config('services.firebase.project_id', 'hanva-app'),
-            ]);
+            const firebaseConfig = @json($firebaseWebConfig);
             const vapidKey = @json(config('services.firebase.web_vapid_key'));
             if (vapidKey && 'serviceWorker' in navigator && 'Notification' in window) {
                 import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js').then(async ({initializeApp}) => {
