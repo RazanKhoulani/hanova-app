@@ -317,6 +317,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _buildBottomBar(ProductModel product) {
+    final canAdd = !product.tracksInventory || product.isInStock;
+    final canIncrease = !product.tracksInventory || _quantity < product.stock;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
@@ -355,7 +358,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.add, size: 20),
-                  onPressed: () => setState(() => _quantity++),
+                  onPressed: canIncrease
+                      ? () => setState(() => _quantity++)
+                      : null,
                 ),
               ],
             ),
@@ -363,12 +368,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                context.read<CartBloc>().add(CartItemAdded(product, _quantity));
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                context.push('/cart');
-              },
-              child: Text(_detailLabel('add_to_cart')),
+              onPressed: canAdd
+                  ? () {
+                      context.read<CartBloc>().add(
+                        CartItemAdded(product, _quantity),
+                      );
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      context.push('/cart');
+                    }
+                  : null,
+              child: Text(
+                _detailLabel(canAdd ? 'add_to_cart' : 'out_of_stock'),
+              ),
             ),
           ),
         ],
@@ -398,6 +409,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               color: AppColors.textPrimary,
             ),
           ),
+          if (product.tracksInventory) ...[
+            const SizedBox(height: 8),
+            Text(
+              _detailLabel(
+                product.isInStock
+                    ? (product.isLowStock ? 'stock_low' : 'stock_available')
+                    : 'out_of_stock',
+              ).replaceFirst(':count', '${product.stock}'),
+              style: TextStyle(
+                color: product.isInStock
+                    ? AppColors.primary
+                    : AppColors.textLight,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [
@@ -626,6 +654,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     'active_ingredients': 'Active ingredients',
     'warnings': 'Warnings',
     'add_to_cart': 'Add to Cart',
+    'stock_available': 'Available: :count',
+    'stock_low': 'Low stock: :count left',
+    'out_of_stock': 'Out of stock',
     'product_rating': 'Product rating',
     'ratings_count': ':count ratings',
     'no_ratings': 'No ratings yet',
@@ -655,6 +686,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     'warnings': 'التحذيرات',
     'add_to_cart':
         '\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u0627\u0644\u0633\u0644\u0629',
+    'stock_available': '\u0645\u062a\u0648\u0641\u0631: :count',
+    'stock_low':
+        '\u0627\u0644\u0645\u062a\u0628\u0642\u064a \u0642\u0644\u064a\u0644: :count',
+    'out_of_stock':
+        '\u0646\u0641\u062f \u0627\u0644\u0645\u062e\u0632\u0648\u0646',
     'product_rating':
         '\u062a\u0642\u064a\u064a\u0645 \u0627\u0644\u0645\u0646\u062a\u062c',
     'ratings_count': ':count \u062a\u0642\u064a\u064a\u0645',

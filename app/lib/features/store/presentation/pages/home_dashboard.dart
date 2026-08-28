@@ -704,6 +704,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
   }
 
   Widget _buildProductCard(BuildContext context, ProductModel product) {
+    final canAdd = !product.tracksInventory || product.isInStock;
+    final stockLabel = product.isInStock
+        ? (product.isLowStock ? 'stock_low' : 'stock_available')
+        : 'out_of_stock';
+
     return GestureDetector(
       onTap: () => context.push('/product-details/${product.id}'),
       child: Container(
@@ -784,6 +789,35 @@ class _HomeDashboardState extends State<HomeDashboard> {
                           ),
                         ),
                       ),
+                    if (product.tracksInventory)
+                      PositionedDirectional(
+                        bottom: 8,
+                        start: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: canAdd
+                                ? Colors.white.withValues(alpha: 0.92)
+                                : AppColors.textPrimary.withValues(alpha: 0.82),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            context
+                                .readTr(stockLabel)
+                                .replaceFirst(':count', '${product.stock}'),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: canAdd
+                                  ? AppColors.textPrimary
+                                  : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -834,35 +868,41 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       ),
                       const SizedBox(width: 6),
                       GestureDetector(
-                        onTap: () {
-                          context.read<CartBloc>().add(
-                            CartItemAdded(product, 1),
-                          );
-                          final messenger = ScaffoldMessenger.of(context);
-                          messenger.hideCurrentSnackBar();
-                          messenger.showSnackBar(
-                            SnackBar(
-                              duration: const Duration(seconds: 2),
-                              content: Text(context.readTr('added_to_cart')),
-                              action: SnackBarAction(
-                                label: context.readTr('view_cart'),
-                                textColor: AppColors.primaryLight,
-                                onPressed: () {
-                                  messenger.hideCurrentSnackBar();
-                                  context.push('/cart');
-                                },
-                              ),
-                            ),
-                          );
-                        },
+                        onTap: canAdd
+                            ? () {
+                                context.read<CartBloc>().add(
+                                  CartItemAdded(product, 1),
+                                );
+                                final messenger = ScaffoldMessenger.of(context);
+                                messenger.hideCurrentSnackBar();
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    duration: const Duration(seconds: 2),
+                                    content: Text(
+                                      context.readTr('added_to_cart'),
+                                    ),
+                                    action: SnackBarAction(
+                                      label: context.readTr('view_cart'),
+                                      textColor: AppColors.primaryLight,
+                                      onPressed: () {
+                                        messenger.hideCurrentSnackBar();
+                                        context.push('/cart');
+                                      },
+                                    ),
+                                  ),
+                                );
+                              }
+                            : null,
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
+                            color: canAdd
+                                ? AppColors.primary
+                                : AppColors.textLight,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(
-                            Icons.add_rounded,
+                          child: Icon(
+                            canAdd ? Icons.add_rounded : Icons.block_rounded,
                             color: Colors.white,
                             size: 18,
                           ),

@@ -3,21 +3,26 @@ import '../../data/models/product_model.dart';
 import '../../domain/repositories/store_repository.dart';
 
 abstract class CartEvent {}
+
 class CartItemAdded extends CartEvent {
   final ProductModel product;
   final int quantity;
   CartItemAdded(this.product, this.quantity);
 }
+
 class CartItemRemoved extends CartEvent {
   final int productId;
   CartItemRemoved(this.productId);
 }
+
 class CartItemUpdated extends CartEvent {
   final int productId;
   final int quantity;
   CartItemUpdated(this.productId, this.quantity);
 }
+
 class CartCleared extends CartEvent {}
+
 class CartLoadRequested extends CartEvent {}
 
 // State
@@ -57,18 +62,40 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   Future<void> _onLoad(CartLoadRequested event, Emitter<CartState> emit) async {
     try {
       final remote = await _repository.getCart();
-      emit(CartState(items: {for (final item in remote) item.product.id: CartItem(product: item.product, quantity: item.quantity, serverId: item.id)}));
+      emit(
+        CartState(
+          items: {
+            for (final item in remote)
+              item.product.id: CartItem(
+                product: item.product,
+                quantity: item.quantity,
+                serverId: item.id,
+              ),
+          },
+        ),
+      );
     } catch (_) {}
   }
 
-  Future<void> _onItemAdded(CartItemAdded event, Emitter<CartState> emit) async {
+  Future<void> _onItemAdded(
+    CartItemAdded event,
+    Emitter<CartState> emit,
+  ) async {
+    final previousState = state;
     final updatedItems = Map<int, CartItem>.from(state.items);
-    if (updatedItems.containsKey(event.product.id)) {
+    final existing = updatedItems[event.product.id];
+    final requestedQuantity = (existing?.quantity ?? 0) + event.quantity;
+    if (event.product.tracksInventory &&
+        requestedQuantity > event.product.stock) {
+      return;
+    }
+    if (existing != null) {
       updatedItems.update(
         event.product.id,
         (existing) => CartItem(
           product: existing.product,
-          quantity: existing.quantity + event.quantity, serverId: existing.serverId,
+          quantity: existing.quantity + event.quantity,
+          serverId: existing.serverId,
         ),
       );
     } else {
@@ -78,33 +105,72 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       );
     }
     emit(CartState(items: updatedItems));
-    try { await _repository.addToCart(event.product.id, event.quantity); } catch (_) {}
+    try {
+      await _repository.addToCart(event.product.id, event.quantity);
+    } catch (_) {
+      emit(previousState);
+    }
   }
 
-  Future<void> _onItemRemoved(CartItemRemoved event, Emitter<CartState> emit) async {
+  Future<void> _onItemRemoved(
+    CartItemRemoved event,
+    Emitter<CartState> emit,
+  ) async {
     final updatedItems = Map<int, CartItem>.from(state.items);
     final serverId = updatedItems[event.productId]?.serverId;
     updatedItems.remove(event.productId);
     emit(CartState(items: updatedItems));
-    if (serverId != null) { try { await _repository.removeCartItem(serverId); } catch (_) {} }
+    if (serverId != null) {
+      try {
+        await _repository.removeCartItem(serverId);
+      } catch (_) {}
+    }
   }
 
-  Future<void> _onItemUpdated(CartItemUpdated event, Emitter<CartState> emit) async {
+  Future<void> _onItemUpdated(
+    CartItemUpdated event,
+    Emitter<CartState> emit,
+  ) async {
+    final previousState = state;
     final updatedItems = Map<int, CartItem>.from(state.items);
     if (updatedItems.containsKey(event.productId)) {
+      final existing = updatedItems[event.productId]!;
+      final quantity = existing.product.tracksInventory
+          ? event.quantity.clamp(1, existing.product.stock).toInt()
+          : event.quantity;
       updatedItems.update(
         event.productId,
-        (existing) => CartItem(product: existing.product, quantity: event.quantity, serverId: existing.serverId),
+        (existing) => CartItem(
+          product: existing.product,
+          quantity: quantity,
+          serverId: existing.serverId,
+        ),
       );
     }
     emit(CartState(items: updatedItems));
     final serverId = updatedItems[event.productId]?.serverId;
-    if (serverId != null) { try { await _repository.updateCartItem(serverId, event.quantity); } catch (_) {} }
+    if (serverId != null) {
+      try {
+        await _repository.updateCartItem(
+          serverId,
+          updatedItems[event.productId]!.quantity,
+        );
+      } catch (_) {
+        emit(previousState);
+      }
+    }
   }
 
   Future<void> _onCleared(CartCleared event, Emitter<CartState> emit) async {
-    final ids = state.items.values.map((item) => item.serverId).whereType<int>().toList();
+    final ids = state.items.values
+        .map((item) => item.serverId)
+        .whereType<int>()
+        .toList();
     emit(CartState(items: {}));
-    for (final id in ids) { try { await _repository.removeCartItem(id); } catch (_) {} }
+    for (final id in ids) {
+      try {
+        await _repository.removeCartItem(id);
+      } catch (_) {}
+    }
   }
 }

@@ -74,6 +74,9 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildCartItem(BuildContext context, CartItem item) {
+    final canIncrease =
+        !item.product.tracksInventory || item.quantity < item.product.stock;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
@@ -177,14 +180,16 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.add, size: 16),
-                            onPressed: () {
-                              context.read<CartBloc>().add(
-                                CartItemUpdated(
-                                  item.product.id,
-                                  item.quantity + 1,
-                                ),
-                              );
-                            },
+                            onPressed: canIncrease
+                                ? () {
+                                    context.read<CartBloc>().add(
+                                      CartItemUpdated(
+                                        item.product.id,
+                                        item.quantity + 1,
+                                      ),
+                                    );
+                                  }
+                                : null,
                           ),
                         ],
                       ),

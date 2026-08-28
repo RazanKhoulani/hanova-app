@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DeliveryArea;
 use App\Models\Coupon;
 use App\Models\Notification;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Repositories\CartRepository;
@@ -46,13 +47,17 @@ class OrderService
         try {
             $subtotal = 0;
             $orderItems = [];
+            $hasReservedInventory = false;
             $usesClientItems = !empty($data['items']) && is_array($data['items']);
 
             if ($usesClientItems) {
                 foreach ($data['items'] as $item) {
-                    $product = Product::findOrFail($item['product_id']);
+                    $product = Product::query()->lockForUpdate()->findOrFail($item['product_id']);
                     $quantity = (int) $item['quantity'];
                     $price = (float) $product->price;
+
+                    $this->reserveInventory($product, $quantity);
+                    $hasReservedInventory = $hasReservedInventory || (bool) $product->track_inventory;
 
                     $subtotal += $price * $quantity;
                     $orderItems[] = [
@@ -71,12 +76,16 @@ class OrderService
                 }
 
                 foreach ($cart->items as $item) {
-                    $price = (float) $item->product->price;
+                    $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
+                    $price = (float) $product->price;
                     $quantity = (int) $item->quantity;
+
+                    $this->reserveInventory($product, $quantity);
+                    $hasReservedInventory = $hasReservedInventory || (bool) $product->track_inventory;
 
                     $subtotal += $price * $quantity;
                     $orderItems[] = [
-                        'product_id' => $item->product_id,
+                        'product_id' => $product->id,
                         'quantity' => $quantity,
                         'price' => $price,
                     ];
@@ -119,6 +128,10 @@ class OrderService
                 $orderData['payment_status'] = in_array($paymentMethod, ['cash', 'cash_on_delivery'], true)
                     ? 'unpaid'
                     : 'pending';
+            }
+
+            if ($hasReservedInventory && Schema::hasColumn('orders', 'inventory_reserved_at')) {
+                $orderData['inventory_reserved_at'] = now();
             }
 
             if (Schema::hasColumn('orders', 'delivery_method')) {
@@ -180,32 +193,39 @@ class OrderService
 
     public function updateOrderStatus($id, $status)
     {
-        $order = $this->orderRepository->findById($id);
+        return DB::transaction(function () use ($id, $status) {
+            $order = $this->orderRepository->findById($id);
+            $previousStatus = $order->status;
 
-        if ($status === 'delivered' && !in_array($order->status, ['accepted', 'ready', 'shipped'], true)) {
-            throw ValidationException::withMessages([
-                'status' => 'Only an accepted, ready, or shipped order can be marked as delivered.',
-            ]);
-        }
+            if ($status === 'delivered' && !in_array($order->status, ['accepted', 'ready', 'shipped'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'Only an accepted, ready, or shipped order can be marked as delivered.',
+                ]);
+            }
 
-        $updateData = ['status' => $status];
+            $updateData = ['status' => $status];
 
-        if ($status === 'delivered') {
-            $updateData['payment_method'] = 'cash';
+            if ($status === 'delivered') {
+                $updateData['payment_method'] = 'cash';
 
-            if (Schema::hasColumn('orders', 'payment_status')) {
+                if (Schema::hasColumn('orders', 'payment_status')) {
+                    $updateData['payment_status'] = 'paid';
+                }
+            }
+
+            if ($status === 'paid' && Schema::hasColumn('orders', 'payment_status')) {
                 $updateData['payment_status'] = 'paid';
             }
-        }
 
-        if ($status === 'paid' && Schema::hasColumn('orders', 'payment_status')) {
-            $updateData['payment_status'] = 'paid';
-        }
+            $updatedOrder = $this->orderRepository->update($order, $updateData);
+            if ($status === 'cancelled'
+                && ! in_array($previousStatus, ['delivered', 'cancelled'], true)) {
+                $this->releaseInventory($updatedOrder);
+            }
+            $this->createOrderNotification($updatedOrder, $this->notificationTypeForStatus($status));
 
-        $updatedOrder = $this->orderRepository->update($order, $updateData);
-        $this->createOrderNotification($updatedOrder, $this->notificationTypeForStatus($status));
-
-        return $updatedOrder;
+            return $updatedOrder;
+        });
     }
 
     public function confirmOrder($id)
@@ -295,6 +315,46 @@ class OrderService
             : (float) $coupon->discount_value;
 
         return [$coupon, min($subtotal, round($discountAmount, 2))];
+    }
+
+    private function reserveInventory(Product $product, int $quantity): void
+    {
+        if (! $product->track_inventory) {
+            return;
+        }
+
+        if ($product->stock_quantity < $quantity) {
+            throw ValidationException::withMessages([
+                'items' => "Only {$product->stock_quantity} units of {$product->name_en} are available.",
+            ]);
+        }
+
+        $product->decrement('stock_quantity', $quantity);
+    }
+
+    private function releaseInventory(Order $order): void
+    {
+        if (! Schema::hasColumn('orders', 'inventory_reserved_at')
+            || ! $order->inventory_reserved_at
+            || $order->inventory_released_at) {
+            return;
+        }
+
+        $released = Order::query()
+            ->whereKey($order->id)
+            ->whereNull('inventory_released_at')
+            ->update(['inventory_released_at' => now()]);
+
+        if ($released !== 1) {
+            return;
+        }
+
+        foreach ($order->items as $item) {
+            $product = Product::query()->lockForUpdate()->find($item->product_id);
+            if ($product?->track_inventory) {
+                $product->increment('stock_quantity', (int) $item->quantity);
+            }
+        }
     }
 
     private function resolveActiveOfferDiscount(int $userId, float $subtotal): array

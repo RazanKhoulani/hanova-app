@@ -9,9 +9,16 @@ class Order extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'inventory_reserved_at' => 'datetime',
+        'inventory_released_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'user_id',
         'status',
+        'inventory_reserved_at',
+        'inventory_released_at',
         'total_amount',
         'payment_method',
         'payment_status',

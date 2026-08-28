@@ -13,6 +13,9 @@ class ProductModel {
   final List<int> bundleProductIds;
   final String? unit;
   final int stock;
+  final bool tracksInventory;
+  final bool isInStock;
+  final bool isLowStock;
   final List<String> concernSlugs;
   final String searchText;
   final String? usage;
@@ -36,6 +39,9 @@ class ProductModel {
     this.bundleProductIds = const [],
     this.unit,
     required this.stock,
+    this.tracksInventory = true,
+    this.isInStock = true,
+    this.isLowStock = false,
     this.concernSlugs = const [],
     this.searchText = '',
     this.usage,
@@ -137,6 +143,19 @@ class ProductModel {
       ),
     ].join(' ').toLowerCase();
 
+    final stock = parseInt(json['stock']);
+    final rawTracksInventory = json['tracks_inventory'];
+    final tracksInventory = rawTracksInventory == null
+        ? true
+        : rawTracksInventory == true || rawTracksInventory.toString() == '1';
+    final rawIsInStock = json['is_in_stock'];
+    final isInStock = rawIsInStock == null
+        ? !tracksInventory || stock > 0
+        : rawIsInStock == true || rawIsInStock.toString() == '1';
+    final rawIsLowStock = json['is_low_stock'];
+    final isLowStock =
+        rawIsLowStock == true || rawIsLowStock?.toString() == '1';
+
     return ProductModel(
       id: parseInt(json['id']),
       name: name,
@@ -151,7 +170,10 @@ class ProductModel {
           .where((id) => id > 0)
           .toList(growable: false),
       unit: json['unit'],
-      stock: parseInt(json['stock']),
+      stock: stock,
+      tracksInventory: tracksInventory,
+      isInStock: isInStock,
+      isLowStock: isLowStock,
       concernSlugs: concernSlugs,
       searchText: searchText,
       usage: json['usage']?.toString(),
@@ -179,6 +201,9 @@ class ProductModel {
       'bundle_product_ids': bundleProductIds,
       'unit': unit,
       'stock': stock,
+      'tracks_inventory': tracksInventory,
+      'is_in_stock': isInStock,
+      'is_low_stock': isLowStock,
       'usage': usage,
       'suitable_for': suitableFor,
       'active_ingredients': activeIngredients,
