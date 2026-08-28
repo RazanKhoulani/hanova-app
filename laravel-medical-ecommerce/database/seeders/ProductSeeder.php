@@ -193,6 +193,156 @@ class ProductSeeder extends Seeder
 
             $storedProduct->save();
         }
+
+        $catalogItems = [
+            [
+                'name_ar' => 'بكج روتين التصبغات',
+                'name_en' => 'Pigmentation Routine Bundle',
+                'price' => 62,
+                'cost' => 45,
+                'category' => 'Bundles',
+                'brand' => 'Hanova Clinic',
+                'catalog_type' => 'bundle',
+                'bundle_product_names' => [
+                    'Gentle Medical Cleanser',
+                    'Niacinamide & Arbutin Serum',
+                    'Sunscreen SPF 50',
+                ],
+                'description_ar' => 'روتين متكامل للتصبغات يجمع الغسول اللطيف وسيروم النياسيناميد والأربوتين وواقي الشمس بسعر بكج خاص.',
+                'description_en' => 'A complete pigmentation routine with a gentle cleanser, niacinamide and arbutin serum, and SPF 50 at a bundle price.',
+                'usage_ar' => 'الغسول صباحاً ومساءً، السيروم مساءً بالتدرج، وواقي الشمس صباحاً مع التجديد.',
+                'usage_en' => 'Cleanse morning and evening, introduce the serum gradually at night, and use SPF every morning with reapplication.',
+            ],
+            [
+                'name_ar' => 'بكج العناية بالبشرة المعرضة للحبوب',
+                'name_en' => 'Acne Care Starter Bundle',
+                'price' => 69,
+                'cost' => 49,
+                'category' => 'Bundles',
+                'brand' => 'Hanova Clinic',
+                'catalog_type' => 'bundle',
+                'bundle_product_names' => [
+                    'Gentle Medical Cleanser',
+                    'Azelaic Acid Cream',
+                    'Medical Moisturizer',
+                    'Sunscreen SPF 50',
+                ],
+                'description_ar' => 'بداية عملية وروتينية للبشرة المعرضة للحبوب تشمل التنظيف والعلاج والترطيب والحماية اليومية.',
+                'description_en' => 'A practical starter routine for acne-prone skin covering cleansing, treatment, moisturizing, and daily protection.',
+                'usage_ar' => 'يُستخدم الكريم العلاجي تدريجياً وفق تحمّل البشرة، مع الالتزام بالترطيب وواقي الشمس.',
+                'usage_en' => 'Introduce the treatment cream gradually based on tolerance, while maintaining moisturizer and sunscreen.',
+            ],
+            [
+                'name_ar' => 'بكج دعم الشعر وفروة الرأس',
+                'name_en' => 'Hair and Scalp Support Bundle',
+                'price' => 46,
+                'cost' => 31,
+                'category' => 'Bundles',
+                'brand' => 'Hanova Clinic',
+                'catalog_type' => 'bundle',
+                'bundle_product_names' => [
+                    'Hair Strengthening Serum',
+                    'Scalp Support Spray',
+                ],
+                'description_ar' => 'بكج داعم للشعر الضعيف وفروة الرأس مع تعليمات استخدام واضحة، ولا يغني عن تقييم أسباب التساقط المتكرر.',
+                'description_en' => 'A supportive bundle for weak hair and scalp with clear usage guidance; recurring hair loss still needs assessment.',
+                'usage_ar' => 'يطبّق على فروة رأس نظيفة حسب التعليمات، مع التوقف عند حدوث تهيج.',
+                'usage_en' => 'Apply to a clean scalp as directed and stop if irritation occurs.',
+            ],
+            [
+                'name_ar' => 'جلسة تنظيف عميق للبشرة',
+                'name_en' => 'Deep Skin Cleansing Session',
+                'price' => 35,
+                'cost' => 18,
+                'category' => 'Clinic Sessions',
+                'brand' => 'Hanova Clinic',
+                'catalog_type' => 'session',
+                'description_ar' => 'جلسة عيادة مدتها 60 دقيقة لتنظيف البشرة وتقييم احتياجاتها واختيار عناية منزلية مناسبة.',
+                'description_en' => 'A 60-minute clinic session for deep cleansing, skin assessment, and tailored home-care guidance.',
+                'suitable_for_ar' => 'البشرة المجهدة، المسام والدهون المتراكمة والحاجة إلى تنظيف احترافي.',
+                'suitable_for_en' => 'Congested or tired skin, visible pores, and clients who need professional cleansing.',
+            ],
+            [
+                'name_ar' => 'جلسة عناية بالتصبغات',
+                'name_en' => 'Pigmentation Care Session',
+                'price' => 45,
+                'cost' => 24,
+                'category' => 'Clinic Sessions',
+                'brand' => 'Hanova Clinic',
+                'catalog_type' => 'session',
+                'description_ar' => 'جلسة عيادة مدتها 60 دقيقة تُحدد تفاصيلها بعد تقييم نوع التصبغ وحالة البشرة.',
+                'description_en' => 'A 60-minute clinic session tailored after assessing the pigmentation type and current skin condition.',
+                'warnings_ar' => 'نوع الجلسة والمواد المستخدمة يحددان بعد التقييم، وقد يلزم تأجيلها عند تهيج البشرة.',
+                'warnings_en' => 'The procedure and products are selected after assessment and may be postponed if the skin is irritated.',
+            ],
+            [
+                'name_ar' => 'تقييم الشعر وفروة الرأس',
+                'name_en' => 'Hair and Scalp Assessment',
+                'price' => 25,
+                'cost' => 12,
+                'category' => 'Clinic Sessions',
+                'brand' => 'Hanova Clinic',
+                'catalog_type' => 'session',
+                'description_ar' => 'موعد تقييم مدته 30 دقيقة لمراجعة نمط التساقط والعناية الحالية وتحديد الخطوة التالية.',
+                'description_en' => 'A 30-minute assessment to review hair loss patterns, current care, and the appropriate next step.',
+            ],
+            [
+                'name_ar' => 'استشارة تغذية أونلاين',
+                'name_en' => 'Online Nutrition Consultation',
+                'price' => 18,
+                'cost' => 8,
+                'category' => 'Nutrition',
+                'brand' => 'Hanova Nutrition',
+                'catalog_type' => 'nutrition',
+                'description_ar' => 'استشارة تغذية أونلاين مدتها 15 دقيقة لمراجعة الهدف والعادات الحالية وتحديد بداية مناسبة.',
+                'description_en' => 'A 15-minute online nutrition consultation to review goals, current habits, and define a suitable starting point.',
+            ],
+            [
+                'name_ar' => 'خطة تغذية شخصية لمدة شهر',
+                'name_en' => 'Personalized Monthly Nutrition Plan',
+                'price' => 42,
+                'cost' => 20,
+                'category' => 'Nutrition',
+                'brand' => 'Hanova Nutrition',
+                'catalog_type' => 'nutrition',
+                'description_ar' => 'خطة شهرية مرنة تُبنى على الهدف ونمط الحياة، مع بدائل عملية قابلة للتطبيق والمتابعة.',
+                'description_en' => 'A flexible monthly plan based on goals and lifestyle, with practical alternatives and follow-up.',
+                'suitable_for_ar' => 'تنظيم الوجبات، تحسين العادات، إدارة الوزن ودعم أهداف العناية العامة.',
+                'suitable_for_en' => 'Meal organization, habit improvement, weight management, and general wellness goals.',
+            ],
+            [
+                'name_ar' => 'متابعة تغذية أونلاين',
+                'name_en' => 'Online Nutrition Follow-up',
+                'price' => 14,
+                'cost' => 6,
+                'category' => 'Nutrition',
+                'brand' => 'Hanova Nutrition',
+                'catalog_type' => 'nutrition',
+                'description_ar' => 'جلسة متابعة أونلاين لمراجعة الالتزام والنتائج وتعديل الخطة حسب الحاجة.',
+                'description_en' => 'An online follow-up to review adherence and results and adjust the plan as needed.',
+            ],
+        ];
+
+        foreach ($catalogItems as $catalogItem) {
+            $bundleProductNames = $catalogItem['bundle_product_names'] ?? [];
+            unset($catalogItem['bundle_product_names']);
+
+            $catalogItem['bundle_product_ids'] = $bundleProductNames === []
+                ? null
+                : Product::query()
+                    ->whereIn('name_en', $bundleProductNames)
+                    ->pluck('id')
+                    ->values()
+                    ->all();
+            $catalogItem['track_inventory'] = false;
+            $catalogItem['stock_quantity'] = 0;
+            $catalogItem['low_stock_threshold'] = 0;
+
+            Product::updateOrCreate(
+                ['name_en' => $catalogItem['name_en']],
+                $catalogItem,
+            );
+        }
     }
 
 }

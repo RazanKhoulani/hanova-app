@@ -317,6 +317,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _buildBottomBar(ProductModel product) {
+    final isBookable = const [
+      'session',
+      'nutrition',
+    ].contains(product.catalogType);
     final canAdd = !product.tracksInventory || product.isInStock;
     final canIncrease = !product.tracksInventory || _quantity < product.stock;
 
@@ -334,41 +338,44 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove, size: 20),
-                  onPressed: () {
-                    if (_quantity > 1) {
-                      setState(() => _quantity--);
-                    }
-                  },
-                ),
-                Text(
-                  '$_quantity',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+          if (!isBookable)
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 20),
+                    onPressed: () {
+                      if (_quantity > 1) {
+                        setState(() => _quantity--);
+                      }
+                    },
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add, size: 20),
-                  onPressed: canIncrease
-                      ? () => setState(() => _quantity++)
-                      : null,
-                ),
-              ],
+                  Text(
+                    '$_quantity',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 20),
+                    onPressed: canIncrease
+                        ? () => setState(() => _quantity++)
+                        : null,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
+          if (!isBookable) const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: canAdd
+              onPressed: isBookable
+                  ? () => context.push(_bookingRoute(product))
+                  : canAdd
                   ? () {
                       context.read<CartBloc>().add(
                         CartItemAdded(product, _quantity),
@@ -378,7 +385,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     }
                   : null,
               child: Text(
-                _detailLabel(canAdd ? 'add_to_cart' : 'out_of_stock'),
+                isBookable
+                    ? context.tr('book_now')
+                    : _detailLabel(canAdd ? 'add_to_cart' : 'out_of_stock'),
               ),
             ),
           ),
@@ -501,6 +510,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         ],
       ),
     );
+  }
+
+  String _bookingRoute(ProductModel product) {
+    if (product.catalogType == 'nutrition') {
+      return '/appointment?type=online&appointment_type=consultation&specialty=nutrition';
+    }
+
+    return '/appointment?type=clinic&appointment_type=session';
   }
 
   Future<void> _showReviewSheet(ProductModel product) async {

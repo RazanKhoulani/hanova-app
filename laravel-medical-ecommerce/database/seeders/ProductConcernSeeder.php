@@ -27,6 +27,15 @@ class ProductConcernSeeder extends Seeder
             'Cellulite Firming Gel' => ['cellulite'],
             'Hair Strengthening Serum' => ['hair-problems', 'hormonal-imbalance'],
             'Scalp Support Spray' => ['hair-problems'],
+            'Pigmentation Routine Bundle' => ['pigmentation', 'sun-protection'],
+            'Acne Care Starter Bundle' => ['acne', 'pores'],
+            'Hair and Scalp Support Bundle' => ['hair-problems'],
+            'Deep Skin Cleansing Session' => ['cleansing', 'pores'],
+            'Pigmentation Care Session' => ['pigmentation'],
+            'Hair and Scalp Assessment' => ['hair-problems'],
+            'Online Nutrition Consultation' => ['hormonal-imbalance'],
+            'Personalized Monthly Nutrition Plan' => ['hormonal-imbalance', 'cellulite'],
+            'Online Nutrition Follow-up' => ['hormonal-imbalance'],
         ];
 
         foreach ($map as $productName => $concernSlugs) {

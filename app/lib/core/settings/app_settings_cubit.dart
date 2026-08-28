@@ -96,7 +96,7 @@ class AppSettingsCubit extends Cubit<AppSettingsState> {
       final response = await _dioClient.get('/app-settings');
       final root = response.data;
       final data = root is Map ? root['data'] : null;
-      if (data is! Map) return (0, 0, true);
+      if (data is! Map) return (0.0, 0.0, true);
 
       return (
         _asDouble(data['syp_old_per_new']),
@@ -107,7 +107,7 @@ class AppSettingsCubit extends Cubit<AppSettingsState> {
       );
     } catch (_) {
       // Currency selection still works offline with the stored base currency.
-      return (0, 0, true);
+      return (0.0, 0.0, true);
     }
   }
 

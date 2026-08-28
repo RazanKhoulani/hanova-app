@@ -62,6 +62,7 @@ class AppRouter {
         builder: (context, state) => AppointmentScreen(
           initialSessionType: state.uri.queryParameters['type'],
           initialAppointmentType: state.uri.queryParameters['appointment_type'],
+          initialSpecialty: state.uri.queryParameters['specialty'],
           openedFromBot: state.uri.queryParameters['source'] == 'bot',
           appointmentId: int.tryParse(
             state.uri.queryParameters['appointment_id'] ?? '',

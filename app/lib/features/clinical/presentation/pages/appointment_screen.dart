@@ -16,6 +16,7 @@ import '../cubit/appointment_availability_cubit.dart';
 class AppointmentScreen extends StatefulWidget {
   final String? initialSessionType;
   final String? initialAppointmentType;
+  final String? initialSpecialty;
   final bool openedFromBot;
   final int? appointmentId;
   final DateTime? initialDate;
@@ -25,6 +26,7 @@ class AppointmentScreen extends StatefulWidget {
     super.key,
     this.initialSessionType,
     this.initialAppointmentType,
+    this.initialSpecialty,
     this.openedFromBot = false,
     this.appointmentId,
     this.initialDate,
@@ -42,7 +44,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   DateTime? _selectedDay;
   late String _sessionType;
   late String _appointmentType;
-  String _specialty = 'Skin';
+  late String _specialty;
   String? _selectedTime;
 
   @override
@@ -52,6 +54,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     _appointmentType = _normalizedAppointmentType(
       widget.initialAppointmentType,
     );
+    _specialty = _normalizedSpecialty(widget.initialSpecialty);
+    if (_specialty == 'Nutrition') {
+      _sessionType = 'Online';
+      _appointmentType = 'Consultation';
+    }
     _selectedDay = widget.initialDate ?? DateTime.now();
     _focusedDay = _selectedDay!;
     _selectedTime = widget.initialTime;
@@ -138,7 +145,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                       _buildAppointmentTypeSelector(),
+                      _buildAppointmentTypeSelector(),
                       if (_appointmentType == 'Consultation') ...[
                         const SizedBox(height: 24),
                         Text(
@@ -208,9 +215,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                       'date': apiDate,
                                       'time': apiTime,
                                       'type': _sessionType.toLowerCase(),
-                                       'appointment_type': _appointmentType
-                                           .toLowerCase(),
-                                       'specialty': _specialty.toLowerCase(),
+                                      'appointment_type': _appointmentType
+                                          .toLowerCase(),
+                                      'specialty': _specialty.toLowerCase(),
                                       if (availabilityState.doctorId != null)
                                         'doctor_id': availabilityState.doctorId,
                                     };
@@ -363,7 +370,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     const specialties = [
       ('Skin', 'skin_consultation_subject', Icons.face_retouching_natural),
       ('Hair', 'hair_consultation_subject', Icons.content_cut_rounded),
-      ('Nutrition', 'nutrition_consultation_subject', Icons.restaurant_menu_rounded),
+      (
+        'Nutrition',
+        'nutrition_consultation_subject',
+        Icons.restaurant_menu_rounded,
+      ),
     ];
 
     return Wrap(
@@ -635,6 +646,14 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       'consultation' => 'Consultation',
       'session' => 'Session',
       _ => 'Treatment',
+    };
+  }
+
+  String _normalizedSpecialty(String? value) {
+    return switch (value?.toLowerCase()) {
+      'hair' => 'Hair',
+      'nutrition' => 'Nutrition',
+      _ => 'Skin',
     };
   }
 }
