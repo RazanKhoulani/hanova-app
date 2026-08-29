@@ -23,6 +23,18 @@ class ChatController extends Controller
     public function index()
     {
         $conversations = $this->chatService->getUserConversations(auth()->id());
+
+        if (auth()->user()->hasAnyRole(['doctor', 'admin'])) {
+            $conversations->getCollection()->transform(function ($conversation) {
+                $conversation->setAttribute(
+                    'contact_phone',
+                    $conversation->user?->phone,
+                );
+
+                return $conversation;
+            });
+        }
+
         return response()->json(['data' => $conversations]);
     }
 
