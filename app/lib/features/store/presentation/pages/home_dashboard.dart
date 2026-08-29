@@ -30,16 +30,17 @@ class HomeDashboard extends StatefulWidget {
 
 class _HomeDashboardState extends State<HomeDashboard> {
   String? _selectedConcernSlug;
-  String? _selectedCatalogType;
+  String? _selectedCatalogType = 'product';
   final TextEditingController _searchController = TextEditingController();
-  final PageController _bannerController = PageController();
+  final PageController _bannerController = PageController(
+    viewportFraction: 0.94,
+  );
   final ScrollController _categoryController = ScrollController();
   final GlobalKey _productsSectionKey = GlobalKey();
   late Future<HomeDataModel> _homeFuture;
   Timer? _bannerTimer;
   String? _searchQuery;
   bool _hasSearchText = false;
-  bool _showAllProducts = false;
   bool _categoryHintScheduled = false;
   bool _categoryHintCancelled = false;
   int _bannerIndex = 0;
@@ -87,7 +88,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
     setState(() {
       _hasSearchText = value.isNotEmpty;
       _searchQuery = query.isEmpty ? null : query;
-      _showAllProducts = false;
     });
     _fetchProducts();
   }
@@ -95,19 +95,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
   void _clearFilters() {
     setState(() {
       _selectedConcernSlug = null;
-      _selectedCatalogType = null;
+      _selectedCatalogType = 'product';
       _searchQuery = null;
       _hasSearchText = false;
-      _showAllProducts = true;
       _searchController.clear();
-    });
-    _fetchProducts();
-  }
-
-  void _clearCategoryFilter() {
-    setState(() {
-      _selectedConcernSlug = null;
-      _showAllProducts = true;
     });
     _fetchProducts();
   }
@@ -120,7 +111,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   void _scrollToProducts() {
     if (_selectedConcernSlug != null ||
-        _selectedCatalogType != null ||
+        _selectedCatalogType != 'product' ||
         _searchQuery != null) {
       _clearFilters();
     }
@@ -227,7 +218,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               _buildAppBar(context),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -236,19 +227,13 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       _buildCatalogTypeSelector(),
                       if (_selectedCatalogType == 'product') ...[
                         const SizedBox(height: 18),
-                        _buildSectionHeader(
-                          context.tr('categories'),
-                          _clearCategoryFilter,
-                        ),
+                        _buildSectionHeader(context.tr('categories')),
                         const SizedBox(height: 8),
                         _buildCategoriesSection(),
                         const SizedBox(height: 18),
                       ] else
                         const SizedBox(height: 22),
-                      _buildSectionHeader(
-                        _productsSectionTitle(),
-                        _clearFilters,
-                      ),
+                      _buildSectionHeader(_productsSectionTitle()),
                       const SizedBox(height: 16),
                       Container(
                         key: _productsSectionKey,
@@ -417,15 +402,17 @@ class _HomeDashboardState extends State<HomeDashboard> {
             return Column(
               children: [
                 SizedBox(
-                  height: 166,
+                  height: 156,
                   child: PageView.builder(
                     controller: _bannerController,
                     itemCount: slides.length,
                     onPageChanged: (index) {
                       if (mounted) setState(() => _bannerIndex = index);
                     },
-                    itemBuilder: (context, index) =>
-                        _HomeBannerCard(data: slides[index]),
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: _HomeBannerCard(data: slides[index]),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -455,31 +442,24 @@ class _HomeDashboardState extends State<HomeDashboard> {
     );
   }
 
-  Widget _buildSectionHeader(String title, VoidCallback onSeeAll) {
+  Widget _buildSectionHeader(String title) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(99),
+          ),
+        ),
+        const SizedBox(width: 8),
         Text(
           title,
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
-          ),
-        ),
-        TextButton(
-          onPressed: onSeeAll,
-          style: TextButton.styleFrom(
-            minimumSize: const Size(0, 32),
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            context.tr('see_all'),
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
           ),
         ),
       ],
@@ -525,7 +505,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
         _scheduleCategoryScrollHint(categories.length);
 
         return SizedBox(
-          height: 92,
+          height: 88,
           child: Stack(
             children: [
               NotificationListener<UserScrollNotification>(
@@ -553,7 +533,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
                           _selectedConcernSlug = isSelected
                               ? null
                               : filterValue;
-                          _showAllProducts = false;
                         });
                         context.read<StoreBloc>().add(
                           StoreFetchProducts(
@@ -575,11 +554,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
               if (categories.length >= 5)
                 PositionedDirectional(
                   end: 0,
-                  top: 10,
+                  top: 8,
                   child: IgnorePointer(
                     child: Container(
                       width: 30,
-                      height: 52,
+                      height: 48,
                       alignment: AlignmentDirectional.centerEnd,
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
@@ -607,7 +586,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   Widget _buildCatalogTypeSelector() {
     final options = [
-      (null, context.tr('all_catalog')),
       ('product', context.tr('care_products')),
       ('bundle', context.tr('bundles')),
       ('session', context.tr('care_sessions')),
@@ -615,7 +593,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     ];
 
     return SizedBox(
-      height: 40,
+      height: 42,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -628,6 +606,12 @@ class _HomeDashboardState extends State<HomeDashboard> {
             label: Text(option.$2),
             selected: isSelected,
             selectedColor: AppColors.primarySoft,
+            showCheckmark: isSelected,
+            checkmarkColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             side: BorderSide(
               color: isSelected ? AppColors.primary : AppColors.divider,
             ),
@@ -641,7 +625,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 if (option.$1 != 'product') {
                   _selectedConcernSlug = null;
                 }
-                _showAllProducts = false;
               });
               _fetchProducts();
             },
@@ -664,24 +647,20 @@ class _HomeDashboardState extends State<HomeDashboard> {
             );
           }
 
-          final isTopProductsView =
-              _selectedConcernSlug == null &&
-              _selectedCatalogType == null &&
-              _searchQuery == null &&
-              !_showAllProducts;
-          final visibleProducts = isTopProductsView
-              ? state.products
-                    .where((product) => product.catalogType == 'product')
-                    .take(12)
-                    .toList(growable: false)
-              : state.products;
+          final visibleProducts = state.products
+              .where(
+                (product) =>
+                    _selectedCatalogType == null ||
+                    product.catalogType == _selectedCatalogType,
+              )
+              .toList(growable: false);
 
           return GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.68,
+              childAspectRatio: 0.76,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -735,7 +714,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.divider, width: 0.6),
           boxShadow: const [
             BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
@@ -745,20 +724,20 @@ class _HomeDashboardState extends State<HomeDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 11,
+              flex: 10,
               child: Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 child: Stack(
                   children: [
                     Positioned.fill(
                       child: Padding(
-                        padding: const EdgeInsets.all(9),
+                        padding: const EdgeInsets.all(8),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(17),
+                          borderRadius: BorderRadius.circular(15),
                           child: ColoredBox(
                             color: Colors.white.withValues(alpha: 0.86),
                             child: product.image != null
@@ -854,7 +833,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               ),
             ),
             Expanded(
-              flex: 9,
+              flex: 8,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
                 child: Column(
@@ -867,11 +846,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
                           product.name,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 13,
                             height: 1.35,
                           ),
-                          maxLines: 3,
-                          overflow: TextOverflow.fade,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -1121,7 +1100,7 @@ class _HomeBannerCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1FA24A63),
@@ -1137,12 +1116,12 @@ class _HomeBannerCard extends StatelessWidget {
             bottom: -14,
             child: Icon(
               data.icon,
-              size: 92,
+              size: 82,
               color: Colors.white.withValues(alpha: 0.14),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1172,7 +1151,7 @@ class _HomeBannerCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1232,7 +1211,7 @@ class _CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 74,
+      width: 70,
       child: Column(
         children: [
           AnimatedScale(
@@ -1242,8 +1221,8 @@ class _CategoryChip extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 240),
               curve: Curves.easeOutCubic,
-              width: 52,
-              height: 52,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : Colors.white,
                 shape: BoxShape.circle,
@@ -1272,7 +1251,7 @@ class _CategoryChip extends StatelessWidget {
             duration: const Duration(milliseconds: 180),
             style: TextStyle(
               height: 1.1,
-              fontSize: 10.5,
+              fontSize: 10,
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
               color: isSelected ? AppColors.primaryDark : AppColors.textPrimary,
             ),

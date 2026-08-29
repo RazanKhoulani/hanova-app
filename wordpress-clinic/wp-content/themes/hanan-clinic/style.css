@@ -2364,3 +2364,62 @@ h3 {
         transform: none;
     }
 }
+
+/* Hanova design system: use one compact card language across the public theme. */
+:root {
+    --shadow: 0 18px 46px rgba(78, 50, 45, 0.09);
+    --shadow-soft: 0 11px 30px rgba(78, 50, 45, 0.06);
+    --radius-md: 24px;
+}
+
+.site-header {
+    box-shadow: 0 8px 28px rgba(78, 50, 45, 0.04);
+}
+
+.services-grid,
+.products-grid,
+.results-grid {
+    gap: 18px;
+}
+
+.service-card,
+.result-card,
+.product-visual,
+.offer-card,
+.app-card {
+    border-radius: var(--radius-md);
+}
+
+.product-visual {
+    aspect-ratio: 0.96 / 1;
+}
+
+.product-visual img {
+    object-fit: contain;
+    padding: 10px;
+}
+
+.product-copy h3 {
+    min-height: 2.8em;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    white-space: normal;
+}
+
+@media (max-width: 620px) {
+    .site-container {
+        width: min(calc(100% - 28px), var(--container));
+    }
+
+    .services-grid,
+    .products-grid,
+    .results-grid {
+        gap: 12px;
+    }
+
+    .product-visual {
+        aspect-ratio: 0.9 / 1;
+    }
+}

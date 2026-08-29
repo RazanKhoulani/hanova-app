@@ -1478,3 +1478,78 @@ textarea.form-control {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Hanova design system: compact, consistent surfaces across admin screens. */
+:root {
+    --clinic-radius: 20px;
+    --clinic-shadow: 0 16px 42px rgba(78, 50, 45, 0.08);
+}
+
+body {
+    background:
+        radial-gradient(circle at 8% 4%, rgba(251, 234, 240, 0.72), transparent 25rem),
+        radial-gradient(circle at 92% 18%, rgba(247, 238, 232, 0.72), transparent 28rem),
+        var(--clinic-background);
+}
+
+.admin-content {
+    padding-block-start: 24px;
+}
+
+.card,
+.panel-card,
+.metric-card,
+.quick-action-card {
+    border-radius: var(--clinic-radius);
+}
+
+.card-header,
+.panel-heading {
+    padding-block: 17px;
+}
+
+.dashboard-hero {
+    border-radius: 26px;
+    box-shadow: 0 20px 48px rgba(162, 74, 99, 0.14);
+}
+
+.metric-card {
+    min-height: 142px;
+    padding: 18px;
+}
+
+.panel-card {
+    box-shadow: var(--clinic-shadow);
+}
+
+.dashboard-list-item {
+    min-height: 64px;
+    padding-inline: 18px;
+}
+
+.empty-panel {
+    min-height: 190px;
+}
+
+.quick-action-card {
+    min-height: 70px;
+    padding: 13px;
+}
+
+@media (max-width: 767.98px) {
+    .admin-content {
+        padding-block-start: 18px;
+    }
+
+    .dashboard-hero {
+        border-radius: 22px;
+    }
+
+    .metric-card {
+        min-height: 126px;
+    }
+
+    .panel-heading {
+        padding-inline: 17px;
+    }
+}
