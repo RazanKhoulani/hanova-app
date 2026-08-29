@@ -4,7 +4,7 @@ abstract class CommunicationRepository {
   Future<int> getConversationId({int? consultationId});
   Future<List<MessageModel>> getChatMessages({int? consultationId});
   Future<void> sendChatMessage(String text, {int? consultationId});
-  Future<void> sendChatAttachment(
+  Future<MessageModel> sendChatAttachment(
     String filePath, {
     String? message,
     int? consultationId,

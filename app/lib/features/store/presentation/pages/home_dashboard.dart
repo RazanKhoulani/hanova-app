@@ -104,6 +104,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
     _fetchProducts();
   }
 
+  void _clearCategoryFilter() {
+    setState(() {
+      _selectedConcernSlug = null;
+      _showAllProducts = true;
+    });
+    _fetchProducts();
+  }
+
   void _reloadHome() {
     setState(() {
       _homeFuture = _requestHomeData(force: true);
@@ -226,14 +234,17 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       _buildBanner(),
                       const SizedBox(height: 14),
                       _buildCatalogTypeSelector(),
-                      const SizedBox(height: 18),
-                      _buildSectionHeader(
-                        context.tr('categories'),
-                        _clearFilters,
-                      ),
-                      const SizedBox(height: 8),
-                      _buildCategoriesSection(),
-                      const SizedBox(height: 18),
+                      if (_selectedCatalogType == 'product') ...[
+                        const SizedBox(height: 18),
+                        _buildSectionHeader(
+                          context.tr('categories'),
+                          _clearCategoryFilter,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildCategoriesSection(),
+                        const SizedBox(height: 18),
+                      ] else
+                        const SizedBox(height: 22),
                       _buildSectionHeader(
                         _productsSectionTitle(),
                         _clearFilters,
@@ -627,6 +638,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
             onSelected: (_) {
               setState(() {
                 _selectedCatalogType = option.$1;
+                if (option.$1 != 'product') {
+                  _selectedConcernSlug = null;
+                }
                 _showAllProducts = false;
               });
               _fetchProducts();

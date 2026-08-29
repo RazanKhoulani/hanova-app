@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -32,7 +32,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final PusherChannelsFlutter _pusher = PusherChannelsFlutter.getInstance();
   String? _pusherChannelName;
   bool _realtimeStarted = false;
-  Timer? _messageRefreshTimer;
 
   @override
   void initState() {
@@ -42,22 +41,7 @@ class _ChatScreenState extends State<ChatScreen> {
         CommunicationFetchChatMessages(consultationId: widget.consultationId),
       );
       _initRealtime();
-      _startMessageRefreshFallback();
     }
-  }
-
-  void _startMessageRefreshFallback() {
-    // Pusher is immediate when connected; polling keeps an open chat current
-    // if a mobile network temporarily drops the private-channel subscription.
-    _messageRefreshTimer ??= Timer.periodic(const Duration(seconds: 8), (_) {
-      if (!mounted) return;
-      context.read<CommunicationBloc>().add(
-        CommunicationFetchChatMessages(
-          showLoading: false,
-          consultationId: widget.consultationId,
-        ),
-      );
-    });
   }
 
   Future<void> _initRealtime() async {
@@ -101,11 +85,34 @@ class _ChatScreenState extends State<ChatScreen> {
   void _handleRealtimeEvent(PusherEvent event) {
     if (!mounted || event.channelName != _pusherChannelName) return;
 
-    final eventName = event.eventName.replaceFirst('.', '');
+    final eventName = event.eventName.startsWith('.')
+        ? event.eventName.substring(1)
+        : event.eventName;
     if (eventName == 'message.sent') {
+      dynamic payload = event.data;
+      if (payload is String && payload.isNotEmpty) {
+        try {
+          payload = jsonDecode(payload);
+        } catch (_) {
+          return;
+        }
+      }
+      if (payload is! Map) return;
+
+      final rawMessage = payload['message'];
+      if (rawMessage is! Map) return;
+
+      final messagePayload = Map<String, dynamic>.from(rawMessage);
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        final senderId = messagePayload['sender_id'];
+        messagePayload['is_me'] = senderId?.toString() ==
+            authState.user.id.toString();
+      }
+
       context.read<CommunicationBloc>().add(
-        CommunicationFetchChatMessages(
-          showLoading: false,
+        CommunicationRealtimeChatMessageReceived(
+          MessageModel.fromJson(messagePayload),
           consultationId: widget.consultationId,
         ),
       );
@@ -149,7 +156,6 @@ class _ChatScreenState extends State<ChatScreen> {
     if (channelName != null) {
       _pusher.unsubscribe(channelName: channelName);
     }
-    _messageRefreshTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -164,7 +170,6 @@ class _ChatScreenState extends State<ChatScreen> {
           CommunicationFetchChatMessages(consultationId: widget.consultationId),
         );
         _initRealtime();
-        _startMessageRefreshFallback();
       },
       builder: (context, authState) {
         if (authState is AuthLoading || authState is AuthInitial) {

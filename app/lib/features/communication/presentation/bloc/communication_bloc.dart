@@ -16,6 +16,16 @@ class CommunicationFetchChatMessages extends CommunicationEvent {
   });
 }
 
+class CommunicationRealtimeChatMessageReceived extends CommunicationEvent {
+  final MessageModel message;
+  final int? consultationId;
+
+  CommunicationRealtimeChatMessageReceived(
+    this.message, {
+    this.consultationId,
+  });
+}
+
 class CommunicationInitializeBot extends CommunicationEvent {
   final bool loadHistory;
   final String? productName;
@@ -90,6 +100,9 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
 
   CommunicationBloc(this._repository) : super(CommunicationInitial()) {
     on<CommunicationFetchChatMessages>(_onFetchChatMessages);
+    on<CommunicationRealtimeChatMessageReceived>(
+      _onRealtimeChatMessageReceived,
+    );
     on<CommunicationInitializeBot>(_onInitializeBot);
     on<CommunicationSendChatMessage>(_onSendChatMessage);
     on<CommunicationSendChatAttachment>(_onSendChatAttachment);
@@ -117,6 +130,41 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
     } catch (e) {
       emit(CommunicationFailure(ApiErrorMessage.from(e)));
     }
+  }
+
+  void _onRealtimeChatMessageReceived(
+    CommunicationRealtimeChatMessageReceived event,
+    Emitter<CommunicationState> emit,
+  ) {
+    if (_activeChatConsultationId != event.consultationId) return;
+
+    final messageId = event.message.id;
+    if (messageId != null &&
+        _chatMessages.any((message) => message.id == messageId)) {
+      return;
+    }
+
+    if (event.message.isMe) {
+      final pendingIndex = _chatMessages.indexWhere(
+        (message) =>
+            message.id == null &&
+            message.isMe &&
+            message.text == event.message.text &&
+            message.timestamp
+                    .difference(event.message.timestamp)
+                    .inSeconds
+                    .abs() <=
+                30,
+      );
+      if (pendingIndex >= 0) {
+        _chatMessages[pendingIndex] = event.message;
+        emit(CommunicationChatLoaded(List.from(_chatMessages)));
+        return;
+      }
+    }
+
+    _chatMessages.add(event.message);
+    emit(CommunicationChatLoaded(List.from(_chatMessages)));
   }
 
   Future<void> _onInitializeBot(
@@ -182,17 +230,13 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
     Emitter<CommunicationState> emit,
   ) async {
     try {
-      await _repository.sendChatAttachment(
+      final message = await _repository.sendChatAttachment(
         event.filePath,
         message: event.message,
         consultationId: event.consultationId,
       );
-      add(
-        CommunicationFetchChatMessages(
-          showLoading: false,
-          consultationId: event.consultationId,
-        ),
-      );
+      _chatMessages.add(message);
+      emit(CommunicationChatLoaded(List.from(_chatMessages)));
     } catch (e) {
       emit(CommunicationFailure(ApiErrorMessage.from(e)));
     }

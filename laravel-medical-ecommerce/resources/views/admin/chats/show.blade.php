@@ -3,6 +3,12 @@
 @section('title', __('admin.chat_with', ['name' => $conversation->user->name]))
 
 @section('content')
+@php
+    $whatsappPhone = preg_replace('/\D+/', '', (string) ($conversation->user->phone ?? ''));
+    if (str_starts_with($whatsappPhone, '00')) {
+        $whatsappPhone = substr($whatsappPhone, 2);
+    }
+@endphp
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center">
         <a href="{{ route('admin.chats.index') }}" class="btn btn-outline-secondary btn-sm me-3">
@@ -14,9 +20,16 @@
 
 <div class="card shadow-sm border-0 d-flex flex-column" style="height: 70vh;">
     <div class="card-header bg-white py-3 border-bottom">
-        <div class="d-flex align-items-center">
-            <span id="chat-connection-dot" class="rounded-circle bg-warning me-2" style="width: 10px; height: 10px;"></span>
-            <span id="chat-connection-status" class="text-muted small">{{ __('admin.realtime_connecting') }}</span>
+        <div class="d-flex align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center">
+                <span id="chat-connection-dot" class="rounded-circle bg-warning me-2" style="width: 10px; height: 10px;"></span>
+                <span id="chat-connection-status" class="text-muted small">{{ __('admin.realtime_connecting') }}</span>
+            </div>
+            @if($whatsappPhone !== '')
+                <a href="https://wa.me/{{ $whatsappPhone }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success">
+                    <i class="fab fa-whatsapp me-1"></i> {{ __('admin.open_whatsapp') }}
+                </a>
+            @endif
         </div>
     </div>
     

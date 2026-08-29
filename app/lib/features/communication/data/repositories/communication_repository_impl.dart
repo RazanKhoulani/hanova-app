@@ -30,12 +30,12 @@ class CommunicationRepositoryImpl implements CommunicationRepository {
   }
 
   @override
-  Future<void> sendChatAttachment(
+  Future<MessageModel> sendChatAttachment(
     String filePath, {
     String? message,
     int? consultationId,
   }) async {
-    await _remoteDataSource.sendChatAttachment(
+    return _remoteDataSource.sendChatAttachment(
       filePath,
       message: message,
       consultationId: consultationId,

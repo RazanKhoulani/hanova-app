@@ -8,7 +8,7 @@ abstract class CommunicationRemoteDataSource {
   Future<int> getConversationId({int? consultationId});
   Future<List<MessageModel>> getChatMessages({int? consultationId});
   Future<void> sendChatMessage(String text, {int? consultationId});
-  Future<void> sendChatAttachment(
+  Future<MessageModel> sendChatAttachment(
     String filePath, {
     String? message,
     int? consultationId,
@@ -150,10 +150,19 @@ class CommunicationRemoteDataSourceImpl
       if (message != null && message.trim().isNotEmpty)
         'message': message.trim(),
     });
-    await _dioClient.post(
+    final response = await _dioClient.post(
       '${ApiConstants.chatMessages}$conversationId/messages',
       data: data,
     );
+
+    final payload = response.data is Map
+        ? (response.data['data'] ?? response.data)
+        : <String, dynamic>{};
+    if (payload is! Map) {
+      throw StateError('The attachment response did not contain a message.');
+    }
+
+    return MessageModel.fromJson(Map<String, dynamic>.from(payload));
   }
 
   @override

@@ -186,5 +186,6 @@ return [
     'realtime_reconnecting' => 'Reconnecting...',
     'realtime_unavailable' => 'Real-time connection unavailable',
     'write_message' => 'Type your message here...',
+    'open_whatsapp' => 'Message on WhatsApp',
     'message_sent_successfully' => 'Message sent successfully.',
 ];

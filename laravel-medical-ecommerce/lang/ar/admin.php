@@ -169,6 +169,7 @@ return [
     'realtime_reconnecting' => 'جارٍ إعادة الاتصال...',
     'realtime_unavailable' => 'الاتصال المباشر غير متاح',
     'write_message' => 'اكتبي رسالتك هنا...',
+    'open_whatsapp' => 'مراسلة عبر واتساب',
     'message_sent_successfully' => 'تم إرسال الرسالة بنجاح.',
     'reviews' => 'التقييمات',
     'reviews_hint' => 'تقييمات العملاء بعد استلام الطلب.',

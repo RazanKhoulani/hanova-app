@@ -3,6 +3,12 @@
 @section('title', 'Consultation #' . $consultation->id)
 
 @section('content')
+@php
+    $whatsappPhone = preg_replace('/\D+/', '', (string) ($consultation->user->phone ?? ''));
+    if (str_starts_with($whatsappPhone, '00')) {
+        $whatsappPhone = substr($whatsappPhone, 2);
+    }
+@endphp
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Consultation Details</h2>
     <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary">
@@ -19,6 +25,11 @@
                 <p><strong>Type:</strong> {{ ucfirst($consultation->type) }}</p>
                 <p><strong>Requested At:</strong> {{ $consultation->created_at }}</p>
                 <p><strong>User:</strong> {{ $consultation->user->name ?? 'Unknown' }} ({{ $consultation->user->phone ?? 'N/A' }})</p>
+                @if($whatsappPhone !== '')
+                    <a href="https://wa.me/{{ $whatsappPhone }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success mb-3">
+                        <i class="fab fa-whatsapp me-1"></i> {{ __('admin.open_whatsapp') }}
+                    </a>
+                @endif
                 <p><strong>Assigned Doctor:</strong> {{ $consultation->doctor->name ?? 'Unassigned' }}</p>
             </div>
         </div>
