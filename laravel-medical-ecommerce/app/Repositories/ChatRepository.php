@@ -12,7 +12,7 @@ class ChatRepository
         return Conversation::where('user_id', $userId)
             ->orWhere('doctor_id', $userId)
             ->with([
-                'user:id,name',
+                'user:id,name,phone',
                 'doctor:id,name',
                 'messages' => function($q) {
                     $q->latest()->limit(1); // load last message

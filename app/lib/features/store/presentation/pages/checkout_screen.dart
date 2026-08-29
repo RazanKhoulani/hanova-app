@@ -680,7 +680,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     'recipient_phone': 'Recipient phone',
     'qadmous_required': 'Please complete all Qadmous shipping details.',
     'qadmous_fee_note':
-        'The clinic will confirm the Qadmous shipping fee and tracking number.',
+        'The clinic will confirm the Qadmous shipping fee and tracking number. No payment receipt is needed for cash on delivery.',
   };
 
   static const _arabicLabels = {
@@ -703,6 +703,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     'recipient_name': 'اسم المستلم',
     'recipient_phone': 'رقم هاتف المستلم',
     'qadmous_required': 'يرجى تعبئة جميع معلومات شحن قدموس.',
-    'qadmous_fee_note': 'تؤكد العيادة أجور الشحن ورقم التتبع بعد تجهيز الطلب.',
+    'qadmous_fee_note':
+        'تؤكد العيادة أجور الشحن ورقم التتبع بعد تجهيز الطلب. لا حاجة لرفع إشعار دفع مع الدفع عند الاستلام.',
   };
 }

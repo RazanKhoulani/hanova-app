@@ -148,10 +148,19 @@ class OrderService
                 $orderData['delivery_user_id'] = $deliveryUserId;
             }
             if ($deliveryMethod === 'qadmous') {
-                $orderData['qadmous_governorate'] = $data['qadmous_governorate'];
-                $orderData['qadmous_branch'] = $data['qadmous_branch'];
-                $orderData['recipient_name'] = $data['recipient_name'];
-                $orderData['recipient_phone'] = $data['recipient_phone'];
+                $qadmousFields = [
+                    'qadmous_governorate' => $data['qadmous_governorate'],
+                    'qadmous_branch' => $data['qadmous_branch'],
+                    'recipient_name' => $data['recipient_name'],
+                    'recipient_phone' => $data['recipient_phone'],
+                ];
+
+                foreach ($qadmousFields as $column => $value) {
+                    if (Schema::hasColumn('orders', $column)) {
+                        $orderData[$column] = $value;
+                    }
+                }
+
                 $orderData['shipping_address'] = $data['qadmous_governorate'].' - '.$data['qadmous_branch'];
             }
 

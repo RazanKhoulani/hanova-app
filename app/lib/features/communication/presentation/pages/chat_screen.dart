@@ -48,19 +48,27 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initRealtime() async {
-    if (_realtimeStarted || ApiConstants.pusherKey.isEmpty) return;
+    if (_realtimeStarted) return;
     _realtimeStarted = true;
 
     try {
-      final conversationId = await sl<CommunicationRepository>()
-          .getConversationId(consultationId: widget.consultationId);
+      final repository = sl<CommunicationRepository>();
+      final conversationId = await repository.getConversationId(
+        consultationId: widget.consultationId,
+      );
       if (_canContactOnWhatsApp) {
-        final contactPhone = await sl<CommunicationRepository>()
-            .getConversationPhone(consultationId: widget.consultationId);
+        final contactPhone = await repository.getConversationPhone(
+          consultationId: widget.consultationId,
+        );
         if (mounted) {
           setState(() => _contactPhone = contactPhone);
         }
       }
+
+      // WhatsApp contact data is independent from Pusher. This keeps the
+      // staff-only action available while realtime credentials are configured.
+      if (ApiConstants.pusherKey.isEmpty) return;
+
       final channelName = 'private-conversation.$conversationId';
       _pusherChannelName = channelName;
 
@@ -109,7 +117,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       if (payload is! Map) return;
 
-      final rawMessage = payload['message'];
+      final rawMessage = payload['message'] is Map ? payload['message'] : payload;
       if (rawMessage is! Map) return;
 
       final messagePayload = Map<String, dynamic>.from(rawMessage);

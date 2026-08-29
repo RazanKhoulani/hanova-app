@@ -23,10 +23,6 @@ class ProfileScreen extends StatelessWidget {
             .watch<AppSettingsCubit>()
             .state
             .languageLabel;
-        final currencyLabel = context
-            .watch<AppSettingsCubit>()
-            .state
-            .currencyLabel;
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -73,12 +69,6 @@ class ProfileScreen extends StatelessWidget {
                     context.tr('language'),
                     () => _showLanguageSheet(context),
                     trailingText: languageLabel,
-                  ),
-                  _buildMenuItem(
-                    Icons.currency_exchange_rounded,
-                    context.tr('display_currency'),
-                    () => _showCurrencySheet(context),
-                    trailingText: currencyLabel,
                   ),
                   _buildMenuItem(
                     Icons.security_rounded,
@@ -336,87 +326,6 @@ class ProfileScreen extends StatelessWidget {
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
       onTap: () {
         settingsCubit.setLanguage(code);
-        Navigator.pop(context);
-      },
-    );
-  }
-
-  void _showCurrencySheet(BuildContext context) {
-    final settingsCubit = context.read<AppSettingsCubit>();
-    final currentCurrency = settingsCubit.state.currency;
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.tr('display_currency'),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                context.tr('currency_rate_note'),
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              _buildCurrencyOption(
-                context: sheetContext,
-                label: context.tr('currency_syp_old'),
-                currency: DisplayCurrency.sypOld,
-                isSelected: currentCurrency == DisplayCurrency.sypOld,
-                settingsCubit: settingsCubit,
-              ),
-              _buildCurrencyOption(
-                context: sheetContext,
-                label: context.tr('currency_syp_new'),
-                currency: DisplayCurrency.sypNew,
-                isSelected: currentCurrency == DisplayCurrency.sypNew,
-                settingsCubit: settingsCubit,
-              ),
-              _buildCurrencyOption(
-                context: sheetContext,
-                label: context.tr('currency_usd'),
-                currency: DisplayCurrency.usd,
-                isSelected: currentCurrency == DisplayCurrency.usd,
-                settingsCubit: settingsCubit,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCurrencyOption({
-    required BuildContext context,
-    required String label,
-    required DisplayCurrency currency,
-    required bool isSelected,
-    required AppSettingsCubit settingsCubit,
-  }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        isSelected
-            ? Icons.radio_button_checked_rounded
-            : Icons.radio_button_off_rounded,
-        color: isSelected ? AppColors.primary : AppColors.textLight,
-      ),
-      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-      onTap: () {
-        settingsCubit.setCurrency(currency);
         Navigator.pop(context);
       },
     );

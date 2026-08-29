@@ -105,7 +105,7 @@ class AppLocalizations {
       'apple_pay': 'Apple Pay',
       'gateway_needed': 'Needs a payment gateway before activation.',
       'payment_info':
-          'Your order will be confirmed now, and payment is cash on delivery or pickup.',
+          'Your order will be confirmed now. Pay cash when you receive it or pick it up; no payment receipt is needed.',
       'order_summary': 'Order Summary',
       'items': 'Items',
       'delivery': 'Delivery',
@@ -301,7 +301,7 @@ class AppLocalizations {
       'apple_pay': 'Apple Pay',
       'gateway_needed': 'تحتاج بوابة دفع قبل التفعيل.',
       'payment_info':
-          'سيتم تأكيد الطلب الآن، والدفع نقداً عند التوصيل أو الاستلام.',
+          'سيتم تأكيد الطلب الآن. الدفع نقداً عند التوصيل أو الاستلام، ولا حاجة لرفع إشعار دفع.',
       'order_summary': 'ملخص الطلب',
       'items': 'المنتجات',
       'delivery': 'التوصيل',

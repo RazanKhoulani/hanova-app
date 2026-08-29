@@ -380,8 +380,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       context.read<CartBloc>().add(
                         CartItemAdded(product, _quantity),
                       );
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      context.push('/cart');
+                      final messenger = ScaffoldMessenger.of(context);
+                      messenger.hideCurrentSnackBar();
+                      messenger.showSnackBar(
+                        SnackBar(
+                          duration: const Duration(seconds: 2),
+                          content: Text(context.readTr('added_to_cart')),
+                          action: SnackBarAction(
+                            label: context.readTr('view_cart'),
+                            textColor: AppColors.primaryLight,
+                            onPressed: () {
+                              messenger.hideCurrentSnackBar();
+                              context.push('/cart');
+                            },
+                          ),
+                        ),
+                      );
                     }
                   : null,
               child: Text(

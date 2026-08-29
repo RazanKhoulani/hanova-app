@@ -58,14 +58,12 @@ class AppSettingsCubit extends Cubit<AppSettingsState> {
 
   Future<void> load() async {
     final languageCode = await _storage.read(key: 'app_locale') ?? 'ar';
-    final currencyValue =
-        await _storage.read(key: 'display_currency') ?? 'syp_old';
     _apiInterceptor.setLocale(languageCode);
     final pricing = await _loadPricing();
     emit(
       AppSettingsState(
         locale: Locale(languageCode),
-        currency: _currencyFromStorage(currencyValue),
+        currency: pricing.$4,
         sypOldPerNew: pricing.$1,
         sypOldPerUsd: pricing.$2,
         showDualSyp: pricing.$3,
@@ -79,24 +77,14 @@ class AppSettingsCubit extends Cubit<AppSettingsState> {
     emit(state.copyWith(locale: Locale(languageCode)));
   }
 
-  Future<void> setCurrency(DisplayCurrency currency) async {
-    await _storage.write(
-      key: 'display_currency',
-      value: switch (currency) {
-        DisplayCurrency.sypOld => 'syp_old',
-        DisplayCurrency.sypNew => 'syp_new',
-        DisplayCurrency.usd => 'usd',
-      },
-    );
-    emit(state.copyWith(currency: currency));
-  }
-
-  Future<(double, double, bool)> _loadPricing() async {
+  Future<(double, double, bool, DisplayCurrency)> _loadPricing() async {
     try {
       final response = await _dioClient.get('/app-settings');
       final root = response.data;
       final data = root is Map ? root['data'] : null;
-      if (data is! Map) return (0.0, 0.0, true);
+      if (data is! Map) {
+        return (0.0, 0.0, true, DisplayCurrency.sypOld);
+      }
 
       return (
         _asDouble(data['syp_old_per_new']),
@@ -104,14 +92,14 @@ class AppSettingsCubit extends Cubit<AppSettingsState> {
         data['show_dual_syp'] == true ||
             data['show_dual_syp'] == 1 ||
             data['show_dual_syp'] == '1',
+        _currencyFromServer(data['display_currency']),
       );
     } catch (_) {
-      // Currency selection still works offline with the stored base currency.
-      return (0.0, 0.0, true);
+      return (0.0, 0.0, true, DisplayCurrency.sypOld);
     }
   }
 
-  DisplayCurrency _currencyFromStorage(String value) => switch (value) {
+  DisplayCurrency _currencyFromServer(dynamic value) => switch (value) {
     'syp_new' => DisplayCurrency.sypNew,
     'usd' => DisplayCurrency.usd,
     _ => DisplayCurrency.sypOld,

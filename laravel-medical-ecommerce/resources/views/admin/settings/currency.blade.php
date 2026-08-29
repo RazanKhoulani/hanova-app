@@ -46,6 +46,16 @@
                 >
                 <small class="form-text text-muted">{{ __('admin.old_syp_per_usd_hint') }}</small>
             </div>
+
+            <div class="col-md-6">
+                <label for="display_currency">{{ __('admin.display_currency') }}</label>
+                <select id="display_currency" name="display_currency" class="form-select" required>
+                    <option value="syp_old" @selected(old('display_currency', $settings['display_currency']) === 'syp_old')>{{ __('admin.currency_syp_old') }}</option>
+                    <option value="syp_new" @selected(old('display_currency', $settings['display_currency']) === 'syp_new')>{{ __('admin.currency_syp_new') }}</option>
+                    <option value="usd" @selected(old('display_currency', $settings['display_currency']) === 'usd')>{{ __('admin.currency_usd') }}</option>
+                </select>
+                <small class="form-text text-muted">{{ __('admin.display_currency_hint') }}</small>
+            </div>
             </div>
 
         <div class="form-check form-switch mt-4">

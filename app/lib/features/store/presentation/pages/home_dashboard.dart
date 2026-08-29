@@ -735,9 +735,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   children: [
                     Positioned.fill(
                       child: Padding(
-                        padding: const EdgeInsets.all(8),
+                        padding: EdgeInsets.zero,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
                           child: ColoredBox(
                             color: Colors.white.withValues(alpha: 0.86),
                             child: product.image != null
@@ -745,7 +747,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                                     imageUrl: product.image!,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    fit: BoxFit.contain,
+                                    fit: BoxFit.cover,
                                     memCacheWidth: 420,
                                     fadeInDuration: const Duration(
                                       milliseconds: 180,

@@ -22,6 +22,7 @@ class AppSettingsController extends Controller
     public function update(Request $request)
     {
         $data = $request->validate([
+            'display_currency' => ['required', 'string', 'in:syp_old,syp_new,usd'],
             'syp_old_per_new' => ['required', 'numeric', 'gt:0'],
             'syp_old_per_usd' => ['required', 'numeric', 'gt:0'],
             'show_dual_syp' => ['nullable', 'boolean'],
@@ -34,6 +35,7 @@ class AppSettingsController extends Controller
         ]);
 
         $values = [
+            'display_currency' => $data['display_currency'],
             'syp_old_per_new' => (string) $data['syp_old_per_new'],
             'syp_old_per_usd' => (string) $data['syp_old_per_usd'],
             'show_dual_syp' => $request->boolean('show_dual_syp') ? '1' : '0',

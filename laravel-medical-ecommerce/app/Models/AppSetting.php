@@ -18,6 +18,7 @@ class AppSetting extends Model
     public static function pricingDefaults(): array
     {
         return [
+            'display_currency' => 'syp_old',
             'syp_old_per_new' => '0',
             'syp_old_per_usd' => '0',
             'show_dual_syp' => '1',

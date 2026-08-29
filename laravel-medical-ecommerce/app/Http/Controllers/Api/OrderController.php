@@ -8,6 +8,8 @@ use App\Http\Requests\Order\CheckoutRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class OrderController extends Controller
 {
@@ -32,7 +34,18 @@ class OrderController extends Controller
      */
     public function store(CheckoutRequest $request)
     {
-        $order = $this->orderService->checkout(auth()->id(), $request->validated());
+        try {
+            $order = $this->orderService->checkout(auth()->id(), $request->validated());
+        } catch (Throwable $exception) {
+            Log::error('Order checkout failed.', [
+                'user_id' => auth()->id(),
+                'delivery_method' => $request->input('delivery_method'),
+                'payment_method' => $request->input('payment_method'),
+                'exception' => $exception,
+            ]);
+
+            throw $exception;
+        }
 
         return (new OrderResource(
             $order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer'])
