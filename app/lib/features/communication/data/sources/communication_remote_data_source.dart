@@ -6,6 +6,7 @@ import '../models/message_model.dart';
 
 abstract class CommunicationRemoteDataSource {
   Future<int> getConversationId({int? consultationId});
+  Future<String?> getConversationPhone({int? consultationId});
   Future<List<MessageModel>> getChatMessages({int? consultationId});
   Future<void> sendChatMessage(String text, {int? consultationId});
   Future<MessageModel> sendChatAttachment(
@@ -35,6 +36,7 @@ class CommunicationRemoteDataSourceImpl
   final DioClient _dioClient;
   final ApiInterceptor _apiInterceptor;
   final Map<String, int> _chatConversationIds = {};
+  final Map<String, String?> _chatConversationPhones = {};
   final Map<String, Future<int>> _chatConversationRequests = {};
   int? _botConversationId;
   late int _sessionVersion;
@@ -65,6 +67,7 @@ class CommunicationRemoteDataSourceImpl
   }
 
   Future<int> _loadConversationId({int? consultationId}) async {
+    final key = consultationId?.toString() ?? 'general';
     final response = await _dioClient.get(ApiConstants.chatConversations);
     final conversationsEnvelope = response.data['data'];
 
@@ -81,10 +84,13 @@ class CommunicationRemoteDataSourceImpl
     }).toList();
 
     if (matching.isNotEmpty) {
-      final id = matching.first['id'];
+      final conversation = Map<String, dynamic>.from(matching.first);
+      _chatConversationPhones[key] = _contactPhone(conversation);
+      final id = conversation['id'];
       return id is num ? id.toInt() : int.parse(id.toString());
     }
 
+    _chatConversationPhones[key] = null;
     final createResponse = await _dioClient.post(
       ApiConstants.chatConversations,
       data: {if (consultationId != null) 'consultation_id': consultationId},
@@ -98,6 +104,7 @@ class CommunicationRemoteDataSourceImpl
 
     _sessionVersion = _apiInterceptor.sessionVersion;
     _chatConversationIds.clear();
+    _chatConversationPhones.clear();
     _chatConversationRequests.clear();
     _botConversationId = null;
   }
@@ -105,6 +112,29 @@ class CommunicationRemoteDataSourceImpl
   @override
   Future<int> getConversationId({int? consultationId}) async {
     return _ensureConversationId(consultationId: consultationId);
+  }
+
+  @override
+  Future<String?> getConversationPhone({int? consultationId}) async {
+    await _ensureConversationId(consultationId: consultationId);
+    final key = consultationId?.toString() ?? 'general';
+    return _chatConversationPhones[key];
+  }
+
+  String? _contactPhone(Map<String, dynamic> conversation) {
+    final user = conversation['user'];
+    if (user is Map && user['phone'] != null) {
+      return user['phone'].toString();
+    }
+
+    for (final key in const ['contact_phone', 'patient_phone', 'user_phone']) {
+      final value = conversation[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+
+    return null;
   }
 
   @override

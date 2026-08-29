@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/network/dio_client.dart';
@@ -31,6 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final PusherChannelsFlutter _pusher = PusherChannelsFlutter.getInstance();
   String? _pusherChannelName;
+  String? _contactPhone;
   bool _realtimeStarted = false;
 
   @override
@@ -51,6 +54,13 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final conversationId = await sl<CommunicationRepository>()
           .getConversationId(consultationId: widget.consultationId);
+      if (_canContactOnWhatsApp) {
+        final contactPhone = await sl<CommunicationRepository>()
+            .getConversationPhone(consultationId: widget.consultationId);
+        if (mounted) {
+          setState(() => _contactPhone = contactPhone);
+        }
+      }
       final channelName = 'private-conversation.$conversationId';
       _pusherChannelName = channelName;
 
@@ -128,6 +138,36 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
       _controller.clear();
+    }
+  }
+
+  bool get _canContactOnWhatsApp {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) return false;
+
+    final role = authState.user.role?.trim().toLowerCase();
+    return role == 'doctor' || role == 'admin';
+  }
+
+  String? _whatsAppPhone(String? rawPhone) {
+    if (rawPhone == null || rawPhone.trim().isEmpty) return null;
+
+    var phone = rawPhone.replaceAll(RegExp(r'\D'), '');
+    if (phone.startsWith('00')) phone = phone.substring(2);
+    if (phone.startsWith('0')) phone = '963${phone.substring(1)}';
+    return phone.length >= 8 ? phone : null;
+  }
+
+  Future<void> _openWhatsApp() async {
+    final phone = _whatsAppPhone(_contactPhone);
+    if (phone == null) return;
+
+    final uri = Uri.https('wa.me', '/$phone');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.tr('whatsapp_open_failed'))),
+      );
     }
   }
 
@@ -236,6 +276,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ],
             ),
+            actions: [
+              if (_canContactOnWhatsApp &&
+                  _whatsAppPhone(_contactPhone) != null)
+                IconButton(
+                  onPressed: _openWhatsApp,
+                  tooltip: context.tr('open_whatsapp'),
+                  icon: const FaIcon(FontAwesomeIcons.whatsapp),
+                ),
+            ],
           ),
           body: Column(
             children: [

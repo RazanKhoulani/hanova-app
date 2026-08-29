@@ -134,6 +134,8 @@ class AppLocalizations {
           'Please login to view clinic appointments and medical records.',
       'clinic_support': 'Clinic Support',
       'live_chat_subtitle': 'Live chat',
+      'open_whatsapp': 'Message patient on WhatsApp',
+      'whatsapp_open_failed': 'Could not open WhatsApp.',
       'chat_login_note':
           'Please login to chat with the doctor and clinic staff.',
       'start_chat': 'Start your consultation chat',
@@ -328,6 +330,8 @@ class AppLocalizations {
           'يرجى تسجيل الدخول لعرض مواعيد العيادة والسجل الطبي.',
       'clinic_support': 'دعم العيادة',
       'live_chat_subtitle': 'محادثة مباشرة',
+      'open_whatsapp': 'مراسلة المريضة عبر واتساب',
+      'whatsapp_open_failed': 'تعذر فتح واتساب.',
       'chat_login_note': 'يرجى تسجيل الدخول للتواصل مع الطبيبة وفريق العيادة.',
       'start_chat': 'ابدئي محادثة الاستشارة',
       'start_chat_note': 'أرسلي رسالتك الأولى وسيقوم فريق العيادة بالرد.',

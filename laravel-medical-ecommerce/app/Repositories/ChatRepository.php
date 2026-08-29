@@ -11,9 +11,13 @@ class ChatRepository
     {
         return Conversation::where('user_id', $userId)
             ->orWhere('doctor_id', $userId)
-            ->with(['messages' => function($q) {
-                $q->latest()->limit(1); // load last message
-            }])->latest()->paginate($perPage);
+            ->with([
+                'user:id,name,phone',
+                'doctor:id,name,phone',
+                'messages' => function($q) {
+                    $q->latest()->limit(1); // load last message
+                },
+            ])->latest()->paginate($perPage);
     }
 
     public function getConversationMessages($conversationId, $perPage = 50)

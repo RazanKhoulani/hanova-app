@@ -15,6 +15,13 @@ class CommunicationRepositoryImpl implements CommunicationRepository {
   }
 
   @override
+  Future<String?> getConversationPhone({int? consultationId}) async {
+    return _remoteDataSource.getConversationPhone(
+      consultationId: consultationId,
+    );
+  }
+
+  @override
   Future<List<MessageModel>> getChatMessages({int? consultationId}) async {
     return await _remoteDataSource.getChatMessages(
       consultationId: consultationId,
