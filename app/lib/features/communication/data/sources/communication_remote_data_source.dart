@@ -162,7 +162,7 @@ class CommunicationRemoteDataSourceImpl
   }
 
   @override
-  Future<void> sendChatAttachment(
+  Future<MessageModel> sendChatAttachment(
     String filePath, {
     String? message,
     int? consultationId,
