@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,37 @@ class ProductResource extends JsonResource
         if ($imageUrl) {
             $separator = str_contains($imageUrl, '?') ? '&' : '?';
             $imageUrl .= $separator.'v='.($this->updated_at?->timestamp ?? $this->id);
+        }
+
+        $catalogType = $this->catalog_type ?? 'product';
+        $stock = (int) ($this->stock_quantity ?? 0);
+        $tracksInventory = (bool) ($this->track_inventory ?? true);
+        $isInStock = ! $tracksInventory || $stock > 0;
+        $isLowStock = $tracksInventory
+            && $stock > 0
+            && $stock <= (int) ($this->low_stock_threshold ?? 5);
+
+        if ($catalogType === 'bundle' && ! empty($this->bundle_product_ids)) {
+            $componentIds = collect($this->bundle_product_ids)
+                ->map(fn ($productId) => (int) $productId)
+                ->filter()
+                ->unique()
+                ->values();
+            $components = Product::query()
+                ->whereIn('id', $componentIds)
+                ->get(['id', 'track_inventory', 'stock_quantity', 'low_stock_threshold']);
+            $trackedComponents = $components->filter(fn (Product $component) => $component->track_inventory);
+
+            $tracksInventory = $trackedComponents->isNotEmpty();
+            $stock = $trackedComponents->isEmpty()
+                ? 0
+                : (int) $trackedComponents->min('stock_quantity');
+            $isInStock = $components->count() === $componentIds->count()
+                && $components->every(fn (Product $component) =>
+                    ! $component->track_inventory || (int) $component->stock_quantity > 0);
+            $isLowStock = $isInStock
+                && $trackedComponents->contains(fn (Product $component) =>
+                    (int) $component->stock_quantity <= (int) ($component->low_stock_threshold ?? 5));
         }
 
         return [
@@ -50,14 +82,12 @@ class ProductResource extends JsonResource
             'currency_symbol' => config('app.currency_symbol', 'ل.س'),
             'category' => $this->category,
             'brand' => $this->brand,
-            'catalog_type' => $this->catalog_type ?? 'product',
+            'catalog_type' => $catalogType,
             'bundle_product_ids' => $this->bundle_product_ids ?? [],
-            'stock' => (int) ($this->stock_quantity ?? 0),
-            'tracks_inventory' => (bool) ($this->track_inventory ?? true),
-            'is_in_stock' => ! ($this->track_inventory ?? true) || (int) ($this->stock_quantity ?? 0) > 0,
-            'is_low_stock' => (bool) ($this->track_inventory ?? true)
-                && (int) ($this->stock_quantity ?? 0) > 0
-                && (int) ($this->stock_quantity ?? 0) <= (int) ($this->low_stock_threshold ?? 5),
+            'stock' => $stock,
+            'tracks_inventory' => $tracksInventory,
+            'is_in_stock' => $isInStock,
+            'is_low_stock' => $isLowStock,
             'rating_average' => round((float) ($this->visible_reviews_avg_rating ?? 0), 1),
             'rating_count' => (int) ($this->visible_reviews_count ?? 0),
             'can_review' => (bool) ($this->can_review ?? false),
