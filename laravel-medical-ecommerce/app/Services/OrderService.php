@@ -56,8 +56,8 @@ class OrderService
                     $quantity = (int) $item['quantity'];
                     $price = (float) $product->price;
 
-                    $this->reserveInventory($product, $quantity);
-                    $hasReservedInventory = $hasReservedInventory || (bool) $product->track_inventory;
+                    $reservedInventory = $this->reserveInventory($product, $quantity);
+                    $hasReservedInventory = $hasReservedInventory || $reservedInventory;
 
                     $subtotal += $price * $quantity;
                     $orderItems[] = [
@@ -80,8 +80,8 @@ class OrderService
                     $price = (float) $product->price;
                     $quantity = (int) $item->quantity;
 
-                    $this->reserveInventory($product, $quantity);
-                    $hasReservedInventory = $hasReservedInventory || (bool) $product->track_inventory;
+                    $reservedInventory = $this->reserveInventory($product, $quantity);
+                    $hasReservedInventory = $hasReservedInventory || $reservedInventory;
 
                     $subtotal += $price * $quantity;
                     $orderItems[] = [
@@ -317,10 +317,42 @@ class OrderService
         return [$coupon, min($subtotal, round($discountAmount, 2))];
     }
 
-    private function reserveInventory(Product $product, int $quantity): void
+    private function reserveInventory(Product $product, int $quantity, array $visitedProductIds = []): bool
     {
+        if (in_array($product->id, $visitedProductIds, true)) {
+            throw ValidationException::withMessages([
+                'items' => "Bundle {$product->name_en} contains a circular product reference.",
+            ]);
+        }
+
+        $visitedProductIds[] = $product->id;
+
+        if ($product->catalog_type === 'bundle' && ! empty($product->bundle_product_ids)) {
+            $reservedAnyInventory = false;
+            $componentIds = collect($product->bundle_product_ids)
+                ->map(fn ($productId) => (int) $productId)
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            foreach ($componentIds as $componentId) {
+                $component = Product::query()->lockForUpdate()->find($componentId);
+                if (! $component) {
+                    throw ValidationException::withMessages([
+                        'items' => "A product in bundle {$product->name_en} is no longer available.",
+                    ]);
+                }
+
+                $componentReserved = $this->reserveInventory($component, $quantity, $visitedProductIds);
+                $reservedAnyInventory = $reservedAnyInventory || $componentReserved;
+            }
+
+            return $reservedAnyInventory;
+        }
+
         if (! $product->track_inventory) {
-            return;
+            return false;
         }
 
         if ($product->stock_quantity < $quantity) {
@@ -330,6 +362,8 @@ class OrderService
         }
 
         $product->decrement('stock_quantity', $quantity);
+
+        return true;
     }
 
     private function releaseInventory(Order $order): void
@@ -351,9 +385,40 @@ class OrderService
 
         foreach ($order->items as $item) {
             $product = Product::query()->lockForUpdate()->find($item->product_id);
-            if ($product?->track_inventory) {
-                $product->increment('stock_quantity', (int) $item->quantity);
+            if ($product) {
+                $this->releaseProductInventory($product, (int) $item->quantity);
             }
+        }
+    }
+
+    private function releaseProductInventory(Product $product, int $quantity, array $visitedProductIds = []): void
+    {
+        if (in_array($product->id, $visitedProductIds, true)) {
+            return;
+        }
+
+        $visitedProductIds[] = $product->id;
+
+        if ($product->catalog_type === 'bundle' && ! empty($product->bundle_product_ids)) {
+            $componentIds = collect($product->bundle_product_ids)
+                ->map(fn ($productId) => (int) $productId)
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            foreach ($componentIds as $componentId) {
+                $component = Product::query()->lockForUpdate()->find($componentId);
+                if ($component) {
+                    $this->releaseProductInventory($component, $quantity, $visitedProductIds);
+                }
+            }
+
+            return;
+        }
+
+        if ($product->track_inventory) {
+            $product->increment('stock_quantity', $quantity);
         }
     }
 
