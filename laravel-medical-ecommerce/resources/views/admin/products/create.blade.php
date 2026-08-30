@@ -1,13 +1,13 @@
 @extends('admin.layout.app')
 
-@section('title', 'Add Product')
+@section('title', __('admin.add_product'))
 
 @section('content')
 <div class="d-flex align-items-center mb-4">
     <a href="{{ route('admin.products.index') }}" class="btn btn-link text-decoration-none text-secondary p-0 me-3">
-        <i class="fas fa-arrow-left fa-lg"></i>
+        <i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} fa-lg"></i>
     </a>
-    <h2 class="mb-0">Add New Product</h2>
+    <h2 class="mb-0">{{ __('admin.add_product') }}</h2>
 </div>
 
 <div class="card shadow-sm border-0">
@@ -17,52 +17,52 @@
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">Name (English) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">{{ __('admin.name_english') }} <span class="text-danger">*</span></label>
                     <input type="text" name="name_en" class="form-control" value="{{ old('name_en') }}" required placeholder="e.g. Gentle Cleanser">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Name (Arabic) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">{{ __('admin.name_arabic') }} <span class="text-danger">*</span></label>
                     <input type="text" name="name_ar" class="form-control" dir="rtl" value="{{ old('name_ar') }}" required placeholder="مثال: غسول لطيف">
                 </div>
             </div>
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">البراند</label>
+                    <label class="form-label fw-bold">{{ __('admin.product_brand') }}</label>
                     <input type="text" name="brand" class="form-control" value="{{ old('brand') }}" placeholder="مثال: Hanova Care">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">نوع الكتالوج</label>
+                    <label class="form-label fw-bold">{{ __('admin.catalog_type') }}</label>
                     <select name="catalog_type" class="form-select">
-                        @foreach(['product' => 'منتج عناية', 'bundle' => 'بكج كامل', 'session' => 'جلسة', 'nutrition' => 'تغذية'] as $value => $label)
-                            <option value="{{ $value }}" @selected(old('catalog_type', 'product') === $value)>{{ $label }}</option>
+                        @foreach(['product' => 'catalog_product', 'bundle' => 'catalog_bundle', 'session' => 'catalog_session', 'nutrition' => 'catalog_nutrition'] as $value => $label)
+                            <option value="{{ $value }}" @selected(old('catalog_type', 'product') === $value)>{{ __('admin.' . $label) }}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold">مكونات البكج</label>
+                    <label class="form-label fw-bold">{{ __('admin.bundle_components') }}</label>
                 <select name="bundle_product_ids[]" class="form-select" multiple size="5">
                     @foreach($bundleProducts as $bundleProduct)
                         <option value="{{ $bundleProduct->id }}" @selected(in_array($bundleProduct->id, old('bundle_product_ids', [])))>{{ $bundleProduct->name_ar }} / {{ $bundleProduct->name_en }}</option>
                     @endforeach
                 </select>
-                <div class="form-text">اختاري مكونات البكج عند اختيار نوع «بكج كامل».</div>
+                <div class="form-text">{{ __('admin.bundle_components_hint') }}</div>
             </div>
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">سعر البيع (ل.س) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">{{ __('admin.base_price') }} <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light">ل.س</span>
+                        <span class="input-group-text bg-light">{{ __('admin.base_value') }}</span>
                         <input type="number" step="0.01" name="price" class="form-control" value="{{ old('price') }}" required placeholder="0.00">
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">سعر التكلفة (ل.س) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">{{ __('admin.base_cost') }} <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light">ل.س</span>
+                        <span class="input-group-text bg-light">{{ __('admin.base_value') }}</span>
                         <input type="number" step="0.01" name="cost" class="form-control" value="{{ old('cost') }}" required placeholder="0.00">
                     </div>
                 </div>
@@ -70,32 +70,32 @@
 
             <div class="row mb-4">
                 <div class="col-md-4 mb-3 mb-md-0">
-                    <label class="form-label fw-bold d-block">Inventory tracking</label>
+                    <label class="form-label fw-bold d-block">{{ __('admin.inventory_tracking') }}</label>
                     <div class="form-check form-switch mt-2">
                         <input class="form-check-input" type="checkbox" role="switch" id="track_inventory" name="track_inventory" value="1" @checked(old('track_inventory', true))>
-                        <label class="form-check-label" for="track_inventory">Track available units for this item</label>
+                        <label class="form-check-label" for="track_inventory">{{ __('admin.track_units') }}</label>
                     </div>
-                    <div class="form-text">Turn this off for services that do not have physical stock.</div>
+                    <div class="form-text">{{ __('admin.services_no_stock') }}</div>
                 </div>
                 <div class="col-md-4 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">Current stock</label>
+                    <label class="form-label fw-bold">{{ __('admin.current_stock') }}</label>
                     <input type="number" min="0" step="1" name="stock_quantity" class="form-control" value="{{ old('stock_quantity', 0) }}" required>
                 </div>
                 <div class="col-md-4 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">Low-stock alert at</label>
+                    <label class="form-label fw-bold">{{ __('admin.low_stock_alert') }}</label>
                     <input type="number" min="0" step="1" name="low_stock_threshold" class="form-control" value="{{ old('low_stock_threshold', 5) }}" required>
-                    <div class="form-text">The dashboard marks the product as low at this quantity or below.</div>
+                    <div class="form-text">{{ __('admin.low_stock_hint') }}</div>
                 </div>
             </div>
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">Commercial Category</label>
-                    <input type="text" name="category" class="form-control" value="{{ old('category') }}" placeholder="e.g. Cleansers, Serums, Sun Protection">
-                    <div class="form-text">Used for shelf/category grouping.</div>
+                    <label class="form-label fw-bold">{{ __('admin.commercial_category') }}</label>
+                    <input type="text" name="category" class="form-control" value="{{ old('category') }}" placeholder="{{ __('admin.category_placeholder') }}">
+                    <div class="form-text">{{ __('admin.commercial_category_hint') }}</div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Treatment Concerns</label>
+                    <label class="form-label fw-bold">{{ __('admin.treatment_concerns') }}</label>
                     <div class="border rounded p-3 bg-light" style="max-height: 180px; overflow-y: auto;">
                         @foreach($concerns as $concern)
                             <label class="form-check mb-2">
@@ -104,41 +104,41 @@
                             </label>
                         @endforeach
                     </div>
-                    <div class="form-text">Used by the app filters: acne, pigmentation, hormonal imbalance, etc.</div>
+                    <div class="form-text">{{ __('admin.concerns_hint') }}</div>
                 </div>
             </div>
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">Description (English)</label>
-                    <textarea name="description_en" class="form-control" rows="4" placeholder="Product details and usage instructions...">{{ old('description_en') }}</textarea>
+                    <label class="form-label fw-bold">{{ __('admin.description_english') }}</label>
+                    <textarea name="description_en" class="form-control" rows="4" placeholder="{{ __('admin.description_placeholder') }}">{{ old('description_en') }}</textarea>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Description (Arabic)</label>
-                    <textarea name="description_ar" class="form-control" dir="rtl" rows="4" placeholder="تفاصيل المنتج وطريقة الاستخدام...">{{ old('description_ar') }}</textarea>
+                    <label class="form-label fw-bold">{{ __('admin.description_arabic') }}</label>
+                    <textarea name="description_ar" class="form-control" dir="rtl" rows="4" placeholder="{{ __('admin.description_ar_placeholder') }}">{{ old('description_ar') }}</textarea>
                 </div>
             </div>
 
-            <h5 class="mb-3">Bot Product Details / تفاصيل المنتج للبوت</h5>
-            @foreach(['usage' => 'طريقة الاستخدام', 'suitable_for' => 'لمن يناسب', 'active_ingredients' => 'المكونات الفعالة', 'warnings' => 'التحذيرات'] as $field => $label)
+            <h5 class="mb-3">{{ __('admin.bot_details') }}</h5>
+            @foreach(['usage', 'suitable_for', 'active_ingredients', 'warnings'] as $field)
             <div class="row mb-3">
-                <div class="col-md-6"><label class="form-label">{{ ucfirst(str_replace('_', ' ', $field)) }} (English)</label><textarea name="{{ $field }}_en" class="form-control" rows="2">{{ old($field.'_en') }}</textarea></div>
-                <div class="col-md-6"><label class="form-label">{{ $label }} (العربية)</label><textarea name="{{ $field }}_ar" class="form-control" dir="rtl" rows="2">{{ old($field.'_ar') }}</textarea></div>
+                <div class="col-md-6"><label class="form-label">{{ __('admin.' . $field) }} ({{ __('admin.english') }})</label><textarea name="{{ $field }}_en" class="form-control" rows="2">{{ old($field.'_en') }}</textarea></div>
+                <div class="col-md-6"><label class="form-label">{{ __('admin.' . $field) }} ({{ __('admin.arabic') }})</label><textarea name="{{ $field }}_ar" class="form-control" dir="rtl" rows="2">{{ old($field.'_ar') }}</textarea></div>
             </div>
             @endforeach
 
             <div class="mb-4">
-                <label class="form-label fw-bold">Product Image</label>
+                <label class="form-label fw-bold">{{ __('admin.product_image') }}</label>
                 <input type="file" name="image" class="form-control" accept="image/*" capture="environment">
-                <div class="form-text text-muted">يمكن التقاط الصورة بالكاميرا مباشرة. يوصى بصورة مربعة PNG/JPG حتى 10MB، وتُحفظ بالدقة الأصلية.</div>
+                <div class="form-text text-muted">{{ __('admin.product_image_hint') }}</div>
             </div>
 
             <hr class="my-4 text-muted">
 
             <div class="d-flex justify-content-end">
-                <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary me-2 px-4">Cancel</a>
+                <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary me-2 px-4">{{ __('admin.cancel') }}</a>
                 <button type="submit" class="btn btn-primary px-4 shadow-sm">
-                    <i class="fas fa-save me-2"></i> Save Product
+                    <i class="fas fa-save me-2"></i>{{ __('admin.save_product') }}
                 </button>
             </div>
         </form>

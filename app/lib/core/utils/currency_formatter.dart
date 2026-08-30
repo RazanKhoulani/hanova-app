@@ -8,25 +8,18 @@ class CurrencyFormatter {
 
   static String display(num value, AppSettingsState settings) {
     final primary = switch (settings.currency) {
-      DisplayCurrency.sypOld => _oldSyp(value),
+      DisplayCurrency.sypOld =>
+        _converted(value, settings.sypOldPerNew, 'ل.س جديدة') ?? _unavailable(),
       DisplayCurrency.sypNew =>
-        _converted(value, settings.sypOldPerNew, 'ل.س جديد') ?? _oldSyp(value),
+        _converted(value, settings.sypOldPerNew, 'ل.س جديدة') ?? _unavailable(),
       DisplayCurrency.usd =>
-        _converted(value, settings.sypOldPerUsd, r'$') ?? _oldSyp(value),
+        _converted(value, settings.sypOldPerUsd, r'$') ?? _unavailable(),
     };
 
-    if (!settings.showDualSyp || settings.currency == DisplayCurrency.usd) {
-      return primary;
-    }
-
-    final secondary = settings.currency == DisplayCurrency.sypOld
-        ? _converted(value, settings.sypOldPerNew, 'ل.س جديد')
-        : _oldSyp(value);
-
-    return secondary == null ? primary : '$primary  |  $secondary';
+    return primary;
   }
 
-  static String _oldSyp(num value) => '${_format.format(value)} ل.س قديم';
+  static String _unavailable() => '—';
 
   static String? _converted(num value, double rate, String suffix) {
     if (rate <= 0) return null;

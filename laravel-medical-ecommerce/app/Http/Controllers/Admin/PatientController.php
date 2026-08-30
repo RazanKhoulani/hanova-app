@@ -8,8 +8,10 @@ use App\Models\Patient;
 use App\Models\PatientMedicalFact;
 use App\Models\PatientDocument;
 use App\Models\PatientProgressPhoto;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PatientController extends Controller
 {
@@ -30,6 +32,50 @@ class PatientController extends Controller
             ->withQueryString();
 
         return view('admin.patients.index', compact('patients', 'search'));
+    }
+
+    public function create()
+    {
+        $users = User::query()->orderBy('name')->get(['id', 'name', 'phone']);
+
+        return view('admin.patients.create', compact('users'));
+    }
+
+    public function store(Request $request)
+    {
+        $patient = Patient::create($this->validatedData($request));
+
+        return redirect()->route('admin.patients.show', $patient->id)
+            ->with('success', __('admin.patient_created'));
+    }
+
+    public function edit(Patient $patient)
+    {
+        $users = User::query()->orderBy('name')->get(['id', 'name', 'phone']);
+
+        return view('admin.patients.edit', compact('patient', 'users'));
+    }
+
+    public function update(Request $request, Patient $patient)
+    {
+        $patient->update($this->validatedData($request, $patient));
+
+        return redirect()->route('admin.patients.show', $patient->id)
+            ->with('success', __('admin.patient_updated'));
+    }
+
+    public function destroy(Patient $patient)
+    {
+        if ($patient->appointments()->exists()
+            || $patient->documents()->exists()
+            || $patient->progressPhotos()->exists()
+            || $patient->medicalFacts()->exists()) {
+            return back()->with('error', __('admin.patient_delete_blocked'));
+        }
+
+        $patient->delete();
+
+        return redirect()->route('admin.patients.index')->with('success', __('admin.patient_deleted'));
     }
 
     public function export()
@@ -74,7 +120,7 @@ class PatientController extends Controller
     public function approveProgressPhoto(PatientProgressPhoto $photo)
     {
         if ($photo->status !== 'pending') {
-            return back()->with('success', 'Progress photos were already reviewed');
+            return back()->with('success', __('admin.progress_already_reviewed'));
         }
 
         $coupon = null;
@@ -104,13 +150,13 @@ class PatientController extends Controller
             'image_after' => $photo->after_image,
         ]);
 
-        return back()->with('success', 'Progress photos approved successfully');
+        return back()->with('success', __('admin.progress_approved'));
     }
 
     public function rejectProgressPhoto(Request $request, PatientProgressPhoto $photo)
     {
         if ($photo->status !== 'pending') {
-            return back()->with('success', 'Progress photos were already reviewed');
+            return back()->with('success', __('admin.progress_already_reviewed'));
         }
 
         $data = $request->validate([
@@ -124,7 +170,7 @@ class PatientController extends Controller
             'rejection_reason' => $data['rejection_reason'] ?? null,
         ]);
 
-        return back()->with('success', 'Progress photos rejected');
+        return back()->with('success', __('admin.progress_rejected'));
     }
 
     public function updateMedicalFactStatus(Request $request, PatientMedicalFact $fact)
@@ -135,7 +181,7 @@ class PatientController extends Controller
 
         $fact->update($data);
 
-        return back()->with('success', 'Medical fact status updated');
+        return back()->with('success', __('admin.medical_fact_updated'));
     }
 
     public function storeDocument(Request $request, Patient $patient)
@@ -158,7 +204,7 @@ class PatientController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
-        return back()->with('success', 'تم رفع الملف إلى ملف المريضة');
+        return back()->with('success', __('admin.patient_file_uploaded'));
     }
 
     private function makePhotoCouponCode(PatientProgressPhoto $photo): string
@@ -168,5 +214,17 @@ class PatientController extends Controller
         } while (Coupon::where('code', $code)->exists());
 
         return $code;
+    }
+
+    private function validatedData(Request $request, ?Patient $patient = null): array
+    {
+        return $request->validate([
+            'user_id' => ['nullable', 'integer', Rule::exists('users', 'id')],
+            'name' => ['required', 'string', 'max:150'],
+            'age' => ['nullable', 'integer', 'min:0', 'max:130'],
+            'phone' => ['required', 'string', 'max:30'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+        ]);
     }
 }

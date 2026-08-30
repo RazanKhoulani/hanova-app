@@ -32,7 +32,7 @@ class OfferController extends Controller
         Offer::create($data);
 
         return redirect()->route('admin.offers.index')
-            ->with('success', 'Offer created successfully');
+            ->with('success', __('admin.offer_created'));
     }
 
     public function edit(Offer $offer)
@@ -51,7 +51,7 @@ class OfferController extends Controller
         $offer->update($data);
 
         return redirect()->route('admin.offers.index')
-            ->with('success', 'Offer updated successfully');
+            ->with('success', __('admin.offer_updated'));
     }
 
     public function destroy(Offer $offer)
@@ -59,7 +59,7 @@ class OfferController extends Controller
         $offer->delete();
 
         return redirect()->route('admin.offers.index')
-            ->with('success', 'Offer deleted successfully');
+            ->with('success', __('admin.offer_deleted'));
     }
 
     private function validatedData(Request $request): array

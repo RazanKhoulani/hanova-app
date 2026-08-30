@@ -76,7 +76,7 @@ class ProductController extends Controller
         $this->productService->createProduct($validated);
 
         return redirect()->route('admin.products.index')
-            ->with('success', 'Product created successfully');
+            ->with('success', __('admin.product_created'));
     }
 
     public function show($id)
@@ -131,7 +131,7 @@ class ProductController extends Controller
         $this->productService->updateProduct($product, $validated);
 
         return redirect()->route('admin.products.index')
-            ->with('success', 'Product updated successfully');
+            ->with('success', __('admin.product_updated'));
     }
 
     public function destroy($id)
@@ -140,7 +140,7 @@ class ProductController extends Controller
         $this->productService->deleteProduct($product);
 
         return redirect()->route('admin.products.index')
-            ->with('success', 'Product deleted successfully');
+            ->with('success', __('admin.product_deleted'));
     }
 
     public function updateStock(Request $request, $id)
@@ -152,6 +152,6 @@ class ProductController extends Controller
         $product = $this->productService->getProductById($id);
         $this->productService->updateProduct($product, $data);
 
-        return back()->with('success', 'Stock quantity updated successfully.');
+        return back()->with('success', __('admin.stock_updated'));
     }
 }

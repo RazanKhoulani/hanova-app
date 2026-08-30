@@ -15,10 +15,10 @@ class AppSettingsController extends Controller
         return response()->json([
             'data' => [
                 'base_currency' => 'SYP_OLD',
-                'display_currency' => $settings['display_currency'],
+                'display_currency' => $settings['display_currency'] === 'usd' ? 'usd' : 'syp_new',
                 'syp_old_per_new' => (float) $settings['syp_old_per_new'],
                 'syp_old_per_usd' => (float) $settings['syp_old_per_usd'],
-                'show_dual_syp' => $settings['show_dual_syp'] === '1',
+                'show_dual_syp' => false,
                 'about' => [
                     'ar' => $siteContent['site_about_ar'],
                     'en' => $siteContent['site_about_en'],

@@ -14,6 +14,14 @@
     $statusLabel = static fn (string $status): string => trans()->has('admin.status_' . $status)
         ? __('admin.status_' . $status)
         : ucfirst(str_replace('_', ' ', $status));
+
+    $pricing = \App\Models\AppSetting::pricingValues();
+    $displayCurrency = $pricing['display_currency'] === 'usd' ? 'usd' : 'syp_new';
+    $rate = (float) $pricing[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
+    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
+    $money = static fn ($amount): string => $rate > 0
+        ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel
+        : '—';
 @endphp
 
 <section class="dashboard-hero">
@@ -36,6 +44,10 @@
         </a>
     </div>
 </section>
+
+@if($rate <= 0)
+    <div class="alert alert-warning border-0 shadow-sm mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ __('admin.currency_rate_missing') }}</div>
+@endif
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
@@ -77,7 +89,7 @@
                 <div class="metric-icon"><i class="fa-solid fa-chart-line"></i></div>
                 <span class="metric-note">{{ __('admin.completed_orders') }}</span>
             </div>
-            <div class="metric-value">{{ number_format($stats['revenue'], 2) }} <small style="font-size: 11px; letter-spacing: 0;">{{ __('admin.currency') }}</small></div>
+            <div class="metric-value">{{ $money($stats['revenue']) }}</div>
             <div class="metric-label">{{ __('admin.total_revenue') }}</div>
         </article>
     </div>
@@ -104,7 +116,7 @@
                             <strong>{{ __('admin.order_number', ['number' => $order->id]) }} · {{ $order->user->name ?? __('admin.unknown_customer') }}</strong>
                             <small>{{ $order->created_at->locale(app()->getLocale())->translatedFormat('d M Y، h:i A') }}</small>
                         </span>
-                        <strong class="d-none d-sm-block" style="font-size: 11px; white-space: nowrap;">{{ number_format($order->total_amount, 2) }} {{ __('admin.currency') }}</strong>
+                        <strong class="d-none d-sm-block" style="font-size: 11px; white-space: nowrap;">{{ $money($order->total_amount) }}</strong>
                         <span class="status-pill {{ $statusClass($order->status) }}">{{ $statusLabel($order->status) }}</span>
                     </a>
                 @empty

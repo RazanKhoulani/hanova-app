@@ -55,7 +55,7 @@ class OrderController extends Controller
 
             $this->orderService->updateOrderStatus($id, 'delivered');
 
-            return redirect()->back()->with('success', 'Order marked as delivered successfully');
+            return redirect()->back()->with('success', __('admin.order_marked_delivered'));
         }
 
         $request->validate([
@@ -64,7 +64,7 @@ class OrderController extends Controller
 
         $this->orderService->updateOrderStatus($id, $request->status);
 
-        return redirect()->back()->with('success', 'Order status updated successfully');
+        return redirect()->back()->with('success', __('admin.order_status_updated'));
     }
 
     public function uploadReceipt(Request $request, $id)
@@ -82,13 +82,13 @@ class OrderController extends Controller
             $this->orderService->updateShippingReceipt($id, $path);
         }
 
-        return redirect()->back()->with('success', 'Shipping receipt uploaded successfully');
+        return redirect()->back()->with('success', __('admin.receipt_uploaded'));
     }
 
     public function updateTracking(Request $request, $id)
     {
         $validated = $request->validate(['tracking_number' => 'required|string|max:100']);
         Order::findOrFail($id)->update($validated);
-        return redirect()->back()->with('success', 'Qadmous tracking number saved successfully');
+        return redirect()->back()->with('success', __('admin.tracking_saved'));
     }
 }

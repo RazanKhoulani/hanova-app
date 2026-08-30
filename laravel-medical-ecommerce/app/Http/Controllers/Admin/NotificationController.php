@@ -93,13 +93,13 @@ class NotificationController extends Controller
             'type' => $request->type ?? 'general',
         ]);
 
-        return back()->with('success', 'Notification sent successfully');
+        return back()->with('success', __('admin.notification_sent'));
     }
 
     public function destroy($id)
     {
         Notification::findOrFail($id)->delete();
 
-        return back()->with('success', 'Notification deleted');
+        return back()->with('success', __('admin.notification_deleted'));
     }
 }

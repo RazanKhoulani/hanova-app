@@ -150,7 +150,7 @@
                 </div>
 
                 <div class="topbar-actions">
-                    <a href="{{ route('site.home') }}" class="topbar-icon" target="_blank" rel="noopener" title="Hanova website">
+                    <a href="{{ route('site.home') }}" class="topbar-icon" target="_blank" rel="noopener" title="{{ __('admin.open_website') }}">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </a>
                     @unless($isDelivery)
@@ -163,8 +163,8 @@
                             </button>
                             <div class="dropdown-menu dropdown-menu-end notification-dropdown" id="adminNotificationDropdown">
                                 <div class="notification-dropdown-header">
-                                    <strong>{{ app()->getLocale() === 'ar' ? 'الإشعارات' : 'Notifications' }}</strong>
-                                    <button type="button" id="markAllNotificationsRead">{{ app()->getLocale() === 'ar' ? 'تعيين الكل كمقروء' : 'Mark all as read' }}</button>
+                                    <strong>{{ __('admin.notifications') }}</strong>
+                                    <button type="button" id="markAllNotificationsRead">{{ __('admin.mark_all_read') }}</button>
                                 </div>
                                 <div id="adminNotificationItems">
                                     @forelse($adminRecentNotifications as $alert)
@@ -173,10 +173,10 @@
                                             <span><strong>{{ $alert->title }}</strong><small>{{ \Illuminate\Support\Str::limit($alert->body, 75) }}</small><time>{{ $alert->created_at?->diffForHumans() }}</time></span>
                                         </a>
                                     @empty
-                                        <div class="notification-dropdown-empty">{{ app()->getLocale() === 'ar' ? 'لا توجد إشعارات' : 'No notifications' }}</div>
+                                        <div class="notification-dropdown-empty">{{ __('admin.no_notifications') }}</div>
                                     @endforelse
                                 </div>
-                                <a href="{{ route('admin.notifications.index') }}" class="notification-dropdown-footer">{{ app()->getLocale() === 'ar' ? 'عرض كل الإشعارات' : 'View all notifications' }}</a>
+                                <a href="{{ route('admin.notifications.index') }}" class="notification-dropdown-footer">{{ __('admin.view_all_notifications') }}</a>
                             </div>
                         </div>
                     @endunless
@@ -248,7 +248,7 @@
             const iconFor = (notification) => notification.url.includes('/chats/') ? 'fa-comment' : (notification.url.includes('/appointments/') ? 'fa-calendar-check' : (notification.url.includes('/orders/') ? 'fa-bag-shopping' : 'fa-bell'));
             const renderItems = (notifications) => {
                 if (!notifications.length) {
-                    items.innerHTML = '<div class="notification-dropdown-empty">{{ app()->getLocale() === 'ar' ? 'لا توجد إشعارات' : 'No notifications' }}</div>';
+                    items.innerHTML = '<div class="notification-dropdown-empty">{{ __('admin.no_notifications') }}</div>';
                     return;
                 }
                 items.innerHTML = notifications.map(notification => `<a href="${escapeHtml(notification.url)}" class="notification-dropdown-item ${notification.is_read ? '' : 'unread'}" data-notification-id="${notification.id}"><span class="notification-type-icon"><i class="fa-solid ${iconFor(notification)}"></i></span><span><strong>${escapeHtml(notification.title)}</strong><small>${escapeHtml(notification.body)}</small><time>${escapeHtml(notification.created_at)}</time></span></a>`).join('');

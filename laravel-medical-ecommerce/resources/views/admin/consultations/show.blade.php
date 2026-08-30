@@ -1,67 +1,17 @@
 @extends('admin.layout.app')
 
-@section('title', 'Consultation #' . $consultation->id)
+@section('title', __('admin.consultation_details') . ' #' . $consultation->id)
 
 @section('content')
 @php
     $whatsappPhone = preg_replace('/\D+/', '', (string) ($consultation->user->phone ?? ''));
-    if (str_starts_with($whatsappPhone, '00')) {
-        $whatsappPhone = substr($whatsappPhone, 2);
-    }
+    if (str_starts_with($whatsappPhone, '00')) $whatsappPhone = substr($whatsappPhone, 2);
+    $typeKey = 'admin.type_' . ($consultation->type ?: 'consultation');
+    $statusKey = 'admin.status_' . $consultation->status;
 @endphp
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Consultation Details</h2>
-    <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-1"></i> Back to List
-    </a>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white fw-bold">Consultation Info</div>
-            <div class="card-body">
-                <p><strong>Status:</strong> <span class="badge bg-primary">{{ ucfirst($consultation->status) }}</span></p>
-                <p><strong>Type:</strong> {{ ucfirst($consultation->type) }}</p>
-                <p><strong>Requested At:</strong> {{ $consultation->created_at }}</p>
-                <p><strong>User:</strong> {{ $consultation->user->name ?? 'Unknown' }} ({{ $consultation->user->phone ?? 'N/A' }})</p>
-                @if($whatsappPhone !== '')
-                    <a href="https://wa.me/{{ $whatsappPhone }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success mb-3">
-                        <i class="fab fa-whatsapp me-1"></i> {{ __('admin.open_whatsapp') }}
-                    </a>
-                @endif
-                <p><strong>Assigned Doctor:</strong> {{ $consultation->doctor->name ?? 'Unassigned' }}</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white fw-bold">Clinical Notes</div>
-            <div class="card-body">
-                <p>{{ $consultation->notes ?? 'No notes recorded.' }}</p>
-            </div>
-        </div>
-        
-        <div class="card shadow-sm">
-            <div class="card-header bg-white fw-bold">Quick Actions</div>
-            <div class="card-body">
-                <form action="{{ route('admin.consultations.updateStatus', $consultation->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="mb-3">
-                        <label class="form-label">Change Status</label>
-                        <select name="status" class="form-select mb-3">
-                            <option value="pending" {{ $consultation->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="active" {{ $consultation->status == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="completed" {{ $consultation->status == 'completed' ? 'selected' : '' }}>Completed</option>
-                            <option value="cancelled" {{ $consultation->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Update Consultation</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<div class="page-header"><div><p class="eyebrow">{{ __('admin.consultations') }} · #{{ $consultation->id }}</p><h1>{{ __('admin.consultation_details') }}</h1><p>{{ $consultation->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</p></div><a href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} me-1"></i>{{ __('admin.back_to_list') }}</a></div>
+<div class="row g-4">
+    <div class="col-xl-7"><section class="panel-card mb-4"><div class="panel-heading"><div><h3>{{ __('admin.consultation_info') }}</h3><p>{{ __('admin.consultation_details_hint') }}</p></div><span class="status-pill {{ $consultation->status === 'completed' ? 'success' : (in_array($consultation->status, ['cancelled', 'canceled']) ? 'danger' : 'warning') }}">{{ trans()->has($statusKey) ? __($statusKey) : ucfirst($consultation->status) }}</span></div><div class="detail-stat-grid"><div><span>{{ __('admin.type') }}</span><strong>{{ trans()->has($typeKey) ? __($typeKey) : ucfirst(str_replace('_', ' ', $consultation->type)) }}</strong></div><div><span>{{ __('admin.requested_at') }}</span><strong>{{ $consultation->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</strong></div><div><span>{{ __('admin.user') }}</span><strong>{{ $consultation->user?->name ?? __('admin.unknown') }}</strong></div><div><span>{{ __('admin.assigned_doctor') }}</span><strong>{{ $consultation->doctor?->name ?? __('admin.unassigned') }}</strong></div></div>@if($whatsappPhone !== '')<a href="https://wa.me/{{ $whatsappPhone }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success mt-4"><i class="fab fa-whatsapp me-1"></i>{{ __('admin.open_whatsapp') }}</a>@endif</section><section class="panel-card"><div class="panel-heading"><div><h3>{{ __('admin.change_status') }}</h3><p>{{ __('admin.status_update_hint') }}</p></div></div><form action="{{ route('admin.consultations.updateStatus', $consultation->id) }}" method="POST" class="d-flex flex-wrap gap-3 align-items-end">@csrf @method('PUT')<div class="flex-grow-1"><label for="consultation_status" class="form-label">{{ __('admin.status') }}</label><select id="consultation_status" name="status" class="form-select">@foreach(['pending', 'active', 'completed', 'cancelled'] as $status)<option value="{{ $status }}" @selected($consultation->status === $status)>{{ __('admin.status_' . $status) }}</option>@endforeach</select></div><button type="submit" class="btn btn-primary">{{ __('admin.update_consultation') }}</button></form></section></div>
+    <div class="col-xl-5"><section class="panel-card h-100"><div class="panel-heading"><div><h3>{{ __('admin.clinical_notes') }}</h3><p>{{ __('admin.notes_hint') }}</p></div></div><p class="text-readable mb-0">{{ $consultation->notes ?: __('admin.no_notes') }}</p></section></div>
 </div>
 @endsection

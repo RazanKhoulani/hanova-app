@@ -30,6 +30,6 @@ class ConsultationController extends Controller
         $consultation->status = $request->status;
         $consultation->save();
 
-        return back()->with('success', 'Consultation status updated successfully');
+        return back()->with('success', __('admin.consultation_status_updated'));
     }
 }

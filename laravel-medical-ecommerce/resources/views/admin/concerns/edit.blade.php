@@ -1,12 +1,12 @@
 @extends('admin.layout.app')
 
-@section('title', 'Edit Concern')
+@section('title', __('admin.edit_concern_page'))
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Edit Treatment Concern</h2>
+    <h2>{{ __('admin.edit_concern_page') }}</h2>
     <a href="{{ route('admin.concerns.index') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-1"></i> Back
+        <i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} me-1"></i>{{ __('admin.back_to_list') }}
     </a>
 </div>
 
@@ -19,7 +19,7 @@
             @include('admin.concerns.form', ['concern' => $concern])
 
             <button type="submit" class="btn btn-primary px-4">
-                <i class="fas fa-save me-2"></i> Update Concern
+        <i class="fas fa-save me-2"></i>{{ __('admin.save_changes') }}
             </button>
         </form>
     </div>

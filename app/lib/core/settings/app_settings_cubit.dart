@@ -15,10 +15,10 @@ class AppSettingsState {
 
   const AppSettingsState({
     required this.locale,
-    this.currency = DisplayCurrency.sypOld,
+    this.currency = DisplayCurrency.sypNew,
     this.sypOldPerNew = 0,
     this.sypOldPerUsd = 0,
-    this.showDualSyp = true,
+    this.showDualSyp = false,
   });
 
   bool get isArabic => locale.languageCode == 'ar';
@@ -83,7 +83,7 @@ class AppSettingsCubit extends Cubit<AppSettingsState> {
       final root = response.data;
       final data = root is Map ? root['data'] : null;
       if (data is! Map) {
-        return (0.0, 0.0, true, DisplayCurrency.sypOld);
+        return (0.0, 0.0, false, DisplayCurrency.sypNew);
       }
 
       return (
@@ -95,14 +95,14 @@ class AppSettingsCubit extends Cubit<AppSettingsState> {
         _currencyFromServer(data['display_currency']),
       );
     } catch (_) {
-      return (0.0, 0.0, true, DisplayCurrency.sypOld);
+      return (0.0, 0.0, false, DisplayCurrency.sypNew);
     }
   }
 
   DisplayCurrency _currencyFromServer(dynamic value) => switch (value) {
     'syp_new' => DisplayCurrency.sypNew,
     'usd' => DisplayCurrency.usd,
-    _ => DisplayCurrency.sypOld,
+    _ => DisplayCurrency.sypNew,
   };
 
   double _asDouble(dynamic value) {

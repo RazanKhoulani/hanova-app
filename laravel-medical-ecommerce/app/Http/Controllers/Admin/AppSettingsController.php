@@ -22,10 +22,9 @@ class AppSettingsController extends Controller
     public function update(Request $request)
     {
         $data = $request->validate([
-            'display_currency' => ['required', 'string', 'in:syp_old,syp_new,usd'],
+            'display_currency' => ['required', 'string', 'in:syp_new,usd'],
             'syp_old_per_new' => ['required', 'numeric', 'gt:0'],
             'syp_old_per_usd' => ['required', 'numeric', 'gt:0'],
-            'show_dual_syp' => ['nullable', 'boolean'],
             'review_reward_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'review_reward_expiry_days' => ['required', 'integer', 'min:1', 'max:365'],
             'site_about_ar' => ['nullable', 'string', 'max:1000'],
@@ -38,7 +37,7 @@ class AppSettingsController extends Controller
             'display_currency' => $data['display_currency'],
             'syp_old_per_new' => (string) $data['syp_old_per_new'],
             'syp_old_per_usd' => (string) $data['syp_old_per_usd'],
-            'show_dual_syp' => $request->boolean('show_dual_syp') ? '1' : '0',
+            'show_dual_syp' => '0',
             'review_reward_percentage' => (string) $data['review_reward_percentage'],
             'review_reward_expiry_days' => (string) $data['review_reward_expiry_days'],
             'site_about_ar' => $data['site_about_ar'] ?? '',

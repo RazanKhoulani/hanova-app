@@ -11,11 +11,13 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('admin.settings.currency.update') }}" class="card shadow-sm border-0">
+    <form method="POST" action="{{ route('admin.settings.currency.update') }}" class="panel-card settings-shell">
         @csrf
         @method('PUT')
 
         <div class="card-body p-4">
+            <div class="settings-section-label">{{ __('admin.currency_conversion') }}</div>
+            <p class="text-muted small mb-3">{{ __('admin.currency_conversion_hint') }}</p>
             <div class="row g-4">
             <div class="col-md-6">
                 <label for="syp_old_per_new">{{ __('admin.old_syp_per_new_syp') }}</label>
@@ -50,28 +52,16 @@
             <div class="col-md-6">
                 <label for="display_currency">{{ __('admin.display_currency') }}</label>
                 <select id="display_currency" name="display_currency" class="form-select" required>
-                    <option value="syp_old" @selected(old('display_currency', $settings['display_currency']) === 'syp_old')>{{ __('admin.currency_syp_old') }}</option>
-                    <option value="syp_new" @selected(old('display_currency', $settings['display_currency']) === 'syp_new')>{{ __('admin.currency_syp_new') }}</option>
-                    <option value="usd" @selected(old('display_currency', $settings['display_currency']) === 'usd')>{{ __('admin.currency_usd') }}</option>
+                    @php($displayCurrency = old('display_currency', $settings['display_currency']) === 'usd' ? 'usd' : 'syp_new')
+                    <option value="syp_new" @selected($displayCurrency === 'syp_new')>{{ __('admin.currency_syp_new') }}</option>
+                    <option value="usd" @selected($displayCurrency === 'usd')>{{ __('admin.currency_usd') }}</option>
                 </select>
                 <small class="form-text text-muted">{{ __('admin.display_currency_hint') }}</small>
             </div>
             </div>
 
-        <div class="form-check form-switch mt-4">
-            <input
-                id="show_dual_syp"
-                name="show_dual_syp"
-                class="form-check-input"
-                type="checkbox"
-                value="1"
-                @checked(old('show_dual_syp', $settings['show_dual_syp']) === '1')
-            >
-            <label class="form-check-label" for="show_dual_syp">{{ __('admin.show_dual_syp') }}</label>
-        </div>
-
         <hr class="my-4">
-        <h2 class="h5 mb-3">{{ __('admin.review_rewards') }}</h2>
+        <div class="settings-section-label">{{ __('admin.review_rewards') }}</div>
         <p class="text-muted small">{{ __('admin.review_rewards_hint') }}</p>
         <div class="row g-4">
             <div class="col-md-6">
@@ -105,7 +95,7 @@
         </div>
 
         <hr class="my-4">
-        <h2 class="h5 mb-3">{{ __('admin.site_content') }}</h2>
+        <div class="settings-section-label">{{ __('admin.site_content') }}</div>
         <div class="row g-4">
             <div class="col-md-6">
                 <label for="site_about_ar">{{ __('admin.site_about_ar') }}</label>

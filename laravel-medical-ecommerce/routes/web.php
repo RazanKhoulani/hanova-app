@@ -80,6 +80,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             // Patients Management
             Route::get('patients', [PatientController::class, 'index'])->name('patients.index');
             Route::get('patients/export', [PatientController::class, 'export'])->name('patients.export');
+            Route::get('patients/create', [PatientController::class, 'create'])->name('patients.create');
+            Route::post('patients', [PatientController::class, 'store'])->name('patients.store');
+            Route::get('patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit');
+            Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update');
+            Route::delete('patients/{patient}', [PatientController::class, 'destroy'])->name('patients.destroy');
             Route::get('patients/{id}', [PatientController::class, 'show'])->name('patients.show');
             Route::post('patients/{patient}/documents', [PatientController::class, 'storeDocument'])->name('patients.documents.store');
             Route::post('patients/progress-photos/{photo}/approve', [PatientController::class, 'approveProgressPhoto'])->name('patients.progressPhotos.approve');
@@ -98,6 +103,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             // Users & Roles Management
             Route::get('users', [UserController::class, 'index'])->name('users.index');
+            Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+            Route::post('users', [UserController::class, 'store'])->name('users.store');
+            Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+            Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
             Route::get('users/{id}', [UserController::class, 'show'])->name('users.show');
             Route::put('users/{id}/role', [UserController::class, 'assignRole'])->name('users.assignRole');
 

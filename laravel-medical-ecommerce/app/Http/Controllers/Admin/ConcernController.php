@@ -36,7 +36,7 @@ class ConcernController extends Controller
         Concern::create($data);
 
         return redirect()->route('admin.concerns.index')
-            ->with('success', 'Concern created successfully');
+            ->with('success', __('admin.concern_created'));
     }
 
     public function edit(Concern $concern)
@@ -59,7 +59,7 @@ class ConcernController extends Controller
         $concern->update($data);
 
         return redirect()->route('admin.concerns.index')
-            ->with('success', 'Concern updated successfully');
+            ->with('success', __('admin.concern_updated'));
     }
 
     public function destroy(Concern $concern)
@@ -67,6 +67,6 @@ class ConcernController extends Controller
         $concern->delete();
 
         return redirect()->route('admin.concerns.index')
-            ->with('success', 'Concern deleted successfully');
+            ->with('success', __('admin.concern_deleted'));
     }
 }

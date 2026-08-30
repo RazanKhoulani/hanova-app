@@ -55,6 +55,6 @@ class AppointmentController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Appointment status updated successfully');
+        return back()->with('success', __('admin.appointment_status_updated'));
     }
 }
