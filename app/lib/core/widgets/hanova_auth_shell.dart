@@ -27,7 +27,11 @@ class HanovaBrandMark extends StatelessWidget {
               : AppColors.primaryMist,
         ),
       ),
-      child: SvgPicture.asset('assets/brand/hanova-mark.svg'),
+      child: SvgPicture.asset(
+        onColor
+            ? 'assets/brand/hanova-mark-inverse.svg'
+            : 'assets/brand/hanova-mark.svg',
+      ),
     );
   }
 }

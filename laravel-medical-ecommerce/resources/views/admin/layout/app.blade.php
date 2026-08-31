@@ -30,7 +30,7 @@
     <div class="admin-shell">
         <aside class="admin-sidebar" id="adminSidebar" aria-label="{{ __('admin.main_navigation') }}">
             <a href="{{ $isDelivery ? route('admin.orders.index') : route('admin.dashboard') }}" class="sidebar-brand">
-                <span class="brand-mark"><img src="{{ asset('images/hanova-mark.svg') }}" alt="" width="30" height="30"></span>
+                <span class="brand-mark"><img src="{{ asset('images/hanova-mark-inverse.svg') }}" alt="Hanova" width="30" height="30"></span>
                 <span class="brand-copy">
                     <strong>{{ __('admin.brand') }}</strong>
                     <small>{{ __('admin.clinic_management') }}</small>
