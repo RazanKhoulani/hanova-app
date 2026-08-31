@@ -3,21 +3,11 @@
 @section('title', __('admin.products_management'))
 
 @section('content')
-@php
-    $pricing = \App\Models\AppSetting::pricingValues();
-    $displayCurrency = $pricing['display_currency'] === 'usd' ? 'usd' : 'syp_new';
-    $rate = (float) $pricing[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
-    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
-    $money = static fn ($amount): string => $rate > 0
-        ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel
-        : '—';
-@endphp
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>{{ __('admin.products_management') }}</h2>
     <a href="{{ route('admin.products.create') }}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>{{ __('admin.add_product') }}</a>
 </div>
 
-@if($rate <= 0)<div class="alert alert-warning border-0 shadow-sm mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ __('admin.currency_rate_missing') }}</div>@endif
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">{{ __('admin.tracked_products') }}</small><div class="fs-3 fw-bold">{{ $inventorySummary['tracked'] }}</div></div></div></div>
@@ -65,8 +55,8 @@
                                 <span class="text-muted small">{{ __('admin.no_concerns') }}</span>
                             @endforelse
                         </td>
-                        <td class="align-middle px-4"><span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1">{{ $money($product->price) }}</span></td>
-                        <td class="align-middle px-4"><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-2 py-1">{{ $money($product->cost) }}</span></td>
+                        <td class="align-middle px-4"><strong class="d-block text-success">{{ number_format((float)($product->price_syp ?? $product->price), 2) }} ل.س</strong><small class="text-muted">{{ $product->price_usd !== null ? '$'.number_format((float)$product->price_usd, 2) : '— USD' }}</small></td>
+                        <td class="align-middle px-4"><strong class="d-block">{{ number_format((float)($product->cost_syp ?? $product->cost), 2) }} ل.س</strong><small class="text-muted">{{ $product->cost_usd !== null ? '$'.number_format((float)$product->cost_usd, 2) : '— USD' }}</small></td>
                         <td class="align-middle px-4" style="min-width: 190px;">
                             @if(!$product->track_inventory)
                                 <span class="badge bg-secondary">{{ __('admin.not_tracked') }}</span>

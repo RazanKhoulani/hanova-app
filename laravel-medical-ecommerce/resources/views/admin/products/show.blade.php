@@ -3,15 +3,6 @@
 @section('title', __('admin.product_details') . ': ' . $product->name_en)
 
 @section('content')
-@php
-    $pricing = \App\Models\AppSetting::pricingValues();
-    $displayCurrency = $pricing['display_currency'] === 'usd' ? 'usd' : 'syp_new';
-    $rate = (float) $pricing[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
-    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
-    $money = static fn ($amount): string => $rate > 0
-        ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel
-        : '—';
-@endphp
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>{{ __('admin.product_details') }}: {{ $product->name_en }}</h2>
     <div class="btn-group">
@@ -24,7 +15,6 @@
     </div>
 </div>
 
-@if($rate <= 0)<div class="alert alert-warning border-0 shadow-sm mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ __('admin.currency_rate_missing') }}</div>@endif
 
 <div class="row">
     <div class="col-md-4">
@@ -44,17 +34,15 @@
                 <div class="d-flex justify-content-center gap-2 mb-3">
                     <div class="bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-2 rounded">
                         <small class="d-block text-uppercase fw-bold" style="font-size: 0.65rem;">{{ __('admin.price') }}</small>
-                        <span class="fw-bold fs-5">{{ $money($product->price) }}</span>
+                        <span class="fw-bold d-block">{{ number_format((float)($product->price_syp ?? $product->price), 2) }} ل.س</span><small>{{ $product->price_usd !== null ? '$'.number_format((float)$product->price_usd, 2) : '— USD' }}</small>
                     </div>
                     <div class="bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-3 py-2 rounded">
                         <small class="d-block text-uppercase fw-bold" style="font-size: 0.65rem;">{{ __('admin.cost') }}</small>
-                        <span class="fw-bold fs-5">{{ $money($product->cost) }}</span>
+                        <span class="fw-bold d-block">{{ number_format((float)($product->cost_syp ?? $product->cost), 2) }} ل.س</span><small>{{ $product->cost_usd !== null ? '$'.number_format((float)$product->cost_usd, 2) : '— USD' }}</small>
                     </div>
                 </div>
 
-                <div class="badge bg-{{ ($product->price - $product->cost) > 0 ? 'success' : 'danger' }} p-2">
-                    {{ __('admin.profit') }}: {{ $money($product->price - $product->cost) }}
-                </div>
+                <div class="badge bg-{{ (($product->price_syp ?? $product->price) - ($product->cost_syp ?? $product->cost)) > 0 ? 'success' : 'danger' }} p-2">{{ __('admin.profit') }}: {{ number_format((float)(($product->price_syp ?? $product->price) - ($product->cost_syp ?? $product->cost)), 2) }} ل.س</div>
 
                 <div class="mt-3">
                     @if(!$product->track_inventory)

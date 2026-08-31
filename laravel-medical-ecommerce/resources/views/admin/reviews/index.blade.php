@@ -4,13 +4,7 @@
 
 @section('content')
 @php
-    $pricing = \App\Models\AppSetting::pricingValues();
-    $displayCurrency = $pricing['display_currency'] === 'usd' ? 'usd' : 'syp_new';
-    $rate = (float) $pricing[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
-    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
-    $money = static fn ($amount): string => $rate > 0
-        ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel
-        : '—';
+    $money = static fn ($amount): string => number_format((float) $amount, 2) . ' ل.س';
 @endphp
 <div class="page-header mb-4">
     <div>
@@ -19,8 +13,6 @@
         <p>{{ __('admin.reviews_hint') }}</p>
     </div>
 </div>
-
-@if($rate <= 0)<div class="alert alert-warning border-0 shadow-sm mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ __('admin.currency_rate_missing') }}</div>@endif
 
 <div class="card shadow-sm border-0">
     <div class="table-responsive">

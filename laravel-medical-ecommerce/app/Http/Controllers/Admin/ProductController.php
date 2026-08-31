@@ -54,8 +54,10 @@ class ProductController extends Controller
             'suitable_for_ar' => 'nullable|string', 'suitable_for_en' => 'nullable|string',
             'active_ingredients_ar' => 'nullable|string', 'active_ingredients_en' => 'nullable|string',
             'warnings_ar' => 'nullable|string', 'warnings_en' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'cost' => 'required|numeric|min:0',
+            'price_syp' => 'required|numeric|min:0',
+            'price_usd' => 'required|numeric|min:0',
+            'cost_syp' => 'required|numeric|min:0',
+            'cost_usd' => 'nullable|numeric|min:0',
             'category' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:100',
             'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
@@ -70,6 +72,8 @@ class ProductController extends Controller
         ]);
 
         $validated['track_inventory'] = $request->boolean('track_inventory');
+        $validated['price'] = $validated['price_syp'];
+        $validated['cost'] = $validated['cost_syp'];
         $validated['stock_quantity'] = (int) ($validated['stock_quantity'] ?? 0);
         $validated['low_stock_threshold'] = (int) ($validated['low_stock_threshold'] ?? 5);
 
@@ -107,8 +111,10 @@ class ProductController extends Controller
             'suitable_for_ar' => 'nullable|string', 'suitable_for_en' => 'nullable|string',
             'active_ingredients_ar' => 'nullable|string', 'active_ingredients_en' => 'nullable|string',
             'warnings_ar' => 'nullable|string', 'warnings_en' => 'nullable|string',
-            'price' => 'sometimes|numeric|min:0',
-            'cost' => 'sometimes|numeric|min:0',
+            'price_syp' => 'required|numeric|min:0',
+            'price_usd' => 'required|numeric|min:0',
+            'cost_syp' => 'required|numeric|min:0',
+            'cost_usd' => 'nullable|numeric|min:0',
             'category' => 'nullable|string|max:255',
             'brand' => 'nullable|string|max:100',
             'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
@@ -123,6 +129,8 @@ class ProductController extends Controller
         ]);
 
         $product = $this->productService->getProductById($id);
+        $validated['price'] = $validated['price_syp'];
+        $validated['cost'] = $validated['cost_syp'];
         $validated['concern_ids'] = $request->input('concern_ids', []);
         $validated['bundle_product_ids'] = $request->input('bundle_product_ids', []);
         $validated['track_inventory'] = $request->boolean('track_inventory');

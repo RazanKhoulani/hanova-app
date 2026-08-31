@@ -16,49 +16,8 @@
         @method('PUT')
 
         <div class="card-body p-4">
-            <div class="settings-section-label">{{ __('admin.currency_conversion') }}</div>
-            <p class="text-muted small mb-3">{{ __('admin.currency_conversion_hint') }}</p>
-            <div class="row g-4">
-            <div class="col-md-6">
-                <label for="syp_old_per_new">{{ __('admin.old_syp_per_new_syp') }}</label>
-                <input
-                    id="syp_old_per_new"
-                    name="syp_old_per_new"
-                    class="form-control"
-                    type="number"
-                    min="0.0001"
-                    step="any"
-                    value="{{ old('syp_old_per_new', $settings['syp_old_per_new']) }}"
-                    required
-                >
-                <small class="form-text text-muted">{{ __('admin.old_syp_per_new_syp_hint') }}</small>
-            </div>
-
-            <div class="col-md-6">
-                <label for="syp_old_per_usd">{{ __('admin.old_syp_per_usd') }}</label>
-                <input
-                    id="syp_old_per_usd"
-                    name="syp_old_per_usd"
-                    class="form-control"
-                    type="number"
-                    min="0.0001"
-                    step="any"
-                    value="{{ old('syp_old_per_usd', $settings['syp_old_per_usd']) }}"
-                    required
-                >
-                <small class="form-text text-muted">{{ __('admin.old_syp_per_usd_hint') }}</small>
-            </div>
-
-            <div class="col-md-6">
-                <label for="display_currency">{{ __('admin.display_currency') }}</label>
-                <select id="display_currency" name="display_currency" class="form-select" required>
-                    @php($displayCurrency = old('display_currency', $settings['display_currency']) === 'usd' ? 'usd' : 'syp_new')
-                    <option value="syp_new" @selected($displayCurrency === 'syp_new')>{{ __('admin.currency_syp_new') }}</option>
-                    <option value="usd" @selected($displayCurrency === 'usd')>{{ __('admin.currency_usd') }}</option>
-                </select>
-                <small class="form-text text-muted">{{ __('admin.display_currency_hint') }}</small>
-            </div>
-            </div>
+            <div class="settings-section-label">{{ __('admin.product_pricing_model') }}</div>
+            <div class="alert alert-info border-0 mb-0 d-flex gap-3 align-items-start"><i class="fas fa-circle-info mt-1"></i><div><strong>{{ __('admin.independent_dual_prices') }}</strong><p class="mb-2 mt-1">{{ __('admin.independent_prices_hint') }}</p><a href="{{ route('admin.products.create') }}" class="btn btn-sm btn-outline-primary">{{ __('admin.add_product') }}</a></div></div>
 
         <hr class="my-4">
         <div class="settings-section-label">{{ __('admin.review_rewards') }}</div>

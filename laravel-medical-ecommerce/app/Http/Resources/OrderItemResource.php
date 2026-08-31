@@ -18,7 +18,10 @@ class OrderItemResource extends JsonResource
             'product' => new ProductResource($this->whenLoaded('product')),
             'quantity' => (int) $this->quantity,
             'price' => (float) $this->price,
+            'price_syp' => (float) $this->price,
+            'price_usd' => $this->price_usd !== null ? (float) $this->price_usd : null,
             'total' => (float) ($this->price * $this->quantity),
+            'total_usd' => $this->price_usd !== null ? (float) ($this->price_usd * $this->quantity) : null,
         ];
     }
 }

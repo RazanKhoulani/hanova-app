@@ -4,11 +4,8 @@
 
 @section('content')
 @php
-    $settings = \App\Models\AppSetting::pricingValues();
-    $displayCurrency = $settings['display_currency'] === 'usd' ? 'usd' : 'syp_new';
-    $rate = (float) $settings[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
-    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
-    $money = static fn ($amount) => $rate > 0 ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel : number_format((float) $amount, 2) . ' ' . __('admin.stored_value');
+    $money = static fn ($amount) => number_format((float) $amount, 2) . ' ل.س';
+    $usd = static fn ($amount) => $amount !== null ? '$' . number_format((float) $amount, 2) : null;
     $statusKey = 'admin.status_' . $order->status;
     $paymentKey = match ($order->payment_method) { 'cash_on_delivery' => 'admin.cash_on_delivery', 'credit_card' => 'admin.credit_card', 'online', 'apple_pay' => 'admin.online_payment', default => 'admin.cash' };
     $deliveryKey = 'admin.' . ($order->delivery_method ?: 'home_delivery');
@@ -16,12 +13,11 @@
     $itemsSubtotal = $order->items->sum(fn ($item) => $item->price * $item->quantity);
 @endphp
 <div class="page-header"><div><p class="eyebrow">{{ __('admin.orders') }} · #{{ $order->id }}</p><h1>{{ __('admin.order_details') }}</h1><p>{{ $order->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</p></div><a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} me-1"></i>{{ __('admin.back_to_list') }}</a></div>
-@if($rate <= 0)<div class="alert alert-warning border-0 shadow-sm mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ __('admin.currency_rate_missing') }}</div>@endif
 <div class="row g-4">
     <div class="col-xl-8">
         <section class="panel-card data-panel mb-4"><div class="panel-heading"><div><h3>{{ __('admin.order_items') }}</h3><p>{{ __('admin.order_items_hint') }}</p></div><span class="soft-count">{{ $order->items->sum('quantity') }} {{ __('admin.items') }}</span></div><div class="order-item-list">
             @foreach($order->items as $item)
-                <div class="order-item-card"><div class="order-item-image">@if($item->product?->image)<img src="{{ asset('storage/' . $item->product->image) }}" alt="">@else<i class="fas fa-pump-soap"></i>@endif</div><div class="order-item-copy"><strong>{{ app()->getLocale() === 'ar' ? ($item->product?->name_ar ?: $item->product?->name_en) : ($item->product?->name_en ?: $item->product?->name_ar) }}</strong><small>{{ __('admin.quantity') }}: {{ $item->quantity }}</small></div><div class="order-item-price"><span>{{ $money($item->price) }}</span><small>{{ __('admin.subtotal') }}: {{ $money($item->price * $item->quantity) }}</small></div></div>
+                <div class="order-item-card"><div class="order-item-image">@if($item->product?->image)<img src="{{ asset('storage/' . $item->product->image) }}" alt="">@else<i class="fas fa-pump-soap"></i>@endif</div><div class="order-item-copy"><strong>{{ app()->getLocale() === 'ar' ? ($item->product?->name_ar ?: $item->product?->name_en) : ($item->product?->name_en ?: $item->product?->name_ar) }}</strong><small>{{ __('admin.quantity') }}: {{ $item->quantity }}</small></div><div class="order-item-price"><span>{{ $money($item->price) }}@if($item->price_usd !== null) · {{ $usd($item->price_usd) }}@endif</span><small>{{ __('admin.subtotal') }}: {{ $money($item->price * $item->quantity) }}@if($item->price_usd !== null) · {{ $usd($item->price_usd * $item->quantity) }}@endif</small></div></div>
             @endforeach
         </div><div class="totals-box"><div><span>{{ __('admin.subtotal') }}</span><strong>{{ $money($itemsSubtotal) }}</strong></div>@if(($order->discount_amount ?? 0) > 0)<div class="text-success"><span>{{ __('admin.discount') }}</span><strong>-{{ $money($order->discount_amount) }}</strong></div>@endif@if(($order->delivery_fee ?? 0) > 0)<div><span>{{ __('admin.delivery_fee') }}</span><strong>{{ $money($order->delivery_fee) }}</strong></div>@endif<div class="total-line"><span>{{ __('admin.total_amount') }}</span><strong>{{ $money($order->total_amount) }}</strong></div></div></section>
         <section class="panel-card"><div class="panel-heading"><div><h3>{{ __('admin.customer_information') }}</h3><p>{{ __('admin.customer_information_hint') }}</p></div></div><div class="detail-stat-grid"><div><span>{{ __('admin.customer') }}</span><strong>{{ $order->user?->name ?? __('admin.unknown_customer') }}</strong></div><div><span>{{ __('admin.phone_number') }}</span><strong dir="ltr">{{ $order->user?->phone ?? '-' }}</strong></div><div class="wide"><span>{{ __('admin.shipping_address') }}</span><strong>{{ $order->shipping_address ?: __('admin.no_address') }}</strong></div></div></section>

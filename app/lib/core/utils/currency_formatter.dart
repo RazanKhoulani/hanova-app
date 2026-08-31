@@ -6,23 +6,15 @@ class CurrencyFormatter {
 
   static String syp(num value) => '${_format.format(value)} ل.س';
 
-  static String display(num value, AppSettingsState settings) {
-    final primary = switch (settings.currency) {
-      DisplayCurrency.sypOld =>
-        _converted(value, settings.sypOldPerNew, 'ل.س جديدة') ?? _unavailable(),
-      DisplayCurrency.sypNew =>
-        _converted(value, settings.sypOldPerNew, 'ل.س جديدة') ?? _unavailable(),
-      DisplayCurrency.usd =>
-        _converted(value, settings.sypOldPerUsd, r'$') ?? _unavailable(),
-    };
-
-    return primary;
+  static String dual(num sypValue, num? usdValue) {
+    final sypPrice = syp(sypValue);
+    if (usdValue == null) return sypPrice;
+    return '$sypPrice  •  \$${_format.format(usdValue)}';
   }
 
-  static String _unavailable() => '—';
-
-  static String? _converted(num value, double rate, String suffix) {
-    if (rate <= 0) return null;
-    return '${_format.format(value / rate)} $suffix';
+  static String display(num value, AppSettingsState settings) {
+    // Transaction totals are stored in Syrian pounds. USD product prices are
+    // entered independently and must never be derived from an exchange rate.
+    return syp(value);
   }
 }

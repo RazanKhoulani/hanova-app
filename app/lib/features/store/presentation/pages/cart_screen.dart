@@ -140,10 +140,7 @@ class _CartScreenState extends State<CartScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      CurrencyFormatter.display(
-                        item.product.price,
-                        context.watch<AppSettingsCubit>().state,
-                      ),
+                      CurrencyFormatter.dual(item.product.priceSyp, item.product.priceUsd),
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
@@ -228,10 +225,7 @@ class _CartScreenState extends State<CartScreen> {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               Text(
-                CurrencyFormatter.display(
-                  state.totalAmount,
-                  context.watch<AppSettingsCubit>().state,
-                ),
+                CurrencyFormatter.dual(state.totalAmount, state.totalUsd),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -265,10 +259,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
               Text(
-                CurrencyFormatter.display(
-                  state.totalAmount,
-                  context.watch<AppSettingsCubit>().state,
-                ),
+                CurrencyFormatter.dual(state.totalAmount, state.totalUsd),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

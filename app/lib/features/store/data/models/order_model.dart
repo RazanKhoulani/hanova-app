@@ -77,12 +77,14 @@ class OrderItemModel {
   final String productName;
   final int quantity;
   final double price;
+  final double? priceUsd;
 
   OrderItemModel({
     required this.productId,
     required this.productName,
     required this.quantity,
     required this.price,
+    this.priceUsd,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -116,6 +118,11 @@ class OrderItemModel {
       price: json['price'] is num
           ? (json['price'] as num).toDouble()
           : double.tryParse('${json['price']}') ?? 0,
+      priceUsd: json['price_usd'] == null
+          ? null
+          : (json['price_usd'] is num
+                ? (json['price_usd'] as num).toDouble()
+                : double.tryParse('${json['price_usd']}')),
     );
   }
 }

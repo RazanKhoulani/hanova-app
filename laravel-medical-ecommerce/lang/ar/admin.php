@@ -556,4 +556,11 @@ return [
     'concern_en_placeholder' => 'مثال: Hormonal Imbalance',
     'concern_ar_placeholder' => 'مثال: اضطراب الهرمونات',
     'slug_auto_placeholder' => 'يُنشأ تلقائياً من الاسم الإنكليزي',
+    'selling_price_syp' => 'سعر البيع بالليرة السورية',
+    'selling_price_usd' => 'سعر البيع بالدولار',
+    'cost_syp' => 'التكلفة بالليرة السورية',
+    'cost_usd' => 'التكلفة بالدولار',
+    'independent_prices_hint' => 'كل سعر مستقل ويُدخل يدوياً؛ لا يجري النظام أي تحويل تلقائي بين الدولار والليرة.',
+    'product_pricing_model' => 'نظام تسعير المنتجات',
+    'independent_dual_prices' => 'سعران مستقلان لكل منتج: ليرة سورية ودولار أمريكي',
 ];

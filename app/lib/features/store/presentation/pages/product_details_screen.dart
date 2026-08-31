@@ -130,10 +130,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              CurrencyFormatter.display(
-                                product.price,
-                                context.watch<AppSettingsCubit>().state,
-                              ),
+                              CurrencyFormatter.dual(product.priceSyp, product.priceUsd),
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,

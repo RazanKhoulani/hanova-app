@@ -38,6 +38,11 @@ class CartState {
     return total;
   }
 
+  double? get totalUsd {
+    if (items.values.any((item) => item.product.priceUsd == null)) return null;
+    return items.values.fold<double>(0, (total, item) => total + item.product.priceUsd! * item.quantity);
+  }
+
   int get itemCount => items.length;
 }
 

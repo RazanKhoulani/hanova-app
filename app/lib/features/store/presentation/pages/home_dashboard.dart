@@ -872,10 +872,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       children: [
                         Expanded(
                           child: Text(
-                            CurrencyFormatter.display(
-                              product.price,
-                              context.watch<AppSettingsCubit>().state,
-                            ),
+                            CurrencyFormatter.dual(product.priceSyp, product.priceUsd),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(

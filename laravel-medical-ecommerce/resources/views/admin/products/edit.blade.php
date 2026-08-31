@@ -27,21 +27,10 @@
                     <input type="text" name="name_ar" class="form-control" dir="rtl" value="{{ old('name_ar', $product->name_ar) }}" required>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">{{ __('admin.base_price') }}</label>
-                    <div class="input-group">
-                        <span class="input-group-text">{{ __('admin.base_value') }}</span>
-                        <input type="number" step="0.01" name="price" class="form-control" value="{{ old('price', $product->price) }}" required>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">{{ __('admin.base_cost') }}</label>
-                    <div class="input-group">
-                        <span class="input-group-text">{{ __('admin.base_value') }}</span>
-                        <input type="number" step="0.01" name="cost" class="form-control" value="{{ old('cost', $product->cost) }}" required>
-                    </div>
-                </div>
+                @foreach(['price_syp' => ['selling_price_syp', 'ل.س', $product->price_syp ?? $product->price, true], 'price_usd' => ['selling_price_usd', 'USD', $product->price_usd, true], 'cost_syp' => ['cost_syp', 'ل.س', $product->cost_syp ?? $product->cost, true], 'cost_usd' => ['cost_usd', 'USD', $product->cost_usd, false]] as $field => [$label, $symbol, $value, $required])
+                    <div class="col-md-6"><label class="form-label fw-bold">{{ __('admin.'.$label) }}</label><div class="input-group"><span class="input-group-text">{{ $symbol }}</span><input type="number" min="0" step="0.01" name="{{ $field }}" class="form-control" value="{{ old($field, $value) }}" @required($required)></div></div>
+                @endforeach
+                <div class="col-12"><div class="form-text">{{ __('admin.independent_prices_hint') }}</div></div>
 
                 <div class="col-md-4">
                     <label class="form-label fw-bold d-block">{{ __('admin.inventory_tracking') }}</label>

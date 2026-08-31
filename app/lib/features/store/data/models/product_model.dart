@@ -6,6 +6,8 @@ class ProductModel {
   final String name;
   final String? description;
   final double price;
+  final double priceSyp;
+  final double? priceUsd;
   final String? image;
   final String? category;
   final String? brand;
@@ -32,6 +34,8 @@ class ProductModel {
     required this.name,
     this.description,
     required this.price,
+    required this.priceSyp,
+    this.priceUsd,
     this.image,
     this.category,
     this.brand,
@@ -160,7 +164,9 @@ class ProductModel {
       id: parseInt(json['id']),
       name: name,
       description: description,
-      price: parseDouble(json['price']),
+      price: parseDouble(json['price_syp'] ?? json['price']),
+      priceSyp: parseDouble(json['price_syp'] ?? json['price']),
+      priceUsd: json['price_usd'] == null ? null : parseDouble(json['price_usd']),
       image: resolveImage(json['image'] ?? json['image_url']),
       category: json['category'],
       brand: json['brand']?.toString(),

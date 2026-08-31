@@ -17,7 +17,11 @@ class Product extends Model
         'description_ar',
         'description_en',
         'price',
+        'price_syp',
+        'price_usd',
         'cost',
+        'cost_syp',
+        'cost_usd',
         'image',
         'category',
         'brand',
@@ -33,6 +37,10 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'price_syp' => 'decimal:2',
+        'price_usd' => 'decimal:2',
+        'cost_syp' => 'decimal:2',
+        'cost_usd' => 'decimal:2',
         'bundle_product_ids' => 'array',
         'track_inventory' => 'boolean',
         'stock_quantity' => 'integer',

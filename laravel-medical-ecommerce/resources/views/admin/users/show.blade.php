@@ -5,13 +5,7 @@
 @section('content')
 @php
     $roleName = $user->roles->first()?->name ?? 'user';
-    $pricing = \App\Models\AppSetting::pricingValues();
-    $displayCurrency = $pricing['display_currency'] === 'usd' ? 'usd' : 'syp_new';
-    $rate = (float) $pricing[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
-    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
-    $money = static fn ($amount): string => $rate > 0
-        ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel
-        : '—';
+    $money = static fn ($amount): string => number_format((float) $amount, 2) . ' ل.س';
 @endphp
 <div class="page-header">
     <div><p class="eyebrow">{{ __('admin.users') }}</p><h1>{{ __('admin.user_profile') }}</h1><p>{{ $user->name }}</p></div>

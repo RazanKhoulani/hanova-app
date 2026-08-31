@@ -599,10 +599,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               Text(
-                CurrencyFormatter.display(
-                  cartState.totalAmount,
-                  context.watch<AppSettingsCubit>().state,
-                ),
+                CurrencyFormatter.dual(cartState.totalAmount, cartState.totalUsd),
               ),
             ],
           ),

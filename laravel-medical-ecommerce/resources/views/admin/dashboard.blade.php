@@ -15,13 +15,7 @@
         ? __('admin.status_' . $status)
         : ucfirst(str_replace('_', ' ', $status));
 
-    $pricing = \App\Models\AppSetting::pricingValues();
-    $displayCurrency = $pricing['display_currency'] === 'usd' ? 'usd' : 'syp_new';
-    $rate = (float) $pricing[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
-    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
-    $money = static fn ($amount): string => $rate > 0
-        ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel
-        : '—';
+    $money = static fn ($amount): string => number_format((float) $amount, 2) . ' ل.س';
 @endphp
 
 <section class="dashboard-hero">
@@ -44,10 +38,6 @@
         </a>
     </div>
 </section>
-
-@if($rate <= 0)
-    <div class="alert alert-warning border-0 shadow-sm mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ __('admin.currency_rate_missing') }}</div>
-@endif
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">

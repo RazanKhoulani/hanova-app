@@ -297,9 +297,11 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 children: [
                   Text('${item.quantity}x ${item.productName}'),
                   Text(
-                    CurrencyFormatter.display(
+                    CurrencyFormatter.dual(
                       item.price * item.quantity,
-                      context.watch<AppSettingsCubit>().state,
+                      item.priceUsd == null
+                          ? null
+                          : item.priceUsd! * item.quantity,
                     ),
                   ),
                 ],

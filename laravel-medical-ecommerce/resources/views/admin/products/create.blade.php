@@ -51,21 +51,14 @@
                 <div class="form-text">{{ __('admin.bundle_components_hint') }}</div>
             </div>
 
-            <div class="row mb-4">
-                <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold">{{ __('admin.base_price') }} <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light">{{ __('admin.base_value') }}</span>
-                        <input type="number" step="0.01" name="price" class="form-control" value="{{ old('price') }}" required placeholder="0.00">
+            <div class="row mb-4 g-3">
+                @foreach(['price_syp' => ['selling_price_syp', 'ل.س', true], 'price_usd' => ['selling_price_usd', 'USD', true], 'cost_syp' => ['cost_syp', 'ل.س', true], 'cost_usd' => ['cost_usd', 'USD', false]] as $field => [$label, $symbol, $required])
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ __('admin.'.$label) }} @if($required)<span class="text-danger">*</span>@endif</label>
+                        <div class="input-group"><span class="input-group-text bg-light">{{ $symbol }}</span><input type="number" min="0" step="0.01" name="{{ $field }}" class="form-control" value="{{ old($field) }}" @required($required) placeholder="0.00"></div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">{{ __('admin.base_cost') }} <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light">{{ __('admin.base_value') }}</span>
-                        <input type="number" step="0.01" name="cost" class="form-control" value="{{ old('cost') }}" required placeholder="0.00">
-                    </div>
-                </div>
+                @endforeach
+                <div class="col-12"><div class="form-text">{{ __('admin.independent_prices_hint') }}</div></div>
             </div>
 
             <div class="row mb-4">

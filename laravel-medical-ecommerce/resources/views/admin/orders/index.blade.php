@@ -4,14 +4,9 @@
 
 @section('content')
 @php
-    $pricing = \App\Models\AppSetting::pricingValues();
-    $displayCurrency = $pricing['display_currency'] === 'usd' ? 'usd' : 'syp_new';
-    $rate = (float) $pricing[$displayCurrency === 'usd' ? 'syp_old_per_usd' : 'syp_old_per_new'];
-    $currencyLabel = $displayCurrency === 'usd' ? 'USD' : __('admin.currency_syp_new');
-    $money = static fn ($amount) => $rate > 0 ? number_format(((float) $amount) / $rate, 2) . ' ' . $currencyLabel : number_format((float) $amount, 2) . ' ' . __('admin.stored_value');
+    $money = static fn ($amount) => number_format((float) $amount, 2) . ' ل.س';
 @endphp
 <div class="page-header"><div><p class="eyebrow">{{ __('admin.store') }}</p><h1>{{ __('admin.orders_management') }}</h1><p>{{ __('admin.orders_management_hint') }}</p></div></div>
-@if($rate <= 0)<div class="alert alert-warning border-0 shadow-sm mb-4"><i class="fas fa-triangle-exclamation me-2"></i>{{ __('admin.currency_rate_missing') }}</div>@endif
 <section class="panel-card data-panel"><div class="panel-heading"><div><h3>{{ __('admin.orders') }}</h3><p>{{ __('admin.orders_table_hint') }}</p></div><span class="soft-count">{{ $orders->total() }}</span></div><div class="table-responsive"><table class="table align-middle mb-0 admin-data-table"><thead><tr><th>{{ __('admin.order_id') }}</th><th>{{ __('admin.date') }}</th><th>{{ __('admin.customer') }}</th><th>{{ __('admin.total') }}</th><th>{{ __('admin.payment') }}</th><th>{{ __('admin.delivery') }}</th><th>{{ __('admin.status') }}</th><th class="text-end">{{ __('admin.action') }}</th></tr></thead><tbody>
     @forelse($orders as $order)
         @php

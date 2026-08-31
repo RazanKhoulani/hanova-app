@@ -556,4 +556,11 @@ return [
     'concern_en_placeholder' => 'e.g. Hormonal Imbalance',
     'concern_ar_placeholder' => 'e.g. اضطراب الهرمونات',
     'slug_auto_placeholder' => 'Generated automatically from the English name',
+    'selling_price_syp' => 'Selling price in Syrian pounds',
+    'selling_price_usd' => 'Selling price in USD',
+    'cost_syp' => 'Cost in Syrian pounds',
+    'cost_usd' => 'Cost in USD',
+    'independent_prices_hint' => 'Each price is entered independently; no automatic currency conversion is performed.',
+    'product_pricing_model' => 'Product pricing model',
+    'independent_dual_prices' => 'Two independent prices per product: Syrian pounds and US dollars',
 ];

@@ -64,6 +64,7 @@ class OrderService
                         'product_id' => $product->id,
                         'quantity' => $quantity,
                         'price' => $price,
+                        'price_usd' => $product->price_usd,
                     ];
                 }
             } else {
@@ -88,6 +89,7 @@ class OrderService
                         'product_id' => $product->id,
                         'quantity' => $quantity,
                         'price' => $price,
+                        'price_usd' => $product->price_usd,
                     ];
                 }
             }
