@@ -40,6 +40,7 @@ class MessageModel {
   final DateTime timestamp;
   final List<BotOption>? options;
   final String? attachmentUrl;
+  final String? attachmentType;
 
   MessageModel({
     this.id,
@@ -48,6 +49,7 @@ class MessageModel {
     required this.timestamp,
     this.options,
     this.attachmentUrl,
+    this.attachmentType,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
@@ -66,6 +68,7 @@ class MessageModel {
           DateTime.now(),
       options: _optionsFrom(json),
       attachmentUrl: attachment,
+      attachmentType: json['type']?.toString(),
     );
   }
 

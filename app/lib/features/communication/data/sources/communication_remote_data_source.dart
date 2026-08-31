@@ -173,6 +173,8 @@ class CommunicationRemoteDataSourceImpl
     final lower = filePath.toLowerCase();
     final type = RegExp(r'\.(jpg|jpeg|png)$').hasMatch(lower)
         ? 'image'
+        : RegExp(r'\.(mp3|wav|m4a|aac|ogg)$').hasMatch(lower)
+        ? 'audio'
         : 'file';
     final data = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),

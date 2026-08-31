@@ -51,6 +51,7 @@ class CartItem {
 // Bloc
 class CartBloc extends Bloc<CartEvent, CartState> {
   final StoreRepository _repository;
+  int _pendingMutations = 0;
   CartBloc(this._repository) : super(CartState()) {
     on<CartItemAdded>(_onItemAdded);
     on<CartItemRemoved>(_onItemRemoved);
@@ -60,6 +61,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   Future<void> _onLoad(CartLoadRequested event, Emitter<CartState> emit) async {
+    if (_pendingMutations > 0) return;
     try {
       final remote = await _repository.getCart();
       emit(
@@ -105,10 +107,13 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       );
     }
     emit(CartState(items: updatedItems));
+    _pendingMutations++;
     try {
       await _repository.addToCart(event.product.id, event.quantity);
     } catch (_) {
       emit(previousState);
+    } finally {
+      _pendingMutations--;
     }
   }
 

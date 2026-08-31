@@ -9,6 +9,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/network/dio_client.dart';
@@ -35,6 +38,10 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _pusherChannelName;
   String? _contactPhone;
   bool _realtimeStarted = false;
+  final AudioRecorder _recorder = AudioRecorder();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _recording = false;
+  String? _playingUrl;
 
   @override
   void initState() {
@@ -117,15 +124,17 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       if (payload is! Map) return;
 
-      final rawMessage = payload['message'] is Map ? payload['message'] : payload;
+      final rawMessage = payload['message'] is Map
+          ? payload['message']
+          : payload;
       if (rawMessage is! Map) return;
 
       final messagePayload = Map<String, dynamic>.from(rawMessage);
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         final senderId = messagePayload['sender_id'];
-        messagePayload['is_me'] = senderId?.toString() ==
-            authState.user.id.toString();
+        messagePayload['is_me'] =
+            senderId?.toString() == authState.user.id.toString();
       }
 
       context.read<CommunicationBloc>().add(
@@ -198,6 +207,45 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
   }
 
+  Future<void> _callContact() async {
+    final phone = _whatsAppPhone(_contactPhone);
+    if (phone != null) await launchUrl(Uri(scheme: 'tel', path: '+$phone'));
+  }
+
+  Future<void> _toggleRecording() async {
+    if (!_canContactOnWhatsApp) return;
+    if (_recording) {
+      final path = await _recorder.stop();
+      if (mounted) setState(() => _recording = false);
+      if (path != null)
+        context.read<CommunicationBloc>().add(
+          CommunicationSendChatAttachment(
+            path,
+            consultationId: widget.consultationId,
+          ),
+        );
+      return;
+    }
+    if (!await _recorder.hasPermission()) return;
+    final directory = await getTemporaryDirectory();
+    await _recorder.start(
+      const RecordConfig(encoder: AudioEncoder.aacLc),
+      path:
+          '${directory.path}/hanova_voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+    );
+    if (mounted) setState(() => _recording = true);
+  }
+
+  Future<void> _playAudio(String url) async {
+    if (_playingUrl == url) {
+      await _audioPlayer.stop();
+      if (mounted) setState(() => _playingUrl = null);
+      return;
+    }
+    await _audioPlayer.play(UrlSource(url));
+    if (mounted) setState(() => _playingUrl = url);
+  }
+
   @override
   void dispose() {
     final channelName = _pusherChannelName;
@@ -205,6 +253,8 @@ class _ChatScreenState extends State<ChatScreen> {
       _pusher.unsubscribe(channelName: channelName);
     }
     _controller.dispose();
+    _recorder.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -286,12 +336,18 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             actions: [
               if (_canContactOnWhatsApp &&
-                  _whatsAppPhone(_contactPhone) != null)
+                  _whatsAppPhone(_contactPhone) != null) ...[
+                IconButton(
+                  onPressed: _callContact,
+                  tooltip: 'اتصال',
+                  icon: const Icon(Icons.call_rounded),
+                ),
                 IconButton(
                   onPressed: _openWhatsApp,
                   tooltip: context.tr('open_whatsapp'),
                   icon: const FaIcon(FontAwesomeIcons.whatsapp),
                 ),
+              ],
             ],
           ),
           body: Column(
@@ -425,7 +481,19 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = message.text;
     final isMe = message.isMe;
     final attachment = message.attachmentUrl;
-    final isImage = attachment != null && RegExp(r'\.(jpe?g|png|webp)(\?.*)?$', caseSensitive: false).hasMatch(attachment);
+    final isImage =
+        attachment != null &&
+        RegExp(
+          r'\.(jpe?g|png|webp)(\?.*)?$',
+          caseSensitive: false,
+        ).hasMatch(attachment);
+    final isAudio =
+        message.attachmentType == 'audio' ||
+        (attachment != null &&
+            RegExp(
+              r'\.(mp3|wav|m4a|aac|ogg)(\?.*)?$',
+              caseSensitive: false,
+            ).hasMatch(attachment));
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -448,17 +516,53 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (attachment != null) ...[
-              if (isImage)
+              if (isAudio)
+                TextButton.icon(
+                  onPressed: () => _playAudio(attachment),
+                  icon: Icon(
+                    _playingUrl == attachment
+                        ? Icons.stop_circle_outlined
+                        : Icons.play_circle_outline,
+                    color: isMe ? Colors.white : AppColors.primary,
+                  ),
+                  label: Text(
+                    _playingUrl == attachment ? 'إيقاف' : 'تشغيل',
+                    style: TextStyle(
+                      color: isMe ? Colors.white : AppColors.primary,
+                    ),
+                  ),
+                )
+              else if (isImage)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.network(attachment, width: 240, height: 180, fit: BoxFit.cover, errorBuilder: (_, error, stackTrace) => const Icon(Icons.broken_image_outlined)),
+                  child: Image.network(
+                    attachment,
+                    width: 240,
+                    height: 180,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, error, stackTrace) =>
+                        const Icon(Icons.broken_image_outlined),
+                  ),
                 )
               else
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.insert_drive_file_rounded, color: isMe ? Colors.white : AppColors.primary),
-                  const SizedBox(width: 8),
-                  Flexible(child: Text(context.tr('medical_attachment'), style: TextStyle(color: isMe ? Colors.white : AppColors.textPrimary))),
-                ]),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.insert_drive_file_rounded,
+                      color: isMe ? Colors.white : AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        context.tr('medical_attachment'),
+                        style: TextStyle(
+                          color: isMe ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               if (text.isNotEmpty) const SizedBox(height: 8),
             ],
             if (text.isNotEmpty)
@@ -500,6 +604,14 @@ class _ChatScreenState extends State<ChatScreen> {
               color: AppColors.primary,
             ),
           ),
+          if (_canContactOnWhatsApp)
+            IconButton(
+              onPressed: _toggleRecording,
+              icon: Icon(
+                _recording ? Icons.stop_circle : Icons.mic,
+                color: _recording ? Colors.red : AppColors.primary,
+              ),
+            ),
           Expanded(
             child: TextField(
               controller: _controller,
