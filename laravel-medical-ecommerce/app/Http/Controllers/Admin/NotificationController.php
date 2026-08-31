@@ -32,11 +32,11 @@ class NotificationController extends Controller
             ->get()
             ->map(fn (Notification $notification) => [
                 'id' => $notification->id,
-                'title' => $notification->title,
-                'body' => $notification->body,
+                'title' => $notification->localizedTitle(),
+                'body' => $notification->localizedBody(),
                 'is_read' => $notification->is_read,
                 'url' => $notification->adminUrl(),
-                'created_at' => $notification->created_at?->diffForHumans(),
+                'created_at' => $notification->created_at?->locale(app()->getLocale())->diffForHumans(),
             ]);
 
         return response()->json([

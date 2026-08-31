@@ -18,18 +18,18 @@
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
                     <label class="form-label fw-bold">{{ __('admin.name_english') }} <span class="text-danger">*</span></label>
-                    <input type="text" name="name_en" class="form-control" value="{{ old('name_en') }}" required placeholder="e.g. Gentle Cleanser">
+                    <input type="text" name="name_en" class="form-control" value="{{ old('name_en') }}" required placeholder="{{ __('admin.name_en_placeholder') }}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">{{ __('admin.name_arabic') }} <span class="text-danger">*</span></label>
-                    <input type="text" name="name_ar" class="form-control" dir="rtl" value="{{ old('name_ar') }}" required placeholder="مثال: غسول لطيف">
+                    <input type="text" name="name_ar" class="form-control" dir="rtl" value="{{ old('name_ar') }}" required placeholder="{{ __('admin.name_ar_placeholder') }}">
                 </div>
             </div>
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-3 mb-md-0">
                     <label class="form-label fw-bold">{{ __('admin.product_brand') }}</label>
-                    <input type="text" name="brand" class="form-control" value="{{ old('brand') }}" placeholder="مثال: Hanova Care">
+                    <input type="text" name="brand" class="form-control" value="{{ old('brand') }}" placeholder="{{ __('admin.brand_placeholder') }}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">{{ __('admin.catalog_type') }}</label>

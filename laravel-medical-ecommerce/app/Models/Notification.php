@@ -49,6 +49,27 @@ class Notification extends Model
         return route('admin.notifications.index');
     }
 
+    public function localizedTitle(?string $locale = null): string
+    {
+        return $this->localizedContent('title', $locale);
+    }
+
+    public function localizedBody(?string $locale = null): string
+    {
+        return $this->localizedContent('body', $locale);
+    }
+
+    private function localizedContent(string $field, ?string $locale = null): string
+    {
+        $locale = str_starts_with((string) ($locale ?? app()->getLocale()), 'en') ? 'en' : 'ar';
+        $data = $this->data ?? [];
+        $translated = $data['translations'][$locale][$field] ?? $data[$field.'_'.$locale] ?? null;
+
+        return is_string($translated) && trim($translated) !== ''
+            ? $translated
+            : (string) $this->{$field};
+    }
+
     protected static function booted(): void
     {
         static::created(function (Notification $notification) {

@@ -40,7 +40,7 @@
                                         {{ $conversation->lastMessage->body }}
                                     </span>
                                 </div>
-                                <small class="text-muted d-block">{{ $conversation->lastMessage->created_at->diffForHumans() }}</small>
+                                <small class="text-muted d-block">{{ $conversation->lastMessage->created_at->locale(app()->getLocale())->diffForHumans() }}</small>
                             @else
                                 <span class="text-muted italic">{{ __('admin.no_messages_yet') }}</span>
                             @endif

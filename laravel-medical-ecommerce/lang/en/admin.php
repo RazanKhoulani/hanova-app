@@ -550,4 +550,10 @@ return [
     'patient_file_uploaded' => 'The file was uploaded to the patient record.',
     'category_placeholder' => 'e.g. Cleansers, serums, sun protection',
     'description_ar_placeholder' => 'Product details and usage instructions...',
+    'name_en_placeholder' => 'e.g. Gentle Cleanser',
+    'name_ar_placeholder' => 'e.g. غسول لطيف',
+    'brand_placeholder' => 'e.g. Hanova Care',
+    'concern_en_placeholder' => 'e.g. Hormonal Imbalance',
+    'concern_ar_placeholder' => 'e.g. اضطراب الهرمونات',
+    'slug_auto_placeholder' => 'Generated automatically from the English name',
 ];

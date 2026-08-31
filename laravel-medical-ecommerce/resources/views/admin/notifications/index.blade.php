@@ -14,17 +14,10 @@
     <div class="card-header bg-white fw-bold py-3">{{ __('admin.incoming_notifications') }}</div>
     <div class="list-group list-group-flush">
         @forelse($inboxNotifications as $alert)
-            @php
-                $target = match($alert->type) {
-                    'chat_message' => isset($alert->data['conversation_id']) ? route('admin.chats.show', $alert->data['conversation_id']) : route('admin.chats.index'),
-                    'new_order' => isset($alert->data['order_id']) ? route('admin.orders.show', $alert->data['order_id']) : route('admin.orders.index'),
-                    'new_appointment' => isset($alert->data['appointment_id']) ? route('admin.appointments.show', $alert->data['appointment_id']) : route('admin.appointments.index'),
-                    default => '#',
-                };
-            @endphp
+            @php($target = $alert->adminUrl())
             <a href="{{ $target }}" class="list-group-item list-group-item-action d-flex justify-content-between gap-3">
-                <div><strong>{{ $alert->title }}</strong><div class="text-muted small mt-1">{{ $alert->body }}</div></div>
-                <small class="text-muted text-nowrap">{{ $alert->created_at->diffForHumans() }}</small>
+                <div><strong>{{ $alert->localizedTitle() }}</strong><div class="text-muted small mt-1">{{ $alert->localizedBody() }}</div></div>
+                <small class="text-muted text-nowrap">{{ $alert->created_at->locale(app()->getLocale())->diffForHumans() }}</small>
             </a>
         @empty
             <div class="p-4 text-center text-muted">{{ __('admin.no_incoming_notifications') }}</div>
@@ -59,9 +52,9 @@
                         <td class="px-4 py-3 align-middle">
                             <span class="badge bg-light text-dark">{{ $notification->type === 'offer' ? __('admin.offer') : ($notification->type === 'clinic' ? __('admin.clinic_update') : __('admin.general')) }}</span>
                         </td>
-                        <td class="px-4 py-3 align-middle fw-bold">{{ $notification->title }}</td>
-                        <td class="px-4 py-3 align-middle text-muted text-truncate" style="max-width: 250px;">{{ $notification->body }}</td>
-                        <td class="px-4 py-3 align-middle text-muted">{{ $notification->created_at->format('Y-m-d H:i') }}</td>
+                        <td class="px-4 py-3 align-middle fw-bold">{{ $notification->localizedTitle() }}</td>
+                        <td class="px-4 py-3 align-middle text-muted text-truncate" style="max-width: 250px;">{{ $notification->localizedBody() }}</td>
+                        <td class="px-4 py-3 align-middle text-muted">{{ $notification->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</td>
                         <td class="px-4 py-3 align-middle text-end">
                             <form action="{{ route('admin.notifications.destroy', $notification->id) }}" method="POST" class="d-inline delete-confirm">
                                 @csrf

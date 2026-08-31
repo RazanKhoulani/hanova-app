@@ -170,7 +170,7 @@
                                     @forelse($adminRecentNotifications as $alert)
                                         <a href="{{ $alert->adminUrl() }}" class="notification-dropdown-item {{ $alert->is_read ? '' : 'unread' }}" data-notification-id="{{ $alert->id }}">
                                             <span class="notification-type-icon"><i class="fa-solid {{ $alert->type === 'chat_message' ? 'fa-comment' : (str_contains($alert->type, 'appointment') ? 'fa-calendar-check' : (str_starts_with($alert->type, 'order_') ? 'fa-bag-shopping' : 'fa-bell')) }}"></i></span>
-                                            <span><strong>{{ $alert->title }}</strong><small>{{ \Illuminate\Support\Str::limit($alert->body, 75) }}</small><time>{{ $alert->created_at?->diffForHumans() }}</time></span>
+                                            <span><strong>{{ $alert->localizedTitle() }}</strong><small>{{ \Illuminate\Support\Str::limit($alert->localizedBody(), 75) }}</small><time>{{ $alert->created_at?->locale(app()->getLocale())->diffForHumans() }}</time></span>
                                         </a>
                                     @empty
                                         <div class="notification-dropdown-empty">{{ __('admin.no_notifications') }}</div>

@@ -69,7 +69,7 @@
 
                 <div class="col-md-6">
                     <label class="form-label fw-bold">{{ __('admin.product_brand') }}</label>
-                    <input type="text" name="brand" class="form-control" value="{{ old('brand', $product->brand) }}" placeholder="مثال: Hanova Care">
+                    <input type="text" name="brand" class="form-control" value="{{ old('brand', $product->brand) }}" placeholder="{{ __('admin.brand_placeholder') }}">
                 </div>
 
                 <div class="col-md-6">

@@ -550,4 +550,10 @@ return [
     'patient_file_uploaded' => 'تم رفع الملف إلى ملف المريضة.',
     'category_placeholder' => 'مثال: غسولات، سيرومات، واقيات شمس',
     'description_ar_placeholder' => 'تفاصيل المنتج وطريقة الاستخدام...',
+    'name_en_placeholder' => 'مثال: Gentle Cleanser',
+    'name_ar_placeholder' => 'مثال: غسول لطيف',
+    'brand_placeholder' => 'مثال: Hanova Care',
+    'concern_en_placeholder' => 'مثال: Hormonal Imbalance',
+    'concern_ar_placeholder' => 'مثال: اضطراب الهرمونات',
+    'slug_auto_placeholder' => 'يُنشأ تلقائياً من الاسم الإنكليزي',
 ];
