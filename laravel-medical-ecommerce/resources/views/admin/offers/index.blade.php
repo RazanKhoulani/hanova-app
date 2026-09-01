@@ -4,20 +4,21 @@
 
 @section('content')
 @php
-    $money = static fn ($amount): string => number_format((float) $amount, 2) . ' ل.س';
+    $money = static fn ($amount): string => number_format((float) $amount, 0) . ' ل.س';
 @endphp
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ __('admin.offers_management') }}</h2>
+<div class="page-header">
+    <div><p class="eyebrow">{{ __('admin.store') }}</p><h1>{{ __('admin.offers_management') }}</h1><p>{{ __('admin.offers_management') }}</p></div>
     <a href="{{ route('admin.offers.create') }}" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>{{ __('admin.add_offer') }}
     </a>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
+<section class="panel-card data-panel">
+    <div class="panel-heading"><div><h3>{{ __('admin.offers_management') }}</h3><p>{{ __('admin.dates') }}</p></div><span class="soft-count">{{ $offers->total() }}</span></div>
+    <div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="bg-light">
+            <table class="table align-middle mb-0 admin-data-table">
+                <thead>
                     <tr>
                         <th class="border-0 px-4 py-3 text-secondary">{{ __('admin.title') }}</th>
                         <th class="border-0 px-4 py-3 text-secondary">{{ __('admin.discount') }}</th>
@@ -43,7 +44,7 @@
                                 <div>{{ __('admin.to') }}: {{ $offer->ends_at?->format('Y-m-d H:i') ?? __('admin.no_end') }}</div>
                             </td>
                             <td class="align-middle px-4">
-                                <span class="badge bg-{{ $offer->is_active ? 'success' : 'secondary' }}">{{ $offer->is_active ? __('admin.active') : __('admin.paused') }}</span>
+                                <span class="status-pill {{ $offer->is_active ? 'success' : '' }}">{{ $offer->is_active ? __('admin.active') : __('admin.paused') }}</span>
                             </td>
                             <td class="align-middle px-4 text-end">
                                 <a href="{{ route('admin.offers.edit', $offer) }}" class="btn btn-sm btn-outline-primary">
@@ -68,9 +69,9 @@
         </div>
     </div>
     @if($offers->hasPages())
-        <div class="card-footer bg-white border-top-0 pt-4 pb-3 px-4">
+        <div class="pt-4 px-4">
             {{ $offers->links('pagination::bootstrap-5') }}
         </div>
     @endif
-</div>
+</section>
 @endsection

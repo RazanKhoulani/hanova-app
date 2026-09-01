@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $money = static fn ($amount): string => number_format((float) $amount, 2) . ' ل.س';
+    $money = static fn ($amount): string => number_format((float) $amount, 0) . ' ل.س';
 @endphp
 <div class="page-header mb-4">
     <div>
@@ -14,10 +14,11 @@
     </div>
 </div>
 
-<div class="card shadow-sm border-0">
+<section class="panel-card data-panel">
+    <div class="panel-heading"><div><h3>{{ __('admin.reviews') }}</h3><p>{{ __('admin.reviews_hint') }}</p></div><span class="soft-count">{{ $reviews->total() }}</span></div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-            <thead class="bg-light">
+        <table class="table mb-0 align-middle admin-data-table">
+            <thead>
                 <tr>
                     <th class="px-4 py-3">{{ __('admin.product') }}</th>
                     <th class="px-4 py-3">{{ __('admin.customer') }}</th>
@@ -72,9 +73,9 @@
         </table>
     </div>
     @if($reviews->hasPages())
-        <div class="card-footer bg-white border-0 pt-3">
+        <div class="pt-3">
             {{ $reviews->links('pagination::bootstrap-5') }}
         </div>
     @endif
-</div>
+</section>
 @endsection
