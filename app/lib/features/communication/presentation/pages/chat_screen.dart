@@ -47,6 +47,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Duration _recordingDuration = Duration.zero;
   String? _playingUrl;
   String? _pendingVoicePath;
+  Timer? _waveTimer;
+  int _wavePhase = 0;
 
   @override
   void initState() {
@@ -264,10 +266,15 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _playAudio(String url) async {
     if (_playingUrl == url) {
       await _audioPlayer.stop();
+      _waveTimer?.cancel();
       if (mounted) setState(() => _playingUrl = null);
       return;
     }
     await _audioPlayer.play(UrlSource(url));
+    _waveTimer?.cancel();
+    _waveTimer = Timer.periodic(const Duration(milliseconds: 180), (_) {
+      if (mounted) setState(() => _wavePhase++);
+    });
     if (mounted) setState(() => _playingUrl = url);
   }
 
@@ -281,6 +288,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _recorder.dispose();
     _recordingTimer?.cancel();
     _audioPlayer.dispose();
+    _waveTimer?.cancel();
     super.dispose();
   }
 
@@ -547,9 +555,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(_playingUrl == attachment ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 38, color: isMe ? Colors.white : AppColors.primary),
                     const SizedBox(width: 10),
-                    ...List.generate(18, (index) => Container(width: 3, height: 8 + (index % 5) * 3.0, margin: const EdgeInsets.symmetric(horizontal: 1.5), decoration: BoxDecoration(color: isMe ? Colors.white70 : AppColors.primary.withValues(alpha: .55), borderRadius: BorderRadius.circular(3)))),
-                    const SizedBox(width: 8),
-                    Text(_playingUrl == attachment ? 'إيقاف' : 'صوت', style: TextStyle(color: isMe ? Colors.white : AppColors.primary, fontWeight: FontWeight.w700)),
+                    ...List.generate(18, (index) => AnimatedContainer(duration: const Duration(milliseconds: 160), width: 3, height: 8 + (((index + (_playingUrl == attachment ? _wavePhase : 0)) % 5) * 3.0), margin: const EdgeInsets.symmetric(horizontal: 1.5), decoration: BoxDecoration(color: isMe ? Colors.white70 : AppColors.primary.withValues(alpha: .55), borderRadius: BorderRadius.circular(3)))),
                   ]),
                 )
               else if (isImage)
