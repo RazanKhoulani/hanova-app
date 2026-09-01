@@ -279,36 +279,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: EdgeInsets.zero,
           borderColor: isSelected ? AppColors.primary : AppColors.divider,
-          child: ListTile(
-            leading: Icon(
-              opt['icon'] as IconData,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            ),
-            title: Text(
-              opt['label'] as String,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(HanovaRadii.card),
+            child: ListTile(
+              leading: Icon(
+                opt['icon'] as IconData,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
               ),
+              title: Text(
+                opt['label'] as String,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                ),
+              ),
+              subtitle: Text(
+                opt['subtitle'] as String,
+                style: const TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 12,
+                ),
+              ),
+              trailing: Icon(
+                isSelected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                color: isSelected ? AppColors.primary : AppColors.textLight,
+              ),
+              onTap: () {
+                setState(() {
+                  _deliveryMethod = value;
+                  if (value != 'home_delivery') {
+                    _deliveryAreaId = null;
+                    _deliveryFee = 0;
+                  }
+                });
+              },
             ),
-            subtitle: Text(
-              opt['subtitle'] as String,
-              style: const TextStyle(color: AppColors.textLight, fontSize: 12),
-            ),
-            trailing: Icon(
-              isSelected
-                  ? Icons.radio_button_checked_rounded
-                  : Icons.radio_button_off_rounded,
-              color: isSelected ? AppColors.primary : AppColors.textLight,
-            ),
-            onTap: () {
-              setState(() {
-                _deliveryMethod = value;
-                if (value != 'home_delivery') {
-                  _deliveryAreaId = null;
-                  _deliveryFee = 0;
-                }
-              });
-            },
           ),
         );
       }).toList(),
@@ -487,40 +494,46 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             margin: const EdgeInsets.only(bottom: 12),
             padding: EdgeInsets.zero,
             borderColor: isSelected ? AppColors.primary : AppColors.divider,
-            child: ListTile(
-              leading: Icon(
-                opt['icon'] as IconData,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              ),
-              title: Text(
-                opt['label'] as String,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(HanovaRadii.card),
+              child: ListTile(
+                leading: Icon(
+                  opt['icon'] as IconData,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                 ),
-              ),
-              subtitle: Text(
-                opt['subtitle'] as String,
-                style: const TextStyle(
-                  color: AppColors.textLight,
-                  fontSize: 12,
+                title: Text(
+                  opt['label'] as String,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  ),
                 ),
+                subtitle: Text(
+                  opt['subtitle'] as String,
+                  style: const TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 12,
+                  ),
+                ),
+                trailing: enabled
+                    ? Icon(
+                        isSelected
+                            ? Icons.radio_button_checked_rounded
+                            : Icons.radio_button_off_rounded,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textLight,
+                      )
+                    : const Icon(
+                        Icons.lock_outline_rounded,
+                        color: AppColors.textLight,
+                      ),
+                onTap: enabled
+                    ? () => setState(() => _selectedPayment = value)
+                    : null,
               ),
-              trailing: enabled
-                  ? Icon(
-                      isSelected
-                          ? Icons.radio_button_checked_rounded
-                          : Icons.radio_button_off_rounded,
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textLight,
-                    )
-                  : const Icon(
-                      Icons.lock_outline_rounded,
-                      color: AppColors.textLight,
-                    ),
-              onTap: enabled
-                  ? () => setState(() => _selectedPayment = value)
-                  : null,
             ),
           ),
         );
