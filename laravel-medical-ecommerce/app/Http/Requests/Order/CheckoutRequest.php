@@ -33,4 +33,14 @@ class CheckoutRequest extends FormRequest
             'recipient_phone' => ['nullable', 'required_if:delivery_method,qadmous', 'string', 'max:30'],
         ];
     }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('delivery_method') === 'qadmous'
+                && in_array($this->input('payment_method'), ['cash', 'cash_on_delivery'], true)) {
+                $validator->errors()->add('payment_method', 'Qadmous shipments require advance payment.');
+            }
+        });
+    }
 }
