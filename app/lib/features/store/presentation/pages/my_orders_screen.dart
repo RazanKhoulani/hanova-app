@@ -7,6 +7,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../cubit/orders_cubit.dart';
@@ -94,7 +95,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
           body: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, authState) {
               if (authState is AuthLoading || authState is AuthInitial) {
-                return const Center(child: CircularProgressIndicator());
+                return const HanovaLoadingView();
               }
 
               if (authState is! AuthAuthenticated) {
@@ -106,7 +107,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   final isDeliveryUser = authState.user.role == 'delivery';
 
                   if (state.isLoading && state.orders.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const HanovaLoadingView();
                   }
 
                   if (state.errorMessage != null && state.orders.isEmpty) {
@@ -139,114 +140,33 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   }
 
   Widget _buildAuthRequired(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.lock_outline_rounded,
-              size: 64,
-              color: AppColors.textLight,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('login_required'),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('login_required_order'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.push('/login'),
-              child: Text(context.tr('login')),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.lock_outline_rounded,
+      title: context.tr('login_required'),
+      message: context.tr('login_required_order'),
+      actionLabel: context.tr('login'),
+      onAction: () => context.push('/login'),
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 86,
-              height: 86,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: const [
-                  BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-                ],
-              ),
-              child: const Icon(
-                Icons.receipt_long_outlined,
-                color: AppColors.primary,
-                size: 42,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              context.tr('no_orders'),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('no_orders_note'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.go('/home?tab=0'),
-              child: Text(context.tr('browse_products')),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.receipt_long_outlined,
+      title: context.tr('no_orders'),
+      message: context.tr('no_orders_note'),
+      actionLabel: context.tr('browse_products'),
+      onAction: () => context.go('/home?tab=0'),
     );
   }
 
   Widget _buildFailureState(BuildContext context, String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              color: AppColors.danger,
-              size: 48,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: () => _fetchOrdersIfAllowed(force: true),
-              child: Text(context.tr('try_again')),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.error_outline_rounded,
+      iconColor: AppColors.danger,
+      title: context.tr('something_went_wrong'),
+      message: message,
+      actionLabel: context.tr('try_again'),
+      onAction: () => _fetchOrdersIfAllowed(force: true),
     );
   }
 
@@ -257,16 +177,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   }) {
     final statusLabel = _orderStatusLabel(order);
 
-    return Container(
+    return HanovaSurface(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -288,6 +201,13 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
             _formatDate(order.createdAt),
             style: const TextStyle(color: AppColors.textLight, fontSize: 12),
           ),
+          if (![
+            'cancelled',
+            'canceled',
+          ].contains(order.status.toLowerCase())) ...[
+            const SizedBox(height: 14),
+            _buildOrderProgress(order.status),
+          ],
           const Divider(height: 24),
           ...order.items.map(
             (item) => Padding(
@@ -394,6 +314,67 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildOrderProgress(String status) {
+    const stages = ['pending', 'accepted', 'ready', 'delivered'];
+    final normalized = status.toLowerCase();
+    final aliases = {
+      'processing': 'accepted',
+      'paid': 'accepted',
+      'shipped': 'ready',
+      'completed': 'delivered',
+    };
+    final current = stages.indexOf(aliases[normalized] ?? normalized);
+
+    return Row(
+      children: List.generate(stages.length * 2 - 1, (index) {
+        if (index.isOdd) {
+          final completed = index ~/ 2 < current;
+          return Expanded(
+            child: Container(
+              height: 2,
+              color: completed ? AppColors.primary : AppColors.divider,
+            ),
+          );
+        }
+
+        final stageIndex = index ~/ 2;
+        final completed = stageIndex <= current;
+        return Tooltip(
+          message: _progressStageLabel(stages[stageIndex]),
+          child: Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: completed ? AppColors.primary : AppColors.surfaceMuted,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: completed ? AppColors.primary : AppColors.divider,
+                width: 2,
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  String _progressStageLabel(String stage) {
+    if (!_isArabic) {
+      return switch (stage) {
+        'pending' => 'Received',
+        'accepted' => 'Accepted',
+        'ready' => 'Ready',
+        _ => 'Delivered',
+      };
+    }
+    return switch (stage) {
+      'pending' => 'تم استلام الطلب',
+      'accepted' => 'تم قبول الطلب',
+      'ready' => 'الطلب جاهز',
+      _ => 'تم التسليم',
+    };
   }
 
   Widget _buildStatusBadge(String status, String label) {

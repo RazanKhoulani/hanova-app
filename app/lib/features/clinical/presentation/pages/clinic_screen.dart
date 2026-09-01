@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/notifications/push_notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -35,14 +36,14 @@ class _ClinicScreenState extends State<ClinicScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _notificationSubscription = sl<PushNotificationService>().events.listen(
-      (data) {
-        final type = data['type']?.toString() ?? '';
-        if (type.startsWith('appointment_') || data['appointment_id'] != null) {
-          _fetchAppointmentsIfAllowed(force: true);
-        }
-      },
-    );
+    _notificationSubscription = sl<PushNotificationService>().events.listen((
+      data,
+    ) {
+      final type = data['type']?.toString() ?? '';
+      if (type.startsWith('appointment_') || data['appointment_id'] != null) {
+        _fetchAppointmentsIfAllowed(force: true);
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _fetchAppointmentsIfAllowed(),
     );
@@ -155,9 +156,7 @@ class _ClinicScreenState extends State<ClinicScreen>
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is AuthLoading || authState is AuthInitial) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: HanovaLoadingView());
         }
 
         if (authState is! AuthAuthenticated) {
@@ -225,12 +224,7 @@ class _ClinicScreenState extends State<ClinicScreen>
           _buildSectionHeader(context.tr('upcoming_appointments')),
           const SizedBox(height: 12),
           if (isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
-              ),
-            )
+            const SizedBox(height: 120, child: HanovaLoadingView())
           else if (errorMessage != null)
             _buildErrorCard(errorMessage)
           else if (appointments.isEmpty)
@@ -536,27 +530,16 @@ class _ClinicScreenState extends State<ClinicScreen>
     BuildContext sheetContext,
     AppointmentModel appointment,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showHanovaConfirmDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(_clinicText('إلغاء الموعد؟', 'Cancel appointment?')),
-        content: Text(
-          _clinicText(
-            'هل أنت متأكدة من إلغاء هذا الموعد؟',
-            'Are you sure you want to cancel this appointment?',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(_clinicText('رجوع', 'Back')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(_clinicText('إلغاء الموعد', 'Cancel appointment')),
-          ),
-        ],
+      title: _clinicText('إلغاء الموعد؟', 'Cancel appointment?'),
+      message: _clinicText(
+        'هل أنت متأكدة من إلغاء هذا الموعد؟',
+        'Are you sure you want to cancel this appointment?',
       ),
+      confirmLabel: _clinicText('إلغاء الموعد', 'Cancel appointment'),
+      cancelLabel: _clinicText('رجوع', 'Back'),
+      destructive: true,
     );
     if (confirmed != true || !mounted) return;
     await sl<ClinicalRepository>().updateAppointmentStatus(
@@ -639,90 +622,29 @@ class _ClinicScreenState extends State<ClinicScreen>
   };
 
   Widget _buildEmptyAppointments(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.event_note_outlined,
-            color: AppColors.primary,
-            size: 42,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            context.tr('no_appointments'),
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            context.tr('no_appointments_note'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 14),
-          OutlinedButton.icon(
-            onPressed: () => context.push('/appointment'),
-            icon: const Icon(Icons.add_rounded),
-            label: Text(context.tr('book_now')),
-          ),
-        ],
-      ),
+    return HanovaStateView(
+      icon: Icons.event_note_outlined,
+      title: context.tr('no_appointments'),
+      message: context.tr('no_appointments_note'),
+      actionLabel: context.tr('book_now'),
+      onAction: () => context.push('/appointment'),
     );
   }
 
   Widget _buildErrorCard(String message) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            color: AppColors.danger,
-            size: 38,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => _fetchAppointmentsIfAllowed(force: true),
-            child: Text(context.tr('try_again')),
-          ),
-        ],
-      ),
+    return HanovaStateView(
+      icon: Icons.error_outline_rounded,
+      iconColor: AppColors.danger,
+      title: context.tr('something_went_wrong'),
+      message: message,
+      actionLabel: context.tr('try_again'),
+      onAction: () => _fetchAppointmentsIfAllowed(force: true),
     );
   }
 
   Widget _buildFollowUpCard() {
-    return Container(
-      width: double.infinity,
+    return HanovaSurface(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
