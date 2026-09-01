@@ -151,7 +151,19 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
+    if (_recording) {
+      final path = await _recorder.stop();
+      _recordingTimer?.cancel();
+      if (mounted) setState(() => _recording = false);
+      if (path != null && mounted) {
+        context.read<CommunicationBloc>().add(CommunicationSendChatAttachment(
+          path,
+          consultationId: widget.consultationId,
+        ));
+      }
+      return;
+    }
     if (_pendingVoicePath != null) {
       final path = _pendingVoicePath!;
       setState(() => _pendingVoicePath = null);
