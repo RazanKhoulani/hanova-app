@@ -9,10 +9,29 @@ use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $appointments = Appointment::with('patient', 'user')->latest()->paginate(15);
-        return view('admin.appointments.index', compact('appointments'));
+        $filters = $request->validate([
+            'search' => 'nullable|string|max:100',
+            'status' => 'nullable|in:pending,confirmed,completed,cancelled',
+            'type' => 'nullable|in:clinic,online',
+            'date' => 'nullable|date',
+        ]);
+        $query = Appointment::with('patient', 'user')->latest();
+
+        if ($search = trim((string) ($filters['search'] ?? ''))) {
+            $query->whereHas('patient', fn ($patient) => $patient
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%"));
+        }
+        foreach (['status', 'type', 'date'] as $filter) {
+            if (($filters[$filter] ?? null) !== null) {
+                $query->where($filter, $filters[$filter]);
+            }
+        }
+
+        $appointments = $query->paginate(15)->withQueryString();
+        return view('admin.appointments.index', compact('appointments', 'filters'));
     }
 
     public function show($id)

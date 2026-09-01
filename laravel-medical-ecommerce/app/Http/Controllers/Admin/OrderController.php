@@ -16,18 +16,41 @@ class OrderController extends Controller
         $this->orderService = $orderService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $filters = $request->validate([
+            'search' => 'nullable|string|max:100',
+            'status' => 'nullable|in:pending,accepted,ready,paid,shipped,delivered,cancelled',
+            'delivery_method' => 'nullable|in:clinic_pickup,pharmacy_pickup,home_delivery,qadmous',
+        ]);
         $ordersQuery = Order::with(['user', 'items.product', 'deliveryArea', 'deliveryUser', 'coupon'])
             ->latest();
+
+        if ($search = trim((string) ($filters['search'] ?? ''))) {
+            $ordersQuery->where(function ($query) use ($search) {
+                if (ctype_digit($search)) {
+                    $query->orWhere('id', (int) $search);
+                }
+                $query->orWhereHas('user', fn ($user) => $user
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%"));
+            });
+        }
+
+        if (($filters['status'] ?? null) !== null) {
+            $ordersQuery->where('status', $filters['status']);
+        }
+        if (($filters['delivery_method'] ?? null) !== null) {
+            $ordersQuery->where('delivery_method', $filters['delivery_method']);
+        }
 
         if (auth()->user()?->hasRole('delivery')) {
             $ordersQuery->where('delivery_user_id', auth()->id());
         }
 
-        $orders = $ordersQuery->paginate(15);
+        $orders = $ordersQuery->paginate(15)->withQueryString();
 
-        return view('admin.orders.index', compact('orders'));
+        return view('admin.orders.index', compact('orders', 'filters'));
     }
 
     public function show($id)

@@ -11,6 +11,7 @@ import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/hanova_auth_shell.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
@@ -443,27 +444,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 20,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(99),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
+    return HanovaSectionHeader(title: title);
   }
 
   Widget _buildCategoriesSection() {
@@ -638,12 +619,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return BlocBuilder<StoreBloc, StoreState>(
       builder: (context, state) {
         if (state is StoreLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const SizedBox(height: 220, child: HanovaLoadingView());
         } else if (state is StoreProductsLoaded) {
           if (state.products.isEmpty) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: Text(context.tr('no_data_available'))),
+            return HanovaStateView(
+              icon: Icons.search_off_rounded,
+              title: context.tr('no_data_available'),
+              actionLabel: _hasSearchText
+                  ? context.tr('clear')
+                  : context.tr('try_again'),
+              onAction: _hasSearchText
+                  ? _clearFilters
+                  : () => _fetchProducts(force: true),
             );
           }
 
@@ -671,27 +658,12 @@ class _HomeDashboardState extends State<HomeDashboard> {
             },
           );
         } else if (state is StoreFailure) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.cloud_off_rounded,
-                    size: 48,
-                    color: AppColors.textLight,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(state.message, textAlign: TextAlign.center),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () => _fetchProducts(force: true),
-                    child: Text(context.tr('try_again')),
-                  ),
-                ],
-              ),
-            ),
+          return HanovaStateView(
+            icon: Icons.cloud_off_rounded,
+            title: context.tr('something_went_wrong'),
+            message: state.message,
+            actionLabel: context.tr('try_again'),
+            onAction: () => _fetchProducts(force: true),
           );
         }
         return const SizedBox.shrink();
@@ -872,7 +844,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       children: [
                         Expanded(
                           child: Text(
-                            CurrencyFormatter.dual(product.priceSyp, product.priceUsd),
+                            CurrencyFormatter.dual(
+                              product.priceSyp,
+                              product.priceUsd,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
