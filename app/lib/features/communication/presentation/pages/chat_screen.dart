@@ -541,20 +541,16 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             if (attachment != null) ...[
               if (isAudio)
-                TextButton.icon(
-                  onPressed: () => _playAudio(attachment),
-                  icon: Icon(
-                    _playingUrl == attachment
-                        ? Icons.stop_circle_outlined
-                        : Icons.play_circle_outline,
-                    color: isMe ? Colors.white : AppColors.primary,
-                  ),
-                  label: Text(
-                    _playingUrl == attachment ? 'إيقاف' : 'تشغيل',
-                    style: TextStyle(
-                      color: isMe ? Colors.white : AppColors.primary,
-                    ),
-                  ),
+                InkWell(
+                  onTap: () => _playAudio(attachment),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(_playingUrl == attachment ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 38, color: isMe ? Colors.white : AppColors.primary),
+                    const SizedBox(width: 10),
+                    ...List.generate(18, (index) => Container(width: 3, height: 8 + (index % 5) * 3.0, margin: const EdgeInsets.symmetric(horizontal: 1.5), decoration: BoxDecoration(color: isMe ? Colors.white70 : AppColors.primary.withValues(alpha: .55), borderRadius: BorderRadius.circular(3)))),
+                    const SizedBox(width: 8),
+                    Text(_playingUrl == attachment ? 'إيقاف' : 'صوت', style: TextStyle(color: isMe ? Colors.white : AppColors.primary, fontWeight: FontWeight.w700)),
+                  ]),
                 )
               else if (isImage)
                 ClipRRect(
