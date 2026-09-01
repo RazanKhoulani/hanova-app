@@ -472,7 +472,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildPaymentOptions() {
-    final options = [
+    final options = <Map<String, dynamic>>[
+      {
+        'label': 'الدفع الإلكتروني', 'value': 'online', 'icon': Icons.credit_card_rounded,
+        'enabled': true, 'subtitle': 'الدفع المسبق عبر بوابة الدفع',
+      },
       {
         'label': context.tr('cash_on_delivery'),
         'value': 'cash_on_delivery',
@@ -481,6 +485,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'subtitle': context.tr('pay_after_confirm'),
       },
     ];
+    if (_deliveryMethod == 'qadmous') {
+      options.removeWhere((option) => option['value'] == 'cash_on_delivery');
+      if (_selectedPayment == 'cash_on_delivery') _selectedPayment = 'online';
+    }
 
     return Column(
       children: options.map((opt) {
