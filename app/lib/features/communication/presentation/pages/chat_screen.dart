@@ -218,13 +218,14 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_recording) {
       final path = await _recorder.stop();
       if (mounted) setState(() => _recording = false);
-      if (path != null)
+      if (path != null && mounted) {
         context.read<CommunicationBloc>().add(
           CommunicationSendChatAttachment(
             path,
             consultationId: widget.consultationId,
           ),
         );
+      }
       return;
     }
     if (!await _recorder.hasPermission()) return;

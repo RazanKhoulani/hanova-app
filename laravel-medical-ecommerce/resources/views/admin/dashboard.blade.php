@@ -15,7 +15,7 @@
         ? __('admin.status_' . $status)
         : ucfirst(str_replace('_', ' ', $status));
 
-    $money = static fn ($amount): string => number_format((float) $amount, 2) . ' ل.س';
+    $money = static fn ($amount): string => number_format((float) $amount, 0) . ' ل.س';
 @endphp
 
 <section class="dashboard-hero">

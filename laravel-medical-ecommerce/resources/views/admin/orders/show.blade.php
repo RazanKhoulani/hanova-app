@@ -4,7 +4,7 @@
 
 @section('content')
 @php
-    $money = static fn ($amount) => number_format((float) $amount, 2) . ' ل.س';
+    $money = static fn ($amount) => number_format((float) $amount, 0) . ' ل.س';
     $usd = static fn ($amount) => $amount !== null ? '$' . number_format((float) $amount, 2) : null;
     $statusKey = 'admin.status_' . $order->status;
     $paymentKey = match ($order->payment_method) { 'cash_on_delivery' => 'admin.cash_on_delivery', 'credit_card' => 'admin.credit_card', 'online', 'apple_pay' => 'admin.online_payment', default => 'admin.cash' };

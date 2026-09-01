@@ -61,8 +61,8 @@
                                 <span class="text-muted small">{{ __('admin.no_concerns') }}</span>
                             @endforelse
                         </td>
-                        <td class="align-middle px-4"><strong class="d-block text-success">{{ number_format((float)($product->price_syp ?? $product->price), 2) }} ل.س</strong><small class="text-muted">{{ $product->price_usd !== null ? '$'.number_format((float)$product->price_usd, 2) : '— USD' }}</small></td>
-                        <td class="align-middle px-4"><strong class="d-block">{{ number_format((float)($product->cost_syp ?? $product->cost), 2) }} ل.س</strong><small class="text-muted">{{ $product->cost_usd !== null ? '$'.number_format((float)$product->cost_usd, 2) : '— USD' }}</small></td>
+                        <td class="align-middle px-4"><strong class="d-block text-success">{{ number_format((float)($product->price_syp ?? $product->price), 0) }} ل.س</strong><small class="text-muted">{{ $product->price_usd !== null ? '$'.number_format((float)$product->price_usd, 2) : '— USD' }}</small></td>
+                        <td class="align-middle px-4"><strong class="d-block">{{ number_format((float)($product->cost_syp ?? $product->cost), 0) }} ل.س</strong><small class="text-muted">{{ $product->cost_usd !== null ? '$'.number_format((float)$product->cost_usd, 2) : '— USD' }}</small></td>
                         <td class="align-middle px-4" style="min-width: 190px;">
                             @if(!$product->track_inventory)
                                 <span class="badge bg-secondary">{{ __('admin.not_tracked') }}</span>
