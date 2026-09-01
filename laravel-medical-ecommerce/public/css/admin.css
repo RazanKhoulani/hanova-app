@@ -6,6 +6,219 @@
     font-display: swap;
 }
 
+/* Hanova design system: normalizes legacy and modern admin pages. */
+:root {
+    --clinic-space-1: 4px;
+    --clinic-space-2: 8px;
+    --clinic-space-3: 12px;
+    --clinic-space-4: 16px;
+    --clinic-space-5: 24px;
+    --clinic-control-height: 46px;
+    --clinic-focus: 0 0 0 4px rgba(202, 109, 132, 0.14);
+}
+
+:focus-visible {
+    outline: 2px solid var(--clinic-primary);
+    outline-offset: 2px;
+}
+
+.admin-content > .card,
+.admin-content > form.card,
+.admin-content .row > [class*="col-"] > .card {
+    overflow: hidden;
+    background: var(--clinic-surface);
+    border: 1px solid rgba(235, 221, 215, 0.9) !important;
+    border-radius: var(--clinic-radius) !important;
+    box-shadow: var(--clinic-shadow) !important;
+}
+
+.admin-content .card-header,
+.admin-content .card-footer {
+    padding: 18px 22px;
+    background: rgba(255, 250, 247, 0.72) !important;
+    border-color: var(--clinic-border) !important;
+}
+
+.admin-content .card-body {
+    padding: 22px;
+}
+
+.admin-content h1,
+.admin-content h2,
+.admin-content h3,
+.admin-content h4,
+.admin-content h5 {
+    letter-spacing: -0.015em;
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+    min-height: var(--clinic-control-height);
+    color: var(--clinic-text);
+    background-color: #fff;
+    border-color: var(--clinic-border);
+    border-radius: 13px;
+}
+
+.form-control::placeholder {
+    color: #aa9992;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: rgba(202, 109, 132, 0.72);
+    box-shadow: var(--clinic-focus);
+}
+
+.input-group > .form-control,
+.input-group > .form-select,
+.input-group > .input-group-text,
+.input-group > .btn {
+    border-radius: 0;
+}
+
+.input-group > :first-child {
+    border-start-start-radius: 13px;
+    border-end-start-radius: 13px;
+}
+
+.input-group > :last-child {
+    border-start-end-radius: 13px;
+    border-end-end-radius: 13px;
+}
+
+.form-label {
+    margin-bottom: 7px;
+    color: var(--clinic-text);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.form-text {
+    color: var(--clinic-muted);
+    font-size: 10px;
+    line-height: 1.65;
+}
+
+.btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding-inline: 17px;
+    border-radius: 13px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    border-color: var(--clinic-primary);
+    background: linear-gradient(145deg, #d77c93, var(--clinic-primary-dark));
+    box-shadow: 0 8px 18px rgba(162, 74, 99, 0.16);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    border-color: var(--clinic-primary-dark);
+    background: linear-gradient(145deg, #cf718a, #91384f);
+}
+
+.table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: var(--clinic-primary-mist, #f1ced8) transparent;
+}
+
+.admin-content .table {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: rgba(251, 234, 240, 0.35);
+    margin: 0;
+}
+
+.admin-content .table thead th {
+    padding: 14px 18px !important;
+    color: var(--clinic-muted) !important;
+    background: #fffaf8 !important;
+    border-block: 1px solid var(--clinic-border) !important;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-content .table tbody td {
+    padding: 15px 18px !important;
+    border-color: rgba(235, 221, 215, 0.72);
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.admin-content .table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.alert {
+    border: 1px solid transparent;
+    border-radius: 16px;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.pagination {
+    gap: 5px;
+}
+
+.page-link {
+    min-width: 36px;
+    min-height: 36px;
+    display: grid;
+    place-items: center;
+    color: var(--clinic-primary-dark);
+    border-color: var(--clinic-border);
+    border-radius: 10px !important;
+}
+
+.active > .page-link,
+.page-link.active {
+    color: #fff;
+    background: var(--clinic-primary);
+    border-color: var(--clinic-primary);
+}
+
+@media (max-width: 767.98px) {
+    .admin-content .card-body,
+    .admin-content .card-header,
+    .admin-content .card-footer {
+        padding: 16px;
+    }
+
+    .admin-content .table thead th,
+    .admin-content .table tbody td {
+        padding-inline: 13px !important;
+    }
+
+    .action-toolbar .btn,
+    .page-header > .btn {
+        min-height: 44px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
 @font-face {
     font-family: "Tajawal";
     src: url("../fonts/Tajawal-Medium.ttf") format("truetype");

@@ -79,6 +79,33 @@ class AppTheme {
           ),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryDark,
+          minimumSize: const Size(0, 50),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          side: const BorderSide(color: AppColors.primaryMist),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: _fontFamily,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primaryDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: _fontFamily,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -114,6 +141,28 @@ class AppTheme {
           borderRadius: BorderRadius.circular(24),
           side: const BorderSide(color: AppColors.divider, width: 0.5),
         ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+        titleTextStyle: const TextStyle(
+          fontFamily: _fontFamily,
+          color: AppColors.textPrimary,
+          fontSize: 19,
+          fontWeight: FontWeight.w800,
+        ),
+        contentTextStyle: const TextStyle(
+          fontFamily: _fontFamily,
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          height: 1.55,
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.divider,
+        thickness: .7,
+        space: 24,
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surface,

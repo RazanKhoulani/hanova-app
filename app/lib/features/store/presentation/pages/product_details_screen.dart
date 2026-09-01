@@ -6,6 +6,7 @@ import '../../../../core/network/api_error_message.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../../injection_container.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/cart_bloc.dart';
@@ -40,42 +41,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       future: _productFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: HanovaLoadingView());
         }
 
         if (snapshot.hasError || !snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.cloud_off_rounded,
-                      size: 56,
-                      color: AppColors.textLight,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      snapshot.error == null
-                          ? _detailLabel('no_description')
-                          : ApiErrorMessage.from(snapshot.error!),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: () {
-                        setState(() => _productFuture = _fetchProduct());
-                      },
-                      child: Text(context.tr('try_again')),
-                    ),
-                  ],
-                ),
-              ),
+            body: HanovaStateView(
+              icon: Icons.cloud_off_rounded,
+              title: context.tr('something_went_wrong'),
+              message: snapshot.error == null
+                  ? _detailLabel('no_description')
+                  : ApiErrorMessage.from(snapshot.error!),
+              actionLabel: context.tr('try_again'),
+              onAction: () {
+                setState(() => _productFuture = _fetchProduct());
+              },
             ),
           );
         }
@@ -130,7 +111,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              CurrencyFormatter.dual(product.priceSyp, product.priceUsd),
+                              CurrencyFormatter.dual(
+                                product.priceSyp,
+                                product.priceUsd,
+                              ),
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,

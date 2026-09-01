@@ -6,6 +6,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../bloc/cart_bloc.dart';
@@ -43,7 +44,19 @@ class _CartScreenState extends State<CartScreen> {
             actions: [
               if (cartItems.isNotEmpty)
                 TextButton(
-                  onPressed: () => context.read<CartBloc>().add(CartCleared()),
+                  onPressed: () async {
+                    final confirmed = await showHanovaConfirmDialog(
+                      context: context,
+                      title: context.tr('clear_cart_title'),
+                      message: context.tr('clear_cart_message'),
+                      confirmLabel: context.tr('clear'),
+                      cancelLabel: context.tr('cancel'),
+                      destructive: true,
+                    );
+                    if (confirmed && context.mounted) {
+                      context.read<CartBloc>().add(CartCleared());
+                    }
+                  },
                   child: Text(
                     context.tr('clear'),
                     style: const TextStyle(color: AppColors.danger),
@@ -77,17 +90,9 @@ class _CartScreenState extends State<CartScreen> {
     final canIncrease =
         !item.product.tracksInventory || item.quantity < item.product.stock;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.divider, width: 0.6),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
-      ),
+    return HanovaSurface(
+      margin: const EdgeInsets.only(bottom: HanovaSpacing.lg),
+      padding: const EdgeInsets.all(HanovaSpacing.md),
       child: Row(
         children: [
           Container(
@@ -140,7 +145,10 @@ class _CartScreenState extends State<CartScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      CurrencyFormatter.dual(item.product.priceSyp, item.product.priceUsd),
+                      CurrencyFormatter.dual(
+                        item.product.priceSyp,
+                        item.product.priceUsd,
+                      ),
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
@@ -307,46 +315,12 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-                ],
-              ),
-              child: const Icon(
-                Icons.shopping_bag_outlined,
-                color: AppColors.textSecondary,
-                size: 44,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              context.tr('cart_empty'),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('cart_empty_note'),
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.go('/home?tab=0'),
-              child: Text(context.tr('start_shopping')),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.shopping_bag_outlined,
+      title: context.tr('cart_empty'),
+      message: context.tr('cart_empty_note'),
+      actionLabel: context.tr('start_shopping'),
+      onAction: () => context.go('/home?tab=0'),
     );
   }
 
