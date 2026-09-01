@@ -46,6 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
   String? _playingUrl;
+  String? _pendingVoicePath;
 
   @override
   void initState() {
@@ -151,6 +152,15 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _sendMessage() {
+    if (_pendingVoicePath != null) {
+      final path = _pendingVoicePath!;
+      setState(() => _pendingVoicePath = null);
+      context.read<CommunicationBloc>().add(CommunicationSendChatAttachment(
+        path,
+        consultationId: widget.consultationId,
+      ));
+      return;
+    }
     if (_controller.text.trim().isNotEmpty) {
       context.read<CommunicationBloc>().add(
         CommunicationSendChatMessage(
@@ -222,14 +232,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final path = await _recorder.stop();
       _recordingTimer?.cancel();
       if (mounted) setState(() => _recording = false);
-      if (path != null && mounted) {
-        context.read<CommunicationBloc>().add(
-          CommunicationSendChatAttachment(
-            path,
-            consultationId: widget.consultationId,
-          ),
-        );
-      }
+      if (path != null && mounted) setState(() => _pendingVoicePath = path);
       return;
     }
     if (!await _recorder.hasPermission()) return;
@@ -621,8 +624,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: _recording ? Colors.red : AppColors.primary,
               ),
             ),
-          if (_recording)
-            Text('${_recordingDuration.inMinutes.toString().padLeft(2, '0')}:${(_recordingDuration.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+          if (_recording || _pendingVoicePath != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Text(
+                _recording
+                    ? '${_recordingDuration.inMinutes.toString().padLeft(2, '0')}:${(_recordingDuration.inSeconds % 60).toString().padLeft(2, '0')}'
+                    : 'جاهز للإرسال',
+                style: TextStyle(color: _recording ? Colors.red : AppColors.primary, fontWeight: FontWeight.w700),
+              ),
+            ),
           Expanded(
             child: TextField(
               controller: _controller,
