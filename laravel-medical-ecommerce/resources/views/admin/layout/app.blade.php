@@ -85,6 +85,9 @@
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                             <span>{{ __('admin.concerns') }}</span>
                         </a>
+                        <a href="{{ route('admin.qadmous-locations.index') }}" class="sidebar-link {{ request()->routeIs('admin.qadmous-locations.*') ? 'active' : '' }}">
+                            <i class="fas fa-truck-fast"></i><span>{{ app()->getLocale() === 'ar' ? 'فروع قدموس' : 'Qadmous branches' }}</span>
+                        </a>
                         <a href="{{ route('admin.offers.index') }}" class="sidebar-link {{ request()->routeIs('admin.offers.*') ? 'active' : '' }}">
                             <i class="fa-solid fa-tags"></i>
                             <span>{{ __('admin.offers') }}</span>

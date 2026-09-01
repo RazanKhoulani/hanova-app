@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -35,6 +36,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _recipientPhoneController =
       TextEditingController();
   late final Future<List<DeliveryAreaModel>> _deliveryAreasFuture;
+  late final Future<List<Map<String, dynamic>>> _qadmousLocationsFuture;
 
   String _selectedPayment = 'cash_on_delivery';
   String _deliveryMethod = 'clinic_pickup';
@@ -68,6 +70,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     _deliveryAreasFuture = sl<StoreRepository>().getDeliveryAreas();
+    _qadmousLocationsFuture = _loadQadmousLocations();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadQadmousLocations() async {
+    final response = await Dio().get('${ApiConstants.baseUrl}/qadmous-locations', options: Options(headers: {'Accept-Language': 'ar'}));
+    final list = response.data['data'] as List? ?? [];
+    return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
   }
 
   @override
@@ -364,15 +373,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
       return Column(
         children: [
-          TextField(
-            controller: _qadmousGovernorateController,
-            decoration: decoration(_checkoutLabel('governorate')),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _qadmousBranchController,
-            decoration: decoration(_checkoutLabel('qadmous_branch')),
-          ),
+          FutureBuilder<List<Map<String, dynamic>>>(future: _qadmousLocationsFuture, builder: (context, snapshot) {
+            final locations = snapshot.data ?? const <Map<String,dynamic>>[];
+            if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+            if (locations.isEmpty) return _buildInfoCard(icon: Icons.info_outline, text: 'لا توجد فروع قدموس مضافة من الداشبورد حالياً.');
+            return DropdownButtonFormField<int>(decoration: decoration('المحافظة وفرع قدموس'), items: locations.map((location) => DropdownMenuItem<int>(value: location['id'] as int, child: Text('${location['governorate']} — ${location['branch']}'))).toList(), onChanged: (id) { final selected=locations.firstWhere((item)=>item['id']==id); _qadmousGovernorateController.text=selected['governorate'].toString(); _qadmousBranchController.text=selected['branch'].toString(); });
+          }),
           const SizedBox(height: 12),
           TextField(
             controller: _recipientNameController,

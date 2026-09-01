@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AppSettingsController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductReviewController;
 use App\Http\Controllers\Admin\ConcernController;
+use App\Http\Controllers\Admin\QadmousLocationController;
 use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PatientController;
@@ -68,6 +69,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('products/{id}/stock', [ProductController::class, 'updateStock'])
                 ->name('products.stock.update');
             Route::resource('concerns', ConcernController::class)->except(['show']);
+            Route::resource('qadmous-locations', QadmousLocationController::class)->only(['index','store','update','destroy']);
             Route::resource('offers', OfferController::class)->except(['show']);
             Route::get('reviews', [ProductReviewController::class, 'index'])->name('reviews.index');
             Route::put('reviews/{review}/visibility', [ProductReviewController::class, 'toggleVisibility'])

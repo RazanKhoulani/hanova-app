@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ConsultationController;
 use App\Http\Controllers\Api\DeliveryAreaController;
+use App\Http\Controllers\Api\QadmousLocationController;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\HomeController;
@@ -42,6 +43,7 @@ Route::get('/bot/bootstrap', [BotController::class, 'bootstrap']);
 Route::post('/bot/ask', [BotController::class, 'ask']);
 Route::get('/appointments/available-slots', [AppointmentController::class, 'availableSlots']);
 Route::get('/delivery-areas', [DeliveryAreaController::class, 'index']);
+Route::get('/qadmous-locations', [QadmousLocationController::class, 'index']);
 Route::get('/offers/active', [OfferController::class, 'active']);
 
 // Protected routes
