@@ -17,7 +17,9 @@ class SendMessageRequest extends FormRequest
             'message' => 'required_without:file|nullable|string',
             // Mobile recordings are saved as m4a; keep the common audio formats
             // accepted by Android/iOS and browser uploads.
-            'file' => 'required_without:message|nullable|file|mimes:jpeg,png,jpg,mp3,wav,m4a,aac,ogg,webm,pdf,doc,docx|max:10240',
+            // Android may report m4a as audio/mp4 or application/octet-stream;
+            // validate the user-facing extension instead of rejecting a valid recording.
+            'file' => 'required_without:message|nullable|file|extensions:jpeg,png,jpg,mp3,wav,m4a,aac,ogg,webm,pdf,doc,docx|max:10240',
             'type' => 'nullable|in:text,image,audio,file',
         ];
     }
