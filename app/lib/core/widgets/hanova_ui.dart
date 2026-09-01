@@ -26,6 +26,7 @@ class HanovaSurface extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
   final Color color;
+  final Color? borderColor;
 
   const HanovaSurface({
     super.key,
@@ -33,6 +34,7 @@ class HanovaSurface extends StatelessWidget {
     this.padding = const EdgeInsets.all(HanovaSpacing.lg),
     this.margin,
     this.color = AppColors.surface,
+    this.borderColor,
   });
 
   @override
@@ -43,7 +45,7 @@ class HanovaSurface extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(HanovaRadii.card),
-        border: Border.all(color: AppColors.divider, width: .7),
+        border: Border.all(color: borderColor ?? AppColors.divider, width: .9),
         boxShadow: const [
           BoxShadow(
             color: AppColors.cardShadow,

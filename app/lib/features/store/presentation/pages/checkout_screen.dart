@@ -7,6 +7,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../data/models/order_model.dart';
@@ -179,6 +180,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         appBar: AppBar(title: Text(context.tr('checkout'))),
         body: BlocBuilder<CartBloc, CartState>(
           builder: (context, cartState) {
+            if (cartState.items.isEmpty) {
+              return HanovaStateView(
+                icon: Icons.shopping_bag_outlined,
+                title: context.tr('cart_empty'),
+                message: context.tr('cart_empty_note'),
+                actionLabel: context.tr('start_shopping'),
+                onAction: () => context.go('/home?tab=0'),
+              );
+            }
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -229,14 +239,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
-      ),
-    );
+    return HanovaSectionHeader(title: title);
   }
 
   Widget _buildDeliveryOptions() {
@@ -272,19 +275,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         final value = opt['value'] as String;
         final isSelected = _deliveryMethod == value;
 
-        return Container(
+        return HanovaSurface(
           margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.transparent,
-              width: 2,
-            ),
-            boxShadow: const [
-              BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-            ],
-          ),
+          padding: EdgeInsets.zero,
+          borderColor: isSelected ? AppColors.primary : AppColors.divider,
           child: ListTile(
             leading: Icon(
               opt['icon'] as IconData,
@@ -450,16 +444,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildInfoCard({required IconData icon, required String text}) {
-    return Container(
-      width: double.infinity,
+    return HanovaSurface(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
-      ),
       child: Row(
         children: [
           Icon(icon, color: AppColors.primary),
@@ -497,19 +483,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         return Opacity(
           opacity: enabled ? 1 : 0.55,
-          child: Container(
+          child: HanovaSurface(
             margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected ? AppColors.primary : Colors.transparent,
-                width: 2,
-              ),
-              boxShadow: const [
-                BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-              ],
-            ),
+            padding: EdgeInsets.zero,
+            borderColor: isSelected ? AppColors.primary : AppColors.divider,
             child: ListTile(
               leading: Icon(
                 opt['icon'] as IconData,
@@ -580,15 +557,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildOrderSummary(CartState cartState) {
     final total = cartState.totalAmount + _deliveryFee;
 
-    return Container(
+    return HanovaSurface(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-        ],
-      ),
       child: Column(
         children: [
           Row(
@@ -599,7 +569,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               Text(
-                CurrencyFormatter.dual(cartState.totalAmount, cartState.totalUsd),
+                CurrencyFormatter.dual(
+                  cartState.totalAmount,
+                  cartState.totalUsd,
+                ),
               ),
             ],
           ),

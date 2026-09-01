@@ -7,6 +7,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../domain/repositories/clinical_repository.dart';
@@ -116,7 +117,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
           }
         },
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.background,
           appBar: AppBar(title: Text(context.tr('book_appointment'))),
           body: SingleChildScrollView(
             child: Column(
@@ -127,45 +128,27 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        context.tr('select_session_type'),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      HanovaSectionHeader(
+                        title: context.tr('select_session_type'),
                       ),
                       const SizedBox(height: 16),
                       _buildSessionTypeSelector(),
                       const SizedBox(height: 32),
-                      Text(
-                        context.tr('appointment_type'),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      HanovaSectionHeader(
+                        title: context.tr('appointment_type'),
                       ),
                       const SizedBox(height: 16),
                       _buildAppointmentTypeSelector(),
                       if (_appointmentType == 'Consultation') ...[
                         const SizedBox(height: 24),
-                        Text(
-                          context.tr('consultation_subject'),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        HanovaSectionHeader(
+                          title: context.tr('consultation_subject'),
                         ),
                         const SizedBox(height: 12),
                         _buildSpecialtySelector(),
                       ],
                       const SizedBox(height: 32),
-                      Text(
-                        context.tr('available_time'),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      HanovaSectionHeader(title: context.tr('available_time')),
                       const SizedBox(height: 16),
                       _buildTimeSlots(),
                       const SizedBox(height: 48),
@@ -261,15 +244,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   }
 
   Widget _buildCalendar() {
-    return Container(
+    return HanovaSurface(
       margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 20),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: TableCalendar(
         locale: Localizations.localeOf(context).languageCode,
         firstDay: DateTime.now(),
@@ -524,16 +501,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     >(
       builder: (context, availabilityState) {
         if (availabilityState.isLoading) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          );
+          return const SizedBox(height: 72, child: HanovaLoadingView());
         }
 
         if (availabilityState.errorMessage != null) {

@@ -17,9 +17,40 @@ class ProductController extends Controller
         $this->productService = $productService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $products = $this->productService->getAllProducts(10);
+        $filters = $request->validate([
+            'search' => 'nullable|string|max:100',
+            'stock' => 'nullable|in:available,low,out,untracked',
+            'catalog_type' => 'nullable|in:product,bundle,session,nutrition',
+        ]);
+
+        $productsQuery = Product::query()
+            ->with('concerns')
+            ->withCount('visibleReviews')
+            ->withAvg('visibleReviews as visible_reviews_avg_rating', 'rating');
+
+        if ($search = trim((string) ($filters['search'] ?? ''))) {
+            $productsQuery->where(function ($query) use ($search) {
+                $query->where('name_ar', 'like', "%{$search}%")
+                    ->orWhere('name_en', 'like', "%{$search}%")
+                    ->orWhere('brand', 'like', "%{$search}%");
+            });
+        }
+
+        if (($filters['catalog_type'] ?? null) !== null) {
+            $productsQuery->where('catalog_type', $filters['catalog_type']);
+        }
+
+        match ($filters['stock'] ?? null) {
+            'available' => $productsQuery->where('track_inventory', true)->whereColumn('stock_quantity', '>', 'low_stock_threshold'),
+            'low' => $productsQuery->where('track_inventory', true)->where('stock_quantity', '>', 0)->whereColumn('stock_quantity', '<=', 'low_stock_threshold'),
+            'out' => $productsQuery->where('track_inventory', true)->where('stock_quantity', '<=', 0),
+            'untracked' => $productsQuery->where('track_inventory', false),
+            default => null,
+        };
+
+        $products = $productsQuery->latest()->paginate(10)->withQueryString();
         $trackedProducts = Product::query()->where('track_inventory', true);
         $inventorySummary = [
             'tracked' => (clone $trackedProducts)->count(),
@@ -33,7 +64,7 @@ class ProductController extends Controller
             'out' => (clone $trackedProducts)->where('stock_quantity', '<=', 0)->count(),
         ];
 
-        return view('admin.products.index', compact('products', 'inventorySummary'));
+        return view('admin.products.index', compact('products', 'inventorySummary', 'filters'));
     }
 
     public function create()

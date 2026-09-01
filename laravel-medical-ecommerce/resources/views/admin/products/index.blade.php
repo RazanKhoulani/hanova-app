@@ -3,21 +3,27 @@
 @section('title', __('admin.products_management'))
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ __('admin.products_management') }}</h2>
-    <a href="{{ route('admin.products.create') }}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>{{ __('admin.add_product') }}</a>
-</div>
+<div class="page-header"><div><p class="eyebrow">{{ __('admin.store') }}</p><h1>{{ __('admin.products_management') }}</h1><p>{{ __('admin.products_management_hint') }}</p></div><a href="{{ route('admin.products.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i>{{ __('admin.add_product') }}</a></div>
 
 
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">{{ __('admin.tracked_products') }}</small><div class="fs-3 fw-bold">{{ $inventorySummary['tracked'] }}</div></div></div></div>
-    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">{{ __('admin.available') }}</small><div class="fs-3 fw-bold text-success">{{ $inventorySummary['available'] }}</div></div></div></div>
-    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">{{ __('admin.low_stock') }}</small><div class="fs-3 fw-bold text-warning">{{ $inventorySummary['low'] }}</div></div></div></div>
-    <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-muted">{{ __('admin.out_of_stock') }}</small><div class="fs-3 fw-bold text-danger">{{ $inventorySummary['out'] }}</div></div></div></div>
+    <div class="col-sm-6 col-xl-3"><article class="metric-card h-100"><div class="metric-top"><div class="metric-icon"><i class="fas fa-boxes-stacked"></i></div></div><div class="metric-value">{{ $inventorySummary['tracked'] }}</div><div class="metric-label">{{ __('admin.tracked_products') }}</div></article></div>
+    <div class="col-sm-6 col-xl-3"><article class="metric-card h-100" style="--metric-color:#2f8f64;--metric-soft:#e8f6ef"><div class="metric-top"><div class="metric-icon"><i class="fas fa-circle-check"></i></div></div><div class="metric-value">{{ $inventorySummary['available'] }}</div><div class="metric-label">{{ __('admin.available') }}</div></article></div>
+    <div class="col-sm-6 col-xl-3"><article class="metric-card h-100" style="--metric-color:#c78636;--metric-soft:#fff3df"><div class="metric-top"><div class="metric-icon"><i class="fas fa-triangle-exclamation"></i></div></div><div class="metric-value">{{ $inventorySummary['low'] }}</div><div class="metric-label">{{ __('admin.low_stock') }}</div></article></div>
+    <div class="col-sm-6 col-xl-3"><article class="metric-card h-100" style="--metric-color:#c44747;--metric-soft:#fdecec"><div class="metric-top"><div class="metric-icon"><i class="fas fa-circle-xmark"></i></div></div><div class="metric-value">{{ $inventorySummary['out'] }}</div><div class="metric-label">{{ __('admin.out_of_stock') }}</div></article></div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
+<form method="GET" class="panel-card form-panel mb-4" role="search">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-5"><label class="form-label" for="product-search">{{ __('admin.search_products') }}</label><div class="input-group"><span class="input-group-text"><i class="fas fa-search"></i></span><input id="product-search" type="search" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('admin.search_products_hint') }}"></div></div>
+        <div class="col-sm-6 col-lg-3"><label class="form-label" for="stock-filter">{{ __('admin.stock_status') }}</label><select id="stock-filter" name="stock" class="form-select"><option value="">{{ __('admin.all_stock_statuses') }}</option><option value="available" @selected(($filters['stock'] ?? '') === 'available')>{{ __('admin.available') }}</option><option value="low" @selected(($filters['stock'] ?? '') === 'low')>{{ __('admin.low_stock') }}</option><option value="out" @selected(($filters['stock'] ?? '') === 'out')>{{ __('admin.out_of_stock') }}</option><option value="untracked" @selected(($filters['stock'] ?? '') === 'untracked')>{{ __('admin.not_tracked') }}</option></select></div>
+        <div class="col-sm-6 col-lg-2"><label class="form-label" for="type-filter">{{ __('admin.catalog_type') }}</label><select id="type-filter" name="catalog_type" class="form-select"><option value="">{{ __('admin.all_types') }}</option>@foreach(['product','bundle','session','nutrition'] as $type)<option value="{{ $type }}" @selected(($filters['catalog_type'] ?? '') === $type)>{{ __('admin.catalog_' . $type) }}</option>@endforeach</select></div>
+        <div class="col-lg-2"><div class="d-flex gap-2"><button class="btn btn-primary flex-grow-1" type="submit">{{ __('admin.filter') }}</button>@if(array_filter($filters ?? []))<a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary" title="{{ __('admin.clear_filters') }}"><i class="fas fa-rotate-left"></i></a>@endif</div></div>
+    </div>
+</form>
+
+<section class="panel-card data-panel">
+    <div class="panel-heading"><div><h3>{{ __('admin.products') }}</h3><p>{{ __('admin.products_table_hint') }}</p></div><span class="soft-count">{{ $products->total() }}</span></div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
@@ -103,11 +109,6 @@
                 </tbody>
             </table>
         </div>
-    </div>
-    @if($products->hasPages())
-    <div class="card-footer bg-white border-top-0 pt-4 pb-3 px-4">
-        {{ $products->links('pagination::bootstrap-5') }}
-    </div>
-    @endif
-</div>
+    @if($products->hasPages())<div class="pt-3">{{ $products->links('pagination::bootstrap-5') }}</div>@endif
+</section>
 @endsection
