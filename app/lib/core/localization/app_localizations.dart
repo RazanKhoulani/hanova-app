@@ -91,6 +91,7 @@ class AppLocalizations {
       'clear_cart_message':
           'All products currently in your cart will be removed.',
       'something_went_wrong': 'Something went wrong',
+      'appointment_scheduled': 'Appointment scheduled successfully',
       'cart_empty': 'Your cart is empty',
       'cart_empty_note': 'Browse products and add your favorites.',
       'start_shopping': 'Start Shopping',
@@ -291,6 +292,7 @@ class AppLocalizations {
       'clear_cart_title': 'تفريغ سلة المشتريات؟',
       'clear_cart_message': 'سيتم حذف جميع المنتجات الموجودة حالياً في السلة.',
       'something_went_wrong': 'حدث خطأ غير متوقع',
+      'appointment_scheduled': 'تم حجز الموعد بنجاح',
       'cart_empty': 'السلة فارغة',
       'cart_empty_note': 'تصفحي المنتجات وأضيفي ما يناسبك.',
       'start_shopping': 'ابدئي التسوق',

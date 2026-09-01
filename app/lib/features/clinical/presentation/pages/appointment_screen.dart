@@ -101,9 +101,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       child: BlocListener<ClinicalBloc, ClinicalState>(
         listener: (context, state) {
           if (state is ClinicalSuccess) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(context.tr('appointment_scheduled'))),
+            );
             context.pop();
           } else if (state is ClinicalFailure) {
             ScaffoldMessenger.of(
