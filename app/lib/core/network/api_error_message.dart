@@ -103,7 +103,7 @@ class ApiErrorMessage {
       return '\u064a\u0631\u062c\u0649 \u0627\u062e\u062a\u064a\u0627\u0631 \u0645\u0646\u0637\u0642\u0629 \u062a\u0648\u0635\u064a\u0644 \u0645\u062a\u0627\u062d\u0629.';
     }
     if (normalized.contains('file field must be a file')) {
-      return '\u0646\u0648\u0639 \u0627\u0644\u0645\u0644\u0641 \u063a\u064a\u0631 \u0645\u0633\u0645\u0648\u062d. \u0627\u062e\u062a\u0627\u0631\u064a \u0635\u0648\u0631\u0629 JPG أو PNG أو ملف PDF.';
+      return '\u0646\u0648\u0639 \u0627\u0644\u0645\u0644\u0641 \u063a\u064a\u0631 \u0645\u0633\u0645\u0648\u062d. اختاري صورة JPG أو PNG أو تسجيلاً صوتياً أو ملف PDF.';
     }
 
     return message.replaceFirst('Exception: ', '');
