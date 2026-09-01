@@ -68,6 +68,8 @@ class OrderResource extends JsonResource
                 ] : null;
             }),
             'shipping_address' => $this->shipping_address,
+            'shipping_latitude' => $this->shipping_latitude !== null ? (float) $this->shipping_latitude : null,
+            'shipping_longitude' => $this->shipping_longitude !== null ? (float) $this->shipping_longitude : null,
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at,
         ];
