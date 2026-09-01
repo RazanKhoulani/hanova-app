@@ -110,6 +110,8 @@ class OrderService
                 'user_id' => $userId,
                 'status' => 'pending',
                 'shipping_address' => $data['shipping_address'] ?? null,
+                'shipping_latitude' => $data['shipping_latitude'] ?? null,
+                'shipping_longitude' => $data['shipping_longitude'] ?? null,
                 'payment_method' => $paymentMethod,
                 'total_amount' => max(0, $subtotal - $discountAmount) + $deliveryFee,
             ];

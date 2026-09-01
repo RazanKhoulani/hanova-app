@@ -31,6 +31,7 @@ class Order extends Model
         'applied_offer_id',
         'discount_amount',
         'shipping_address',
+        'shipping_latitude', 'shipping_longitude',
         'tracking_status',
         'shipping_receipt',
         'is_confirmed',
