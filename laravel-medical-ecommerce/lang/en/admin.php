@@ -447,6 +447,8 @@ return [
     'now' => 'Now',
     'no_end' => 'No end',
     'medical_chats' => 'Medical chats',
+    'manage_chats' => 'Follow patient conversations, unread messages, and clinic replies in one place.',
+    'call' => 'Call',
     'last_message' => 'Last message',
     'no_messages_yet' => 'No messages yet',
     'new_count' => ':count new',

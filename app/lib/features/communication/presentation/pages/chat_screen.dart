@@ -16,6 +16,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -271,9 +272,7 @@ class _ChatScreenState extends State<ChatScreen> {
       },
       builder: (context, authState) {
         if (authState is AuthLoading || authState is AuthInitial) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const Scaffold(body: HanovaLoadingView());
         }
 
         if (authState is! AuthAuthenticated) {
@@ -356,7 +355,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: BlocBuilder<CommunicationBloc, CommunicationState>(
                   builder: (context, state) {
                     if (state is CommunicationLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const HanovaLoadingView();
                     }
 
                     if (state is CommunicationChatLoaded) {

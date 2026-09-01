@@ -9,23 +9,24 @@
         $whatsappPhone = substr($whatsappPhone, 2);
     }
 @endphp
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header mb-4">
     <div class="d-flex align-items-center">
         <a href="{{ route('admin.chats.index') }}" class="btn btn-outline-secondary btn-sm me-3">
             <i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }}"></i>
         </a>
-        <h2 class="mb-0">{{ __('admin.chat_title', ['name' => $conversation->user->name]) }}</h2>
+        <div><span class="page-eyebrow">HANOVA CARE</span><h2 class="mb-0">{{ __('admin.chat_title', ['name' => $conversation->user->name]) }}</h2><p class="mb-0" dir="ltr">{{ $conversation->user->phone }}</p></div>
     </div>
 </div>
 
-<div class="card shadow-sm border-0 d-flex flex-column" style="height: 70vh;">
-    <div class="card-header bg-white py-3 border-bottom">
+<div class="panel-card p-0 overflow-hidden d-flex flex-column" style="height: min(72vh, 780px); min-height: 560px;">
+    <div class="px-4 py-3 border-bottom bg-white">
         <div class="d-flex align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center">
                 <span id="chat-connection-dot" class="rounded-circle bg-warning me-2" style="width: 10px; height: 10px;"></span>
                 <span id="chat-connection-status" class="text-muted small">{{ __('admin.realtime_connecting') }}</span>
             </div>
             @if($whatsappPhone !== '')
+                <a href="tel:+{{ $whatsappPhone }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-phone me-1"></i> {{ __('admin.call') }}</a>
                 <a href="https://wa.me/{{ $whatsappPhone }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success">
                     <i class="fab fa-whatsapp me-1"></i> {{ __('admin.open_whatsapp') }}
                 </a>
@@ -33,7 +34,7 @@
         </div>
     </div>
     
-    <div class="card-body overflow-auto p-4 bg-light bg-opacity-50" id="chat-box">
+    <div class="flex-grow-1 overflow-auto p-4 bg-light bg-opacity-50" id="chat-box">
         @foreach($conversation->messages as $message)
             <div class="d-flex mb-4 chat-message {{ $message->sender_id == auth()->id() ? 'justify-content-end' : 'justify-content-start' }}" data-message-id="{{ $message->id }}">
                 <div class="max-w-75">
@@ -55,7 +56,7 @@
         @endforeach
     </div>
 
-    <div class="card-footer bg-white border-top-0 py-3">
+    <div class="bg-white border-top py-3 px-4">
         <div id="chat-send-error" class="alert alert-danger py-2 px-3 mb-2 d-none" role="alert"></div>
         <form id="chat-message-form" action="{{ route('admin.chats.messages.store', $conversation->id) }}" method="POST">
             @csrf

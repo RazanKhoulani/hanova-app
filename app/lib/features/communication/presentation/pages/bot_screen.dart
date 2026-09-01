@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../data/models/message_model.dart';
@@ -93,7 +94,7 @@ class _BotScreenState extends State<BotScreen> {
               builder: (context, state) {
                 if (state is CommunicationLoading ||
                     state is CommunicationInitial) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const HanovaLoadingView();
                 }
 
                 if (state is CommunicationFailure) {
@@ -191,27 +192,13 @@ class _BotScreenState extends State<BotScreen> {
   }
 
   Widget _buildFailure(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              color: AppColors.danger,
-              size: 42,
-            ),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: _initializeBot,
-              child: Text(context.tr('try_again')),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.smart_toy_outlined,
+      title: context.tr('something_went_wrong'),
+      message: message,
+      actionLabel: context.tr('try_again'),
+      onAction: _initializeBot,
+      iconColor: AppColors.danger,
     );
   }
 

@@ -3,15 +3,17 @@
 @section('title', __('admin.medical_chats'))
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ __('admin.medical_chats') }}</h2>
+<div class="page-header">
+    <div><span class="page-eyebrow">HANOVA CARE</span><h2>{{ __('admin.medical_chats') }}</h2><p>{{ __('admin.manage_chats') }}</p></div>
+    <span class="soft-count">{{ $conversations->total() }}</span>
 </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-0">
+<section class="panel-card data-panel">
+    <div class="panel-heading"><div><h3>{{ __('admin.medical_chats') }}</h3><p>{{ __('admin.last_message') }}</p></div><i class="fas fa-comments text-primary"></i></div>
+    <div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="bg-light">
+            <table class="table align-middle mb-0 admin-data-table">
+                <thead>
                     <tr>
                         <th class="px-4 py-3 border-0">{{ __('admin.patient') }}</th>
                         <th class="px-4 py-3 border-0">{{ __('admin.last_message') }}</th>
@@ -50,9 +52,9 @@
                                 $unreadCount = $conversation->messages()->where('sender_id', '!=', auth()->id())->where('is_read', false)->count();
                             @endphp
                             @if($unreadCount > 0)
-                                <span class="badge bg-danger rounded-pill">{{ __('admin.new_count', ['count' => $unreadCount]) }}</span>
+                                <span class="status-pill danger">{{ __('admin.new_count', ['count' => $unreadCount]) }}</span>
                             @else
-                                <span class="badge bg-light text-muted border">{{ __('admin.read') }}</span>
+                                <span class="status-pill success">{{ __('admin.read') }}</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 align-middle text-end">
@@ -73,5 +75,6 @@
             </table>
         </div>
     </div>
-</div>
+</section>
+<div class="mt-4">{{ $conversations->links() }}</div>
 @endsection

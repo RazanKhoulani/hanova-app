@@ -3,15 +3,15 @@
 @section('title', __('admin.system_notifications'))
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ __('admin.system_notifications') }}</h2>
+<div class="page-header">
+    <div><span class="page-eyebrow">HANOVA ALERTS</span><h2>{{ __('admin.system_notifications') }}</h2><p>{{ __('admin.incoming_notifications') }}</p></div>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sendNotificationModal">
         <i class="fas fa-paper-plane me-2"></i>{{ __('admin.send_notification') }}
     </button>
 </div>
 
-<div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white fw-bold py-3">{{ __('admin.incoming_notifications') }}</div>
+<section class="panel-card p-0 overflow-hidden mb-4">
+    <div class="panel-heading px-4 pt-4"><div><h3>{{ __('admin.incoming_notifications') }}</h3></div><span class="soft-count">{{ $inboxNotifications->where('is_read', false)->count() }}</span></div>
     <div class="list-group list-group-flush">
         @forelse($inboxNotifications as $alert)
             @php($target = $alert->adminUrl())
@@ -23,13 +23,14 @@
             <div class="p-4 text-center text-muted">{{ __('admin.no_incoming_notifications') }}</div>
         @endforelse
     </div>
-</div>
+</section>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-0">
+<section class="panel-card data-panel">
+    <div class="panel-heading"><div><h3>{{ __('admin.system_notifications') }}</h3><p>{{ __('admin.sent_at') }}</p></div><span class="soft-count">{{ $notifications->total() }}</span></div>
+    <div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="bg-light">
+            <table class="table align-middle mb-0 admin-data-table">
+                <thead>
                     <tr>
                         <th class="px-4 py-3 border-0">{{ __('admin.recipient') }}</th>
                         <th class="px-4 py-3 border-0">{{ __('admin.notification_type') }}</th>
@@ -77,7 +78,8 @@
             </table>
         </div>
     </div>
-</div>
+</section>
+<div class="mt-4">{{ $notifications->links() }}</div>
 
 <!-- Send Notification Modal -->
 <div class="modal fade" id="sendNotificationModal" tabindex="-1" aria-hidden="true">

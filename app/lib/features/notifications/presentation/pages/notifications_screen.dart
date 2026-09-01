@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../data/models/notification_model.dart';
@@ -51,7 +52,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return BlocBuilder<NotificationBloc, NotificationState>(
       builder: (context, state) {
         if (state is NotificationLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const HanovaLoadingView();
         }
 
         if (state is NotificationFailure) {
@@ -82,9 +83,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       );
                     }
 
-                    if (notification.type.startsWith('order')) {
-                      context.push('/orders');
-                    }
+                    _openNotification(notification);
                   },
                 );
               },
@@ -97,106 +96,56 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  void _openNotification(NotificationModel notification) {
+    final type = notification.type.toLowerCase();
+    final data = notification.data ?? const <String, dynamic>{};
+
+    if (type == 'chat_message' || data['conversation_id'] != null) {
+      final consultationId = data['consultation_id'];
+      context.push(
+        consultationId == null ? '/chat' : '/chat?consultation_id=$consultationId',
+      );
+      return;
+    }
+    if (type.contains('appointment') || data['appointment_id'] != null) {
+      context.push('/clinic');
+      return;
+    }
+    if (type.startsWith('order') ||
+        type == 'new_order' ||
+        data['order_id'] != null) {
+      context.push('/orders');
+      return;
+    }
+    context.push('/home');
+  }
+
   Widget _buildAuthRequired(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.lock_outline_rounded,
-              size: 64,
-              color: AppColors.textLight,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('login_required'),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('notifications_login_note'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => context.push('/login'),
-              child: Text(context.tr('login')),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.lock_outline_rounded,
+      title: context.tr('login_required'),
+      message: context.tr('notifications_login_note'),
+      actionLabel: context.tr('login'),
+      onAction: () => context.push('/login'),
     );
   }
 
   Widget _buildFailure(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              color: AppColors.danger,
-              size: 48,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: _fetchIfAllowed,
-              child: Text(context.tr('try_again')),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.cloud_off_rounded,
+      title: context.tr('something_went_wrong'),
+      message: message,
+      actionLabel: context.tr('try_again'),
+      onAction: _fetchIfAllowed,
+      iconColor: AppColors.danger,
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 86,
-              height: 86,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: const [
-                  BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-                ],
-              ),
-              child: const Icon(
-                Icons.notifications_none_rounded,
-                color: AppColors.primary,
-                size: 42,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              context.tr('no_notifications'),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('no_notifications_note'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      ),
+    return HanovaStateView(
+      icon: Icons.notifications_none_rounded,
+      title: context.tr('no_notifications'),
+      message: context.tr('no_notifications_note'),
     );
   }
 }
@@ -216,7 +165,7 @@ class _NotificationCard extends StatelessWidget {
     final time = _formatTime(context, notification.createdAt);
 
     return Material(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -230,9 +179,11 @@ class _NotificationCard extends StatelessWidget {
                   ? Colors.transparent
                   : AppColors.primary.withValues(alpha: 0.28),
             ),
-            boxShadow: const [
-              BoxShadow(color: AppColors.cardShadow, blurRadius: 10),
-            ],
+            boxShadow: const [BoxShadow(
+              color: AppColors.cardShadow,
+              blurRadius: 18,
+              offset: Offset(0, 6),
+            )],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
