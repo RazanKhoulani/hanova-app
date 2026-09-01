@@ -235,7 +235,11 @@ class CommunicationBloc extends Bloc<CommunicationEvent, CommunicationState> {
         message: event.message,
         consultationId: event.consultationId,
       );
-      _chatMessages.add(message);
+      // The API response and the realtime broadcast can both arrive for the
+      // same upload. Keep one bubble only.
+      final alreadyPresent = message.id != null &&
+          _chatMessages.any((item) => item.id == message.id);
+      if (!alreadyPresent) _chatMessages.add(message);
       emit(CommunicationChatLoaded(List.from(_chatMessages)));
     } catch (e) {
       emit(CommunicationFailure(ApiErrorMessage.from(e)));

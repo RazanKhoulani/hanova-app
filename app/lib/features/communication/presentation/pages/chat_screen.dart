@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -42,6 +43,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _recording = false;
+  Timer? _recordingTimer;
+  Duration _recordingDuration = Duration.zero;
   String? _playingUrl;
 
   @override
@@ -217,6 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!_canContactOnWhatsApp) return;
     if (_recording) {
       final path = await _recorder.stop();
+      _recordingTimer?.cancel();
       if (mounted) setState(() => _recording = false);
       if (path != null && mounted) {
         context.read<CommunicationBloc>().add(
@@ -235,7 +239,11 @@ class _ChatScreenState extends State<ChatScreen> {
       path:
           '${directory.path}/hanova_voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
     );
-    if (mounted) setState(() => _recording = true);
+    _recordingTimer?.cancel();
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _recordingDuration += const Duration(seconds: 1));
+    });
+    if (mounted) setState(() { _recording = true; _recordingDuration = Duration.zero; });
   }
 
   Future<void> _playAudio(String url) async {
@@ -256,6 +264,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     _controller.dispose();
     _recorder.dispose();
+    _recordingTimer?.cancel();
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -612,6 +621,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: _recording ? Colors.red : AppColors.primary,
               ),
             ),
+          if (_recording)
+            Text('${_recordingDuration.inMinutes.toString().padLeft(2, '0')}:${(_recordingDuration.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
           Expanded(
             child: TextField(
               controller: _controller,
