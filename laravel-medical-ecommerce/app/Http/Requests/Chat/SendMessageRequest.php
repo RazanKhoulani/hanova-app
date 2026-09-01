@@ -15,7 +15,9 @@ class SendMessageRequest extends FormRequest
     {
         return [
             'message' => 'required_without:file|nullable|string',
-            'file' => 'required_without:message|nullable|file|mimes:jpeg,png,jpg,mp3,wav,pdf,doc,docx|max:10240',
+            // Mobile recordings are saved as m4a; keep the common audio formats
+            // accepted by Android/iOS and browser uploads.
+            'file' => 'required_without:message|nullable|file|mimes:jpeg,png,jpg,mp3,wav,m4a,aac,ogg,webm,pdf,doc,docx|max:10240',
             'type' => 'nullable|in:text,image,audio,file',
         ];
     }
