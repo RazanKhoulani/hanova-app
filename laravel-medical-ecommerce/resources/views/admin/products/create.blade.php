@@ -3,15 +3,12 @@
 @section('title', __('admin.add_product'))
 
 @section('content')
-<div class="d-flex align-items-center mb-4">
-    <a href="{{ route('admin.products.index') }}" class="btn btn-link text-decoration-none text-secondary p-0 me-3">
-        <i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} fa-lg"></i>
-    </a>
-    <h2 class="mb-0">{{ __('admin.add_product') }}</h2>
+<div class="page-header">
+    <div><p class="eyebrow">{{ __('admin.products') }}</p><h1>{{ __('admin.add_product') }}</h1><p>{{ __('admin.independent_prices_hint') }}</p></div>
+    <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} me-1"></i>{{ __('admin.back_to_list') }}</a>
 </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-4">
+<section class="panel-card form-panel">
         <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
@@ -135,6 +132,5 @@
                 </button>
             </div>
         </form>
-    </div>
-</div>
+</section>
 @endsection

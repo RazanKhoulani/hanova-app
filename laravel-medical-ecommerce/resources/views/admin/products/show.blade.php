@@ -3,8 +3,8 @@
 @section('title', __('admin.product_details') . ': ' . $product->name_en)
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ __('admin.product_details') }}: {{ $product->name_en }}</h2>
+<div class="page-header">
+    <div><p class="eyebrow">{{ __('admin.products') }}</p><h1>{{ __('admin.product_details') }}</h1><p>{{ app()->getLocale() === 'ar' ? $product->name_ar : $product->name_en }}</p></div>
     <div class="btn-group">
         <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} me-1"></i>{{ __('admin.back_to_list') }}
@@ -16,10 +16,9 @@
 </div>
 
 
-<div class="row">
+<div class="row g-4">
     <div class="col-md-4">
-        <div class="card shadow-sm border-0 mb-4 h-100">
-            <div class="card-body text-center p-4">
+        <section class="panel-card detail-profile-card h-100">
                 @if($product->image)
                     <img src="{{ asset('storage/'.$product->image) }}" class="img-fluid rounded shadow-sm mb-4" style="max-height: 250px;">
                 @else
@@ -34,15 +33,15 @@
                 <div class="d-flex justify-content-center gap-2 mb-3">
                     <div class="bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-2 rounded">
                         <small class="d-block text-uppercase fw-bold" style="font-size: 0.65rem;">{{ __('admin.price') }}</small>
-                        <span class="fw-bold d-block">{{ number_format((float)($product->price_syp ?? $product->price), 2) }} ل.س</span><small>{{ $product->price_usd !== null ? '$'.number_format((float)$product->price_usd, 2) : '— USD' }}</small>
+                        <span class="fw-bold d-block">{{ number_format((float)($product->price_syp ?? $product->price), 0) }} ل.س</span><small>{{ $product->price_usd !== null ? '$'.number_format((float)$product->price_usd, 2) : '— USD' }}</small>
                     </div>
                     <div class="bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-3 py-2 rounded">
                         <small class="d-block text-uppercase fw-bold" style="font-size: 0.65rem;">{{ __('admin.cost') }}</small>
-                        <span class="fw-bold d-block">{{ number_format((float)($product->cost_syp ?? $product->cost), 2) }} ل.س</span><small>{{ $product->cost_usd !== null ? '$'.number_format((float)$product->cost_usd, 2) : '— USD' }}</small>
+                        <span class="fw-bold d-block">{{ number_format((float)($product->cost_syp ?? $product->cost), 0) }} ل.س</span><small>{{ $product->cost_usd !== null ? '$'.number_format((float)$product->cost_usd, 2) : '— USD' }}</small>
                     </div>
                 </div>
 
-                <div class="badge bg-{{ (($product->price_syp ?? $product->price) - ($product->cost_syp ?? $product->cost)) > 0 ? 'success' : 'danger' }} p-2">{{ __('admin.profit') }}: {{ number_format((float)(($product->price_syp ?? $product->price) - ($product->cost_syp ?? $product->cost)), 2) }} ل.س</div>
+                <div class="status-pill {{ (($product->price_syp ?? $product->price) - ($product->cost_syp ?? $product->cost)) > 0 ? 'success' : 'danger' }}">{{ __('admin.profit') }}: {{ number_format((float)(($product->price_syp ?? $product->price) - ($product->cost_syp ?? $product->cost)), 0) }} ل.س</div>
 
                 <div class="mt-3">
                     @if(!$product->track_inventory)
@@ -67,14 +66,12 @@
                         <span class="text-muted small">{{ __('admin.no_concerns') }}</span>
                     @endforelse
                 </div>
-            </div>
-        </div>
+        </section>
     </div>
 
     <div class="col-md-8">
-        <div class="card shadow-sm border-0 mb-4 h-100">
-            <div class="card-header bg-white fw-bold py-3">{{ __('admin.description') }}</div>
-            <div class="card-body py-4">
+        <section class="panel-card h-100">
+            <div class="panel-heading"><div><h3>{{ __('admin.description') }}</h3><p>{{ __('admin.product_details') }}</p></div></div>
                 <div class="mb-5">
                     <label class="text-muted small text-uppercase fw-bold d-block mb-2">{{ __('admin.description_english') }}</label>
                     <p class="fs-5">{{ $product->description_en ?? __('admin.no_description_en') }}</p>
@@ -84,8 +81,7 @@
                     <label class="text-muted small text-uppercase fw-bold d-block mb-2">{{ __('admin.description_arabic') }}</label>
                     <p class="fs-5" dir="rtl">{{ $product->description_ar ?? __('admin.no_description_ar') }}</p>
                 </div>
-            </div>
-        </div>
+        </section>
     </div>
 </div>
 @endsection

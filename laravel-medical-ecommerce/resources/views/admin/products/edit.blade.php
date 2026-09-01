@@ -3,15 +3,14 @@
 @section('title', __('admin.edit') . ': ' . $product->name_en)
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ __('admin.edit') }}: {{ $product->name_en }}</h2>
+<div class="page-header">
+    <div><p class="eyebrow">{{ __('admin.products') }}</p><h1>{{ __('admin.edit') }}: {{ app()->getLocale() === 'ar' ? $product->name_ar : $product->name_en }}</h1><p>{{ __('admin.independent_prices_hint') }}</p></div>
     <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'right' : 'left' }} me-1"></i>{{ __('admin.back_to_list') }}
     </a>
 </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-4">
+<section class="panel-card form-panel">
         <form action="{{ route('admin.products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -128,6 +127,5 @@
                 </div>
             </div>
         </form>
-    </div>
-</div>
+</section>
 @endsection

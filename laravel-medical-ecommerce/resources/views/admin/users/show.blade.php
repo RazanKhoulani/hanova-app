@@ -5,7 +5,7 @@
 @section('content')
 @php
     $roleName = $user->roles->first()?->name ?? 'user';
-    $money = static fn ($amount): string => number_format((float) $amount, 2) . ' ل.س';
+    $money = static fn ($amount): string => number_format((float) $amount, 0) . ' ل.س';
 @endphp
 <div class="page-header">
     <div><p class="eyebrow">{{ __('admin.users') }}</p><h1>{{ __('admin.user_profile') }}</h1><p>{{ $user->name }}</p></div>
