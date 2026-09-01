@@ -5,6 +5,7 @@ import '../models/order_model.dart';
 import '../models/offer_model.dart';
 import '../models/home_data_model.dart';
 import '../models/product_review_model.dart';
+import 'package:dio/dio.dart';
 
 abstract class StoreRemoteDataSource {
   Future<HomeDataModel> getHomeData();
@@ -170,6 +171,8 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
         'pickup_location': orderData['pickup_location'],
       if (orderData['delivery_area_id'] != null)
         'delivery_area_id': orderData['delivery_area_id'],
+      if (orderData['shipping_latitude'] != null) 'shipping_latitude': orderData['shipping_latitude'],
+      if (orderData['shipping_longitude'] != null) 'shipping_longitude': orderData['shipping_longitude'],
       if (orderData['qadmous_governorate'] != null)
         'qadmous_governorate': orderData['qadmous_governorate'],
       if (orderData['qadmous_branch'] != null)
@@ -180,8 +183,10 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
         'recipient_phone': orderData['recipient_phone'],
       'items': orderData['items'] ?? [],
     };
-
-    await _dioClient.post(ApiConstants.orders, data: payload);
+    if (orderData['payment_receipt_path'] != null) {
+      payload['payment_receipt'] = await MultipartFile.fromFile(orderData['payment_receipt_path'].toString());
+    }
+    await _dioClient.post(ApiConstants.orders, data: FormData.fromMap(payload));
   }
 
   @override

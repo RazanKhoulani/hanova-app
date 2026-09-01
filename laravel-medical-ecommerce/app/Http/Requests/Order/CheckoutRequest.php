@@ -18,6 +18,7 @@ class CheckoutRequest extends FormRequest
             'shipping_address' => 'nullable|required_if:delivery_method,home_delivery|string|max:1000',
             'shipping_latitude' => 'nullable|numeric|between:-90,90',
             'shipping_longitude' => 'nullable|numeric|between:-180,180',
+            'payment_receipt' => 'nullable|required_if:delivery_method,qadmous|image|mimes:jpeg,png,jpg,webp|max:5120',
             'payment_method' => 'required|string|in:cash,online,credit_card,cash_on_delivery,apple_pay',
             'delivery_method' => 'required|string|in:clinic_pickup,pharmacy_pickup,home_delivery,qadmous',
             'pickup_location' => 'nullable|string|in:clinic,pharmacy',

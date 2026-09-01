@@ -2,6 +2,8 @@ import 'package:app/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/settings/app_settings_cubit.dart';
@@ -38,6 +40,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _deliveryMethod = 'clinic_pickup';
   int? _deliveryAreaId;
   double _deliveryFee = 0;
+  double? _shippingLatitude;
+  double? _shippingLongitude;
+  String? _paymentReceiptPath;
+  bool _searchingAddress = false;
+
+  Future<void> _searchAddress() async {
+    final query = _addressController.text.trim();
+    if (query.isEmpty) return;
+    setState(() => _searchingAddress = true);
+    try {
+      final response = await Dio().get('https://nominatim.openstreetmap.org/search', queryParameters: {'q': '$query, Syria', 'format': 'jsonv2', 'limit': 5, 'accept-language': Localizations.localeOf(context).languageCode}, options: Options(headers: {'User-Agent': 'HanovaMobile/1.0'}));
+      final results = response.data is List ? response.data as List : const [];
+      if (!mounted) return;
+      final selected = await showModalBottomSheet<Map>(context: context, builder: (context) => SafeArea(child: ListView(shrinkWrap: true, children: [const ListTile(title: Text('اختاري العنوان', style: TextStyle(fontWeight: FontWeight.bold))), ...results.map((item) => ListTile(leading: const Icon(Icons.location_on_outlined, color: AppColors.primary), title: Text(item['display_name']?.toString() ?? ''), onTap: () => Navigator.pop(context, item)))])));
+      if (selected != null) setState(() { _addressController.text = selected['display_name'].toString(); _shippingLatitude = double.tryParse(selected['lat'].toString()); _shippingLongitude = double.tryParse(selected['lon'].toString()); });
+    } catch (_) { if (mounted) _showCheckoutMessage('تعذر البحث عن العنوان، حاولي مجدداً.'); }
+    finally { if (mounted) setState(() => _searchingAddress = false); }
+  }
+
+  Future<void> _pickPaymentReceipt() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result?.files.single.path != null && mounted) setState(() => _paymentReceiptPath = result!.files.single.path);
+  }
 
   @override
   void initState() {
@@ -86,6 +111,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _showCheckoutMessage(_checkoutLabel('qadmous_required'));
       return;
     }
+    if (_deliveryMethod == 'qadmous' && _paymentReceiptPath == null) {
+      _showCheckoutMessage('يرجى رفع صورة إشعار الدفع أولاً.');
+      return;
+    }
 
     final orderData = {
       'payment_method': _selectedPayment,
@@ -93,6 +122,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (_deliveryMethod == 'home_delivery') ...{
         'delivery_area_id': _deliveryAreaId,
         'shipping_address': _addressController.text.trim(),
+        if (_shippingLatitude != null) 'shipping_latitude': _shippingLatitude,
+        if (_shippingLongitude != null) 'shipping_longitude': _shippingLongitude,
       } else if (_deliveryMethod == 'qadmous') ...{
         'qadmous_governorate': _qadmousGovernorateController.text.trim(),
         'qadmous_branch': _qadmousBranchController.text.trim(),
@@ -100,6 +131,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'recipient_phone': _recipientPhoneController.text.trim(),
         'shipping_address':
             '${_qadmousGovernorateController.text.trim()} - ${_qadmousBranchController.text.trim()}',
+        'payment_receipt_path': _paymentReceiptPath,
       } else ...{
         'pickup_location': _deliveryMethod == 'clinic_pickup'
             ? 'clinic'
@@ -352,6 +384,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             keyboardType: TextInputType.phone,
             decoration: decoration(_checkoutLabel('recipient_phone')),
           ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _pickPaymentReceipt,
+            icon: Icon(_paymentReceiptPath == null ? Icons.upload_file_rounded : Icons.check_circle_rounded),
+            label: Text(_paymentReceiptPath == null ? 'رفع صورة إشعار الدفع' : 'تم اختيار الإيصال'),
+          ),
           const SizedBox(height: 10),
           _buildInfoCard(
             icon: Icons.info_outline,
@@ -446,6 +484,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
         ),
+        const SizedBox(height: 10),
+        SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _searchingAddress ? null : _searchAddress, icon: _searchingAddress ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.map_outlined), label: Text(_shippingLatitude == null ? 'بحث وتحديد العنوان على الخريطة' : 'تم تحديد الموقع — تغيير'))),
       ],
     );
   }

@@ -34,8 +34,12 @@ class OrderController extends Controller
      */
     public function store(CheckoutRequest $request)
     {
+        $data = $request->validated();
+        if ($request->hasFile('payment_receipt')) {
+            $data['shipping_receipt'] = $request->file('payment_receipt')->store('receipts', 'public');
+        }
         try {
-            $order = $this->orderService->checkout(auth()->id(), $request->validated());
+            $order = $this->orderService->checkout(auth()->id(), $data);
         } catch (Throwable $exception) {
             Log::error('Order checkout failed.', [
                 'user_id' => auth()->id(),
