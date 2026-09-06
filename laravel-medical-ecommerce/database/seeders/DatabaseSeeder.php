@@ -60,6 +60,7 @@ class DatabaseSeeder extends Seeder
         $admin->assignRole($adminRole);
 
         $this->call(DeliverySetupSeeder::class);
+        $this->call(QadmousLocationSeeder::class);
         $this->call(ConcernSeeder::class);
         $this->call(OfferSeeder::class);
 

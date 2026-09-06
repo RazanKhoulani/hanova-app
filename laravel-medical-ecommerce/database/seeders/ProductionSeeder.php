@@ -65,6 +65,7 @@ class ProductionSeeder extends Seeder
         }
 
         $this->call([
+            QadmousLocationSeeder::class,
             ConcernSeeder::class,
             OfferSeeder::class,
             ProductSeeder::class,
