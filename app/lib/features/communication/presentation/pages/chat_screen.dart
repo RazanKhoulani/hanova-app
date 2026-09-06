@@ -48,6 +48,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
   String? _playingUrl;
+  Duration _audioPosition = Duration.zero;
+  Duration _audioDuration = Duration.zero;
+  StreamSubscription<void>? _audioCompleteSubscription;
+  StreamSubscription<Duration>? _audioPositionSubscription;
+  StreamSubscription<Duration>? _audioDurationSubscription;
   String? _pendingVoicePath;
   Timer? _waveTimer;
   int _wavePhase = 0;
@@ -55,6 +60,21 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _audioCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+      _waveTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _playingUrl = null;
+          _audioPosition = Duration.zero;
+        });
+      }
+    });
+    _audioPositionSubscription = _audioPlayer.onPositionChanged.listen((value) {
+      if (mounted) setState(() => _audioPosition = value);
+    });
+    _audioDurationSubscription = _audioPlayer.onDurationChanged.listen((value) {
+      if (mounted) setState(() => _audioDuration = value);
+    });
     if (context.read<AuthBloc>().state is AuthAuthenticated) {
       context.read<CommunicationBloc>().add(
         CommunicationFetchChatMessages(consultationId: widget.consultationId),
@@ -310,15 +330,27 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_playingUrl == url) {
       await _audioPlayer.stop();
       _waveTimer?.cancel();
-      if (mounted) setState(() => _playingUrl = null);
+      if (mounted) {
+        setState(() {
+          _playingUrl = null;
+          _audioPosition = Duration.zero;
+          _audioDuration = Duration.zero;
+        });
+      }
       return;
+    }
+    if (mounted) {
+      setState(() {
+        _playingUrl = url;
+        _audioPosition = Duration.zero;
+        _audioDuration = Duration.zero;
+      });
     }
     await _audioPlayer.play(UrlSource(url));
     _waveTimer?.cancel();
     _waveTimer = Timer.periodic(const Duration(milliseconds: 180), (_) {
       if (mounted) setState(() => _wavePhase++);
     });
-    if (mounted) setState(() => _playingUrl = url);
   }
 
   @override
@@ -331,6 +363,9 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollController.dispose();
     _recorder.dispose();
     _recordingTimer?.cancel();
+    _audioCompleteSubscription?.cancel();
+    _audioPositionSubscription?.cancel();
+    _audioDurationSubscription?.cancel();
     _audioPlayer.dispose();
     _waveTimer?.cancel();
     super.dispose();
@@ -606,39 +641,56 @@ class _ChatScreenState extends State<ChatScreen> {
                 InkWell(
                   onTap: () => _playAudio(attachment),
                   borderRadius: BorderRadius.circular(14),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        _playingUrl == attachment
-                            ? Icons.pause_circle_filled
-                            : Icons.play_circle_filled,
-                        size: 38,
-                        color: isMe ? Colors.white : AppColors.primary,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _playingUrl == attachment
+                                ? Icons.pause_circle_filled
+                                : Icons.play_circle_filled,
+                            size: 38,
+                            color: isMe ? Colors.white : AppColors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          ...List.generate(
+                            18,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              width: 3,
+                              height:
+                                  8 +
+                                  (((index +
+                                              (_playingUrl == attachment
+                                                  ? _wavePhase
+                                                  : 0)) %
+                                          5) *
+                                      3.0),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 1.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isMe
+                                    ? Colors.white70
+                                    : AppColors.primary.withValues(alpha: .55),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      ...List.generate(
-                        18,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          width: 3,
-                          height:
-                              8 +
-                              (((index +
-                                          (_playingUrl == attachment
-                                              ? _wavePhase
-                                              : 0)) %
-                                      5) *
-                                  3.0),
-                          margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                          decoration: BoxDecoration(
-                            color: isMe
-                                ? Colors.white70
-                                : AppColors.primary.withValues(alpha: .55),
-                            borderRadius: BorderRadius.circular(3),
+                      if (_playingUrl == attachment) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          '${_formatAudioDuration(_audioPosition)} / ${_formatAudioDuration(_audioDuration)}',
+                          style: TextStyle(
+                            color: isMe ? Colors.white70 : AppColors.textLight,
+                            fontSize: 11,
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 )
@@ -695,6 +747,12 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+
+  String _formatAudioDuration(Duration duration) {
+    final minutes = duration.inMinutes.toString().padLeft(2, '0');
+    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   Widget _buildInputBar() {
