@@ -45,6 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _recording = false;
+  bool _sendingVoice = false;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
   String? _playingUrl;
@@ -206,29 +207,41 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendMessage() async {
+    if (_sendingVoice) return;
     if (_recording) {
-      final path = await _recorder.stop();
-      _recordingTimer?.cancel();
-      if (mounted) setState(() => _recording = false);
-      if (path != null && mounted) {
-        context.read<CommunicationBloc>().add(
-          CommunicationSendChatAttachment(
-            path,
-            consultationId: widget.consultationId,
-          ),
-        );
+      setState(() {
+        _recording = false;
+        _sendingVoice = true;
+      });
+      try {
+        final path = await _recorder.stop();
+        _recordingTimer?.cancel();
+        if (path != null && mounted) {
+          context.read<CommunicationBloc>().add(
+            CommunicationSendChatAttachment(
+              path,
+              consultationId: widget.consultationId,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _sendingVoice = false);
       }
       return;
     }
     if (_pendingVoicePath != null) {
       final path = _pendingVoicePath!;
-      setState(() => _pendingVoicePath = null);
+      setState(() {
+        _pendingVoicePath = null;
+        _sendingVoice = true;
+      });
       context.read<CommunicationBloc>().add(
         CommunicationSendChatAttachment(
           path,
           consultationId: widget.consultationId,
         ),
       );
+      setState(() => _sendingVoice = false);
       return;
     }
     if (_controller.text.trim().isNotEmpty) {
@@ -308,7 +321,12 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!await _recorder.hasPermission()) return;
     final directory = await getTemporaryDirectory();
     await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc),
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        bitRate: 32000,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
       path:
           '${directory.path}/hanova_voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
     );
@@ -814,14 +832,16 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(width: 10),
           CircleAvatar(
-            backgroundColor: AppColors.primary,
+            backgroundColor: _sendingVoice
+                ? AppColors.textLight
+                : AppColors.primary,
             child: IconButton(
               icon: const Icon(
                 Icons.send_rounded,
                 color: Colors.white,
                 size: 20,
               ),
-              onPressed: _sendMessage,
+              onPressed: _sendingVoice ? null : _sendMessage,
             ),
           ),
         ],
