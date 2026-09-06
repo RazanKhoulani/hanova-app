@@ -6,7 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 
 import '../../../../core/localization/app_localizations.dart';
-import '../../../../core/constants/api_constants.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/hanova_ui.dart';
@@ -119,10 +119,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<List<Map<String, dynamic>>> _loadQadmousLocations() async {
-    final response = await Dio().get(
-      '${ApiConstants.baseUrl}/qadmous-locations',
-      options: Options(headers: {'Accept-Language': 'ar'}),
-    );
+    final response = await sl<DioClient>().get('/qadmous-locations');
     final list = response.data['data'] as List? ?? [];
     return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
   }

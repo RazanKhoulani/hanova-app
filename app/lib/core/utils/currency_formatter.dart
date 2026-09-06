@@ -6,8 +6,8 @@ class CurrencyFormatter {
 
   static String syp(num value, {String languageCode = 'ar'}) =>
       languageCode == 'ar'
-      ? '${_format.format(value)} ل.س جديدة'
-      : '${_format.format(value)} new SYP';
+      ? '${_format.format(value)} ل.س'
+      : '${_format.format(value)} SYP';
 
   static String dual(
     num sypValue,

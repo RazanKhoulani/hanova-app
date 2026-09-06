@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dio/dio.dart';
 
 import 'package:app/core/localization/app_localizations.dart';
 import 'package:app/core/network/api_interceptor.dart';
-import 'package:app/core/network/dio_client.dart';
 import 'package:app/core/settings/app_settings_cubit.dart';
 import 'package:app/features/store/presentation/pages/order_confirmation_screen.dart';
 
@@ -23,7 +21,6 @@ void main() {
           return AppSettingsCubit(
             storage,
             interceptor,
-            DioClient(Dio(), interceptor),
           );
         },
         child: const MaterialApp(home: OrderConfirmationScreen()),
