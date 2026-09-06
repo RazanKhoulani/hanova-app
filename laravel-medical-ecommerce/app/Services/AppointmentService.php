@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Repositories\AppointmentRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -61,6 +62,11 @@ class AppointmentService
 
     public function bookAppointment(array $data)
     {
+        return DB::transaction(fn () => $this->bookAppointmentLocked($data), 3);
+    }
+
+    private function bookAppointmentLocked(array $data)
+    {
         $data['status'] = 'pending';
         $data['provider_type'] = in_array($data['provider_type'] ?? null, ['doctor', 'team'], true)
             ? $data['provider_type']
@@ -88,6 +94,7 @@ class AppointmentService
         }
 
         $doctor = $this->resolveDoctor($data['doctor_id'] ?? null);
+        User::query()->whereKey($doctor->id)->lockForUpdate()->firstOrFail();
         $schedule = $this->resolveSchedule($doctor);
         $durationMinutes = $this->resolveDurationMinutes($schedule, $data['appointment_type']);
         $appointmentDate = !empty($data['date'])
@@ -218,7 +225,19 @@ class AppointmentService
 
     public function updateAppointment($id, array $data)
     {
-        $appointment = $this->appointmentRepository->findById($id);
+        return DB::transaction(fn () => $this->updateAppointmentLocked($id, $data), 3);
+    }
+
+    private function updateAppointmentLocked($id, array $data)
+    {
+        $appointment = Appointment::query()->lockForUpdate()->findOrFail($id);
+
+        if (isset($data['status']) && $data['status'] !== $appointment->status
+            && ! $this->canTransitionAppointment($appointment->status, $data['status'])) {
+            throw ValidationException::withMessages([
+                'status' => __('appointments.invalid_status_transition'),
+            ]);
+        }
 
         $isRescheduling = isset($data['date']) || isset($data['time']) || isset($data['type']) || isset($data['appointment_type']) || isset($data['specialty']);
         if ($isRescheduling) {
@@ -234,6 +253,7 @@ class AppointmentService
                 ]);
             }
             $doctor = $this->resolveDoctor($data['doctor_id'] ?? $appointment->doctor_id);
+            User::query()->whereKey($doctor->id)->lockForUpdate()->firstOrFail();
             $schedule = $this->resolveSchedule($doctor);
             $duration = $this->resolveDurationMinutes($schedule, $appointmentType);
 
@@ -525,6 +545,18 @@ class AppointmentService
         return in_array($appointmentType, ['consultation', 'session', 'treatment'], true)
             ? $appointmentType
             : 'treatment';
+    }
+
+    private function canTransitionAppointment(string $from, string $to): bool
+    {
+        $allowed = [
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['completed', 'cancelled'],
+            'completed' => [],
+            'cancelled' => [],
+        ];
+
+        return in_array($to, $allowed[$from] ?? [], true);
     }
 
     private function normalizeSpecialty(?string $specialty): string
