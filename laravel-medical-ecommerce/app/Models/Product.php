@@ -30,6 +30,7 @@ class Product extends Model
         'track_inventory',
         'stock_quantity',
         'low_stock_threshold',
+        'low_stock_notified_at',
         'usage_ar', 'usage_en',
         'suitable_for_ar', 'suitable_for_en',
         'active_ingredients_ar', 'active_ingredients_en',
@@ -45,6 +46,7 @@ class Product extends Model
         'track_inventory' => 'boolean',
         'stock_quantity' => 'integer',
         'low_stock_threshold' => 'integer',
+        'low_stock_notified_at' => 'datetime',
     ];
 
     public function concerns(): BelongsToMany
@@ -60,5 +62,22 @@ class Product extends Model
     public function visibleReviews(): HasMany
     {
         return $this->reviews()->where('is_visible', true);
+    }
+
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function availableStock(): ?int
+    {
+        if ($this->catalog_type !== 'bundle' || empty($this->bundle_product_ids)) {
+            return $this->track_inventory ? (int) $this->stock_quantity : null;
+        }
+
+        $components = self::query()->whereIn('id', $this->bundle_product_ids)->get();
+        $tracked = $components->filter->track_inventory;
+
+        return $tracked->isEmpty() ? null : (int) $tracked->min('stock_quantity');
     }
 }

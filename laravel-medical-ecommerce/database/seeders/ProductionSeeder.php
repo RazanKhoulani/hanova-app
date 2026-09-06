@@ -53,10 +53,10 @@ class ProductionSeeder extends Seeder
         );
 
         foreach ([
-            ['name_ar' => 'المزة', 'name_en' => 'Mezzeh', 'fee' => 3.00],
-            ['name_ar' => 'المالكي', 'name_en' => 'Malki', 'fee' => 3.50],
-            ['name_ar' => 'كفرسوسة', 'name_en' => 'Kafr Sousa', 'fee' => 4.00],
-            ['name_ar' => 'مشروع دمر', 'name_en' => 'Dummar', 'fee' => 5.00],
+            ['name_ar' => 'المزة', 'name_en' => 'Mezzeh', 'fee' => 3.00, 'fee_usd' => 3.00],
+            ['name_ar' => 'المالكي', 'name_en' => 'Malki', 'fee' => 3.50, 'fee_usd' => 3.50],
+            ['name_ar' => 'كفرسوسة', 'name_en' => 'Kafr Sousa', 'fee' => 4.00, 'fee_usd' => 4.00],
+            ['name_ar' => 'مشروع دمر', 'name_en' => 'Dummar', 'fee' => 5.00, 'fee_usd' => 5.00],
         ] as $area) {
             DeliveryArea::updateOrCreate(
                 ['name_en' => $area['name_en']],

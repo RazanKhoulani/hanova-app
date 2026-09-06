@@ -18,6 +18,7 @@ class AppointmentScreen extends StatefulWidget {
   final String? initialSessionType;
   final String? initialAppointmentType;
   final String? initialSpecialty;
+  final String? initialProviderType;
   final bool openedFromBot;
   final int? appointmentId;
   final DateTime? initialDate;
@@ -28,6 +29,7 @@ class AppointmentScreen extends StatefulWidget {
     this.initialSessionType,
     this.initialAppointmentType,
     this.initialSpecialty,
+    this.initialProviderType,
     this.openedFromBot = false,
     this.appointmentId,
     this.initialDate,
@@ -46,6 +48,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   late String _sessionType;
   late String _appointmentType;
   late String _specialty;
+  late String _providerType;
   String? _selectedTime;
 
   @override
@@ -56,6 +59,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       widget.initialAppointmentType,
     );
     _specialty = _normalizedSpecialty(widget.initialSpecialty);
+    _providerType = widget.initialProviderType == 'team' ? 'team' : 'doctor';
     if (_specialty == 'Nutrition') {
       _sessionType = 'Online';
       _appointmentType = 'Consultation';
@@ -134,6 +138,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                       const SizedBox(height: 16),
                       _buildSessionTypeSelector(),
                       const SizedBox(height: 32),
+                      HanovaSectionHeader(title: context.tr('select_provider')),
+                      const SizedBox(height: 16),
+                      _buildProviderSelector(),
+                      const SizedBox(height: 32),
                       HanovaSectionHeader(
                         title: context.tr('appointment_type'),
                       ),
@@ -201,6 +209,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                                       'appointment_type': _appointmentType
                                           .toLowerCase(),
                                       'specialty': _specialty.toLowerCase(),
+                                      'provider_type': _providerType,
                                       if (availabilityState.doctorId != null)
                                         'doctor_id': availabilityState.doctorId,
                                     };
@@ -340,6 +349,75 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProviderSelector() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildProviderCard(
+            value: 'doctor',
+            title: context.tr('with_doctor_hanan'),
+            subtitle: context.tr('paid_appointment'),
+            icon: Icons.medical_services_outlined,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildProviderCard(
+            value: 'team',
+            title: context.tr('with_clinic_team'),
+            subtitle: context.tr('free_for_now'),
+            icon: Icons.groups_2_outlined,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProviderCard({
+    required String value,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    final selected = _providerType == value;
+    return InkWell(
+      onTap: () => setState(() => _providerType = value),
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primarySoft : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.divider,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 30),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

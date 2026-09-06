@@ -41,7 +41,8 @@ class ChatService
     public function getConversationForUser($userId, $conversationId)
     {
         $conversation = $this->chatRepository->findConversationById($conversationId);
-        $isAllowed = (int) $conversation->user_id === (int) $userId || (int) $conversation->doctor_id === (int) $userId;
+        $user = User::findOrFail($userId);
+        $isAllowed = $conversation->canBeAccessedBy($user);
 
         if (! $isAllowed) {
             throw new AuthorizationException('You are not allowed to access this conversation.');
@@ -50,7 +51,7 @@ class ChatService
         return $conversation;
     }
 
-    public function startConversation($userId, $doctorId, $consultationId = null)
+    public function startConversation($userId, $doctorId, $consultationId = null, string $careScope = 'doctor')
     {
         $consultation = null;
         if ($consultationId) {
@@ -58,6 +59,7 @@ class ChatService
                 ->where('user_id', $userId)
                 ->findOrFail($consultationId);
             $doctorId = $consultation->doctor_id ?: $doctorId;
+            $careScope = $consultation->appointment?->provider_type === 'team' ? 'team' : 'doctor';
         }
 
         $resolvedDoctorId = $this->resolveDoctorId($doctorId);
@@ -69,6 +71,7 @@ class ChatService
             $userId,
             $resolvedDoctorId,
             $consultation?->id,
+            in_array($careScope, ['doctor', 'team'], true) ? $careScope : 'doctor',
         );
     }
 
@@ -84,8 +87,10 @@ class ChatService
 
         $uploadedFile = $data['file'] ?? null;
         if ($uploadedFile instanceof UploadedFile) {
-            $path = $uploadedFile->store('chat_files', 'public');
+            $disk = config('filesystems.medical_disk', 'local');
+            $path = $uploadedFile->store('chat-files/'.$conversation->id, $disk);
             $messageData['attachment'] = $path;
+            $messageData['attachment_disk'] = $disk;
             $messageData['body'] = $data['message'] ?? null;
         } else {
             $messageData['body'] = $data['message'] ?? '';
@@ -93,7 +98,7 @@ class ChatService
 
         $message = $this->chatRepository->createMessage($messageData);
         if ($uploadedFile instanceof UploadedFile) {
-            $this->storePatientDocument($conversation, $message, $uploadedFile, $path);
+            $this->storePatientDocument($conversation, $message, $uploadedFile, $path, $disk);
         }
         $this->factExtractor->extractFromMessage($message);
         $this->broadcastMessage($message);
@@ -119,8 +124,11 @@ class ChatService
     {
         $isPatientMessage = (int) $message->sender_id === (int) $conversation->user_id;
         $recipientIds = $isPatientMessage
-            ? User::role('admin')->pluck('id')->push($conversation->doctor_id)->filter()->unique()
-            : collect([$conversation->user_id])->filter();
+            ? ($conversation->care_scope === 'team'
+                ? User::role(['admin', 'doctor', 'staff'])->pluck('id')
+                : collect([$conversation->doctor_id]))
+            : collect([$conversation->user_id]);
+        $recipientIds = $recipientIds->filter()->unique();
 
         if ($recipientIds->isEmpty()) {
             return;
@@ -164,7 +172,7 @@ class ChatService
         return $doctor->id;
     }
 
-    private function storePatientDocument($conversation, $message, UploadedFile $file, string $path): void
+    private function storePatientDocument($conversation, $message, UploadedFile $file, string $path, string $disk): void
     {
         $conversation->loadMissing('user');
         $patient = Patient::firstOrCreate(
@@ -185,6 +193,7 @@ class ChatService
                 'conversation_id' => $conversation->id,
                 'document_type' => str_starts_with((string) $mimeType, 'image/') ? 'image' : 'analysis',
                 'file_path' => $path,
+                'storage_disk' => $disk,
                 'original_name' => $file->getClientOriginalName(),
                 'mime_type' => $mimeType,
             ]

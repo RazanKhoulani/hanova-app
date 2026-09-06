@@ -22,7 +22,9 @@ class Patient extends Model
         'notes',
         'image_before',
         'image_after',
+        'progress_images_disk',
         'medical_file',
+        'medical_file_disk',
     ];
 
     protected function phone(): Attribute
@@ -68,6 +70,11 @@ class Patient extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(PatientDocument::class);
+    }
+
+    public function consultations(): HasMany
+    {
+        return $this->hasMany(Consultation::class);
     }
 
     public function botConversations(): HasMany

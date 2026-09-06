@@ -15,6 +15,7 @@ class Coupon extends Model
         'user_id',
         'discount_type',
         'discount_value',
+        'discount_value_usd',
         'status',
         'source',
         'expires_at',
@@ -24,6 +25,7 @@ class Coupon extends Model
 
     protected $casts = [
         'discount_value' => 'float',
+        'discount_value_usd' => 'float',
         'expires_at' => 'datetime',
         'used_at' => 'datetime',
     ];

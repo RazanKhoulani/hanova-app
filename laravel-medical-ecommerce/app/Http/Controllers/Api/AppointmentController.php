@@ -93,6 +93,7 @@ class AppointmentController extends Controller
             : $request->validate([
                 'status' => 'sometimes|in:cancelled',
                 'doctor_id' => 'sometimes|nullable|exists:users,id',
+                'provider_type' => 'sometimes|in:doctor,team',
                 'date' => 'sometimes|date|after_or_equal:today',
                 'time' => 'sometimes|date_format:H:i',
                 'type' => 'sometimes|in:online,clinic',
@@ -117,9 +118,9 @@ class AppointmentController extends Controller
         $appointment = $this->appointmentService->getAppointmentById($id);
         $this->authorizeAppointmentAccess($appointment, request()->user());
 
-        $this->appointmentService->deleteAppointment($id);
+        $this->appointmentService->cancelAppointment($id, 'Cancelled by patient');
 
-        return response()->json(['message' => 'Appointment cancelled successfully'], 204);
+        return response()->json(['message' => 'Appointment cancelled successfully']);
     }
 
     private function authorizeAppointmentAccess($appointment, $user): void

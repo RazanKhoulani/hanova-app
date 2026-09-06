@@ -9,8 +9,10 @@ class ChatRepository
 {
     public function getUserConversations($userId, $perPage = 15)
     {
-        return Conversation::where('user_id', $userId)
-            ->orWhere('doctor_id', $userId)
+        $user = \App\Models\User::findOrFail($userId);
+
+        return Conversation::query()
+            ->accessibleBy($user)
             ->with([
                 'user:id,name,phone',
                 'doctor:id,name',
@@ -27,12 +29,13 @@ class ChatRepository
             ->paginate($perPage);
     }
 
-    public function findOrCreateConversation($userId, $doctorId, $consultationId = null)
+    public function findOrCreateConversation($userId, $doctorId, $consultationId = null, string $careScope = 'doctor')
     {
         return Conversation::firstOrCreate([
             'user_id' => $userId,
             'doctor_id' => $doctorId,
             'consultation_id' => $consultationId,
+            'care_scope' => $careScope,
         ]);
     }
 

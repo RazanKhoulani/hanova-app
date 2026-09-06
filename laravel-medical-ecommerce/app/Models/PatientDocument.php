@@ -14,6 +14,7 @@ class PatientDocument extends Model
         'message_id',
         'document_type',
         'file_path',
+        'storage_disk',
         'original_name',
         'mime_type',
         'notes',

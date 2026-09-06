@@ -17,6 +17,7 @@ class Offer extends Model
         'description_en',
         'discount_type',
         'discount_value',
+        'discount_value_usd',
         'target_segment',
         'starts_at',
         'ends_at',
@@ -27,6 +28,7 @@ class Offer extends Model
 
     protected $casts = [
         'discount_value' => 'float',
+        'discount_value_usd' => 'float',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'priority' => 'integer',

@@ -63,6 +63,7 @@ class AppRouter {
           initialSessionType: state.uri.queryParameters['type'],
           initialAppointmentType: state.uri.queryParameters['appointment_type'],
           initialSpecialty: state.uri.queryParameters['specialty'],
+          initialProviderType: state.uri.queryParameters['provider_type'],
           openedFromBot: state.uri.queryParameters['source'] == 'bot',
           appointmentId: int.tryParse(
             state.uri.queryParameters['appointment_id'] ?? '',

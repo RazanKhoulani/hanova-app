@@ -11,31 +11,6 @@ class AppSetting extends Model
         'value',
     ];
 
-    /**
-     * Central defaults keep the mobile API usable before an administrator
-     * configures a conversion rate in the dashboard.
-     */
-    public static function pricingDefaults(): array
-    {
-        return [
-            'display_currency' => 'syp_new',
-            'syp_old_per_new' => '0',
-            'syp_old_per_usd' => '0',
-            'show_dual_syp' => '0',
-        ];
-    }
-
-    public static function pricingValues(): array
-    {
-        return array_replace(
-            self::pricingDefaults(),
-            self::query()
-                ->whereIn('key', array_keys(self::pricingDefaults()))
-                ->pluck('value', 'key')
-                ->all(),
-        );
-    }
-
     public static function reviewRewardDefaults(): array
     {
         return [

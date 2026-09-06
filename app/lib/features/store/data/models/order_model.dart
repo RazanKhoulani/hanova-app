@@ -2,10 +2,16 @@ class OrderModel {
   final int id;
   final String orderNumber;
   final double totalAmount;
+  final double? subtotalUsd;
+  final double? totalAmountUsd;
   final double deliveryFee;
+  final double? deliveryFeeUsd;
   final double discountAmount;
+  final double? discountAmountUsd;
   final String? deliveryMethod;
   final String? paymentStatus;
+  final String? paymentReceiptStatus;
+  final String? receiptRejectionReason;
   final String status;
   final String statusLabel;
   final DateTime createdAt;
@@ -15,10 +21,16 @@ class OrderModel {
     required this.id,
     required this.orderNumber,
     required this.totalAmount,
+    this.subtotalUsd,
+    this.totalAmountUsd,
     this.deliveryFee = 0,
+    this.deliveryFeeUsd,
     this.discountAmount = 0,
+    this.discountAmountUsd,
     this.deliveryMethod,
     this.paymentStatus,
+    this.paymentReceiptStatus,
+    this.receiptRejectionReason,
     required this.status,
     this.statusLabel = '',
     required this.createdAt,
@@ -38,10 +50,24 @@ class OrderModel {
       id: parseInt(json['id']),
       orderNumber: json['order_number']?.toString() ?? 'ORD-${json['id']}',
       totalAmount: parseDouble(json['total_amount']),
+      subtotalUsd: json['subtotal_usd'] == null
+          ? null
+          : parseDouble(json['subtotal_usd']),
+      totalAmountUsd: json['total_amount_usd'] == null
+          ? null
+          : parseDouble(json['total_amount_usd']),
       deliveryFee: parseDouble(json['delivery_fee']),
+      deliveryFeeUsd: json['delivery_fee_usd'] == null
+          ? null
+          : parseDouble(json['delivery_fee_usd']),
       discountAmount: parseDouble(json['discount_amount']),
+      discountAmountUsd: json['discount_amount_usd'] == null
+          ? null
+          : parseDouble(json['discount_amount_usd']),
       deliveryMethod: json['delivery_method']?.toString(),
       paymentStatus: json['payment_status']?.toString(),
+      paymentReceiptStatus: json['payment_receipt_status']?.toString(),
+      receiptRejectionReason: json['receipt_rejection_reason']?.toString(),
       status: json['status']?.toString() ?? 'pending',
       statusLabel: json['status_label']?.toString() ?? '',
       createdAt:
@@ -58,8 +84,14 @@ class DeliveryAreaModel {
   final int id;
   final String name;
   final double fee;
+  final double? feeUsd;
 
-  DeliveryAreaModel({required this.id, required this.name, required this.fee});
+  DeliveryAreaModel({
+    required this.id,
+    required this.name,
+    required this.fee,
+    this.feeUsd,
+  });
 
   factory DeliveryAreaModel.fromJson(Map<String, dynamic> json) {
     return DeliveryAreaModel(
@@ -68,6 +100,11 @@ class DeliveryAreaModel {
           : int.parse('${json['id']}'),
       name: json['name']?.toString() ?? '',
       fee: (json['fee'] as num? ?? 0).toDouble(),
+      feeUsd: json['fee_usd'] == null
+          ? null
+          : (json['fee_usd'] is num
+                ? (json['fee_usd'] as num).toDouble()
+                : double.tryParse(json['fee_usd'].toString())),
     );
   }
 }

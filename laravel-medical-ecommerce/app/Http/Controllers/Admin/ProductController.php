@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Concern;
 use App\Models\Product;
 use App\Services\ProductService;
+use App\Services\InventoryService;
+use App\Models\InventoryMovement;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     protected ProductService $productService;
 
-    public function __construct(ProductService $productService)
+    public function __construct(ProductService $productService, private readonly InventoryService $inventoryService)
     {
         $this->productService = $productService;
     }
@@ -108,7 +110,18 @@ class ProductController extends Controller
         $validated['stock_quantity'] = (int) ($validated['stock_quantity'] ?? 0);
         $validated['low_stock_threshold'] = (int) ($validated['low_stock_threshold'] ?? 5);
 
-        $this->productService->createProduct($validated);
+        $product = $this->productService->createProduct($validated);
+        if ($product->track_inventory && $product->stock_quantity > 0) {
+            InventoryMovement::create([
+                'product_id' => $product->id,
+                'user_id' => auth()->id(),
+                'type' => 'opening_balance',
+                'quantity_change' => $product->stock_quantity,
+                'stock_before' => 0,
+                'stock_after' => $product->stock_quantity,
+                'reason' => __('admin.opening_stock'),
+            ]);
+        }
 
         return redirect()->route('admin.products.index')
             ->with('success', __('admin.product_created'));
@@ -118,6 +131,7 @@ class ProductController extends Controller
     {
         // View not typically needed in dashboard unless for distinct preview, but we'll stick to basic CRUD
         $product = $this->productService->getProductById($id);
+        $product->load(['inventoryMovements' => fn ($query) => $query->with(['user', 'order'])->latest()->limit(30)]);
         return view('admin.products.show', compact('product'));
     }
 
@@ -157,17 +171,27 @@ class ProductController extends Controller
             'concern_ids' => 'nullable|array',
             'concern_ids.*' => 'exists:concerns,id',
             'image' => 'nullable|image|max:10240',
+            'stock_adjustment_reason' => 'nullable|string|max:500',
         ]);
 
         $product = $this->productService->getProductById($id);
+        $requestedStock = (int) ($validated['stock_quantity'] ?? $product->stock_quantity);
+        $stockChanged = $requestedStock !== (int) $product->stock_quantity;
+        if ($stockChanged && trim((string) ($validated['stock_adjustment_reason'] ?? '')) === '') {
+            return back()->withErrors(['stock_adjustment_reason' => __('admin.stock_reason_required')])->withInput();
+        }
+        $stockReason = (string) ($validated['stock_adjustment_reason'] ?? '');
+        unset($validated['stock_quantity'], $validated['stock_adjustment_reason']);
         $validated['price'] = $validated['price_syp'];
         $validated['cost'] = $validated['cost_syp'];
         $validated['concern_ids'] = $request->input('concern_ids', []);
         $validated['bundle_product_ids'] = $request->input('bundle_product_ids', []);
         $validated['track_inventory'] = $request->boolean('track_inventory');
-        $validated['stock_quantity'] = (int) ($validated['stock_quantity'] ?? 0);
         $validated['low_stock_threshold'] = (int) ($validated['low_stock_threshold'] ?? 5);
         $this->productService->updateProduct($product, $validated);
+        if ($stockChanged) {
+            $this->inventoryService->setStock($product, $requestedStock, $stockReason, auth()->id());
+        }
 
         return redirect()->route('admin.products.index')
             ->with('success', __('admin.product_updated'));
@@ -186,10 +210,11 @@ class ProductController extends Controller
     {
         $data = $request->validate([
             'stock_quantity' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'reason' => ['required', 'string', 'max:500'],
         ]);
 
         $product = $this->productService->getProductById($id);
-        $this->productService->updateProduct($product, $data);
+        $this->inventoryService->setStock($product, (int) $data['stock_quantity'], $data['reason'], auth()->id());
 
         return back()->with('success', __('admin.stock_updated'));
     }

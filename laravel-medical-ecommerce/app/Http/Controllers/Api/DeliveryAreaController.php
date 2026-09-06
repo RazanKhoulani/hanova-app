@@ -23,6 +23,7 @@ class DeliveryAreaController extends Controller
                 'name_ar' => $area->name_ar,
                 'name_en' => $area->name_en,
                 'fee' => (float) $area->fee,
+                'fee_usd' => $area->fee_usd !== null ? (float) $area->fee_usd : null,
             ]);
 
         return response()->json(['data' => $areas]);

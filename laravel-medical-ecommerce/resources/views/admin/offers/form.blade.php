@@ -21,16 +21,21 @@
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-3 mb-3 mb-md-0">
+    <div class="col-md-2 mb-3 mb-md-0">
         <label class="form-label fw-bold">{{ __('admin.discount_type') }}</label>
         <select name="discount_type" class="form-select" required>
             <option value="percentage" @selected(old('discount_type', $offer?->discount_type ?? 'percentage') === 'percentage')>{{ __('admin.percentage') }}</option>
             <option value="fixed" @selected(old('discount_type', $offer?->discount_type) === 'fixed')>{{ __('admin.fixed_amount') }}</option>
         </select>
     </div>
-    <div class="col-md-3 mb-3 mb-md-0">
-        <label class="form-label fw-bold">{{ __('admin.discount_value') }}</label>
+    <div class="col-md-2 mb-3 mb-md-0">
+        <label class="form-label fw-bold">{{ __('admin.discount_value_syp') }}</label>
         <input type="number" step="0.01" min="0" name="discount_value" class="form-control" value="{{ old('discount_value', $offer?->discount_value ?? 0) }}" required>
+    </div>
+    <div class="col-md-2 mb-3 mb-md-0">
+        <label class="form-label fw-bold">{{ __('admin.discount_value_usd') }}</label>
+        <input type="number" step="0.01" min="0" name="discount_value_usd" class="form-control" value="{{ old('discount_value_usd', $offer?->discount_value_usd) }}">
+        <div class="form-text">{{ __('admin.fixed_discount_dual_hint') }}</div>
     </div>
     <div class="col-md-3 mb-3 mb-md-0">
         <label class="form-label fw-bold">{{ __('admin.target_segment') }}</label>

@@ -84,4 +84,15 @@
         </section>
     </div>
 </div>
+
+<section class="panel-card data-panel mt-4">
+    <div class="panel-heading"><div><h3>{{ __('admin.inventory_history') }}</h3><p>{{ __('admin.inventory_history_hint') }}</p></div></div>
+    <div class="table-responsive"><table class="table mb-0"><thead><tr><th>{{ __('admin.date') }}</th><th>{{ __('admin.movement_type') }}</th><th>{{ __('admin.quantity_change') }}</th><th>{{ __('admin.stock') }}</th><th>{{ __('admin.reason') }}</th><th>{{ __('admin.changed_by') }}</th></tr></thead><tbody>
+    @forelse($product->inventoryMovements as $movement)
+        <tr><td>{{ $movement->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</td><td>{{ __('admin.movement_' . $movement->type) }}</td><td class="{{ $movement->quantity_change >= 0 ? 'text-success' : 'text-danger' }} fw-bold">{{ $movement->quantity_change > 0 ? '+' : '' }}{{ $movement->quantity_change }}</td><td>{{ $movement->stock_before }} → {{ $movement->stock_after }}</td><td>{{ $movement->reason ?: '-' }}@if($movement->order_id) <a href="{{ route('admin.orders.show', $movement->order_id) }}">#{{ $movement->order_id }}</a>@endif</td><td>{{ $movement->user?->name ?: __('admin.system') }}</td></tr>
+    @empty
+        <tr><td colspan="6" class="text-center text-muted py-4">{{ __('admin.no_inventory_movements') }}</td></tr>
+    @endforelse
+    </tbody></table></div>
+</section>
 @endsection

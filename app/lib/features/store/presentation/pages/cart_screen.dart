@@ -147,6 +147,9 @@ class _CartScreenState extends State<CartScreen> {
                       CurrencyFormatter.dual(
                         item.product.priceSyp,
                         item.product.priceUsd,
+                        languageCode: Localizations.localeOf(
+                          context,
+                        ).languageCode,
                       ),
                       style: const TextStyle(
                         color: AppColors.primary,
@@ -232,7 +235,11 @@ class _CartScreenState extends State<CartScreen> {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               Text(
-                CurrencyFormatter.dual(state.totalAmount, state.totalUsd),
+                CurrencyFormatter.dual(
+                  state.totalAmount,
+                  state.totalUsd,
+                  languageCode: Localizations.localeOf(context).languageCode,
+                ),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -266,7 +273,11 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
               Text(
-                CurrencyFormatter.dual(state.totalAmount, state.totalUsd),
+                CurrencyFormatter.dual(
+                  state.totalAmount,
+                  state.totalUsd,
+                  languageCode: Localizations.localeOf(context).languageCode,
+                ),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

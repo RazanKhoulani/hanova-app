@@ -71,11 +71,11 @@
                                 <span class="badge bg-{{ $stockClass }} mb-2">
                                     {{ $product->stock_quantity <= 0 ? __('admin.out_of_stock') : $product->stock_quantity . ' ' . __('admin.units') }}
                                 </span>
-                                <form action="{{ route('admin.products.stock.update', $product->id) }}" method="POST" class="d-flex gap-1" onclick="event.stopPropagation()">
+                                <form action="{{ route('admin.products.stock.update', $product->id) }}" method="POST" class="d-grid gap-1" onclick="event.stopPropagation()">
                                     @csrf
                                     @method('PUT')
-                                    <input type="number" min="0" step="1" name="stock_quantity" class="form-control form-control-sm" value="{{ $product->stock_quantity }}" aria-label="{{ __('admin.stock_quantity_for', ['name' => $product->name_en]) }}">
-                                    <button class="btn btn-sm btn-outline-primary" type="submit" title="{{ __('admin.save_stock') }}"><i class="fas fa-check"></i></button>
+                                    <div class="input-group input-group-sm"><input type="number" min="0" step="1" name="stock_quantity" class="form-control" value="{{ $product->stock_quantity }}" aria-label="{{ __('admin.stock_quantity_for', ['name' => $product->name_en]) }}"><button class="btn btn-outline-primary" type="submit" title="{{ __('admin.save_stock') }}"><i class="fas fa-check"></i></button></div>
+                                    <input type="text" name="reason" class="form-control form-control-sm" placeholder="{{ __('admin.stock_adjustment_reason') }}" required>
                                 </form>
                             @endif
                         </td>

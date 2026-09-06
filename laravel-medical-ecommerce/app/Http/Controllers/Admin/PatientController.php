@@ -9,6 +9,7 @@ use App\Models\PatientMedicalFact;
 use App\Models\PatientDocument;
 use App\Models\PatientProgressPhoto;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -105,7 +106,7 @@ class PatientController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($id, AuditService $auditService)
     {
         $patient = Patient::with([
             'user',
@@ -114,6 +115,8 @@ class PatientController extends Controller
             'documents' => fn ($query) => $query->with('consultation')->latest(),
             'appointments' => fn ($query) => $query->with('consultation')->latest('date'),
         ])->findOrFail($id);
+        $auditService->record('patient_record.viewed', $patient);
+
         return view('admin.patients.show', compact('patient'));
     }
 
@@ -148,6 +151,7 @@ class PatientController extends Controller
         $photo->patient->update([
             'image_before' => $photo->before_image,
             'image_after' => $photo->after_image,
+            'progress_images_disk' => $photo->storage_disk,
         ]);
 
         return back()->with('success', __('admin.progress_approved'));
@@ -192,13 +196,15 @@ class PatientController extends Controller
         ]);
 
         $file = $data['file'];
-        $path = $file->store('patient-documents/'.$patient->id, 'public');
+        $disk = config('filesystems.medical_disk', 'local');
+        $path = $file->store('patient-documents/'.$patient->id, $disk);
 
         PatientDocument::create([
             'patient_id' => $patient->id,
             'user_id' => $patient->user_id,
             'document_type' => str_starts_with((string) $file->getMimeType(), 'image/') ? 'clinical_photo' : 'medical_file',
             'file_path' => $path,
+            'storage_disk' => $disk,
             'original_name' => $file->getClientOriginalName(),
             'mime_type' => $file->getMimeType(),
             'notes' => $data['notes'] ?? null,

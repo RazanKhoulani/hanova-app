@@ -7,6 +7,7 @@
     $whatsappPhone = preg_replace('/\D+/', '', (string) ($patient->phone ?? ''));
     if (str_starts_with($whatsappPhone, '00')) $whatsappPhone = substr($whatsappPhone, 2);
     $recordCode = $patient->record_code ?: 'HNV-' . str_pad($patient->id, 6, '0', STR_PAD_LEFT);
+    $viewerId = auth()->id();
 @endphp
 <div class="page-header">
     <div><p class="eyebrow">{{ __('admin.patients') }} · {{ $recordCode }}</p><h1>{{ __('admin.patient_details') }}</h1><p>{{ $patient->name }}</p></div>
@@ -37,10 +38,10 @@
         <section class="panel-card mb-4">
             <div class="panel-heading"><div><h3>{{ __('admin.medical_files') }}</h3><p>{{ __('admin.upload_file_hint') }}</p></div></div>
             @if($patient->medical_file)
-                <a href="{{ Storage::url($patient->medical_file) }}" target="_blank" class="file-row"><i class="fas fa-file-medical"></i><span>{{ __('admin.primary_medical_file') }}</span><i class="fas fa-external-link-alt"></i></a>
+                <a href="{{ \App\Services\ProtectedFileUrl::make('patient', $patient->id, 'medical', $viewerId) }}" target="_blank" class="file-row"><i class="fas fa-file-medical"></i><span>{{ __('admin.primary_medical_file') }}</span><i class="fas fa-external-link-alt"></i></a>
             @endif
             @forelse($patient->documents as $document)
-                <a href="{{ Storage::url($document->file_path) }}" target="_blank" class="file-row"><i class="fas {{ str_starts_with((string) $document->mime_type, 'image/') ? 'fa-image' : 'fa-file-medical' }}"></i><span class="text-truncate">{{ $document->original_name ?: __('admin.medical_attachment') }}<small class="d-block text-muted">{{ $document->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</small></span><i class="fas fa-external-link-alt"></i></a>
+                <a href="{{ \App\Services\ProtectedFileUrl::make('patient-document', $document->id, 'file', $viewerId) }}" target="_blank" class="file-row"><i class="fas {{ str_starts_with((string) $document->mime_type, 'image/') ? 'fa-image' : 'fa-file-medical' }}"></i><span class="text-truncate">{{ $document->original_name ?: __('admin.medical_attachment') }}<small class="d-block text-muted">{{ $document->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</small></span><i class="fas fa-external-link-alt"></i></a>
             @empty
                 @if(!$patient->medical_file)<p class="empty-copy">{{ __('admin.no_documents') }}</p>@endif
             @endforelse
@@ -76,7 +77,7 @@
 
         <section class="panel-card mb-4">
             <div class="panel-heading"><div><h3>{{ __('admin.current_approved_progress') }}</h3><p>{{ __('admin.progress_hint') }}</p></div></div>
-            <div class="detail-image-grid"><div><h4>{{ __('admin.before') }}</h4>@if($patient->image_before)<img src="{{ Storage::url($patient->image_before) }}" alt="{{ __('admin.before') }}">@else<div class="empty-image">{{ __('admin.no_image') }}</div>@endif</div><div><h4>{{ __('admin.after') }}</h4>@if($patient->image_after)<img src="{{ Storage::url($patient->image_after) }}" alt="{{ __('admin.after') }}">@else<div class="empty-image">{{ __('admin.no_image') }}</div>@endif</div></div>
+            <div class="detail-image-grid"><div><h4>{{ __('admin.before') }}</h4>@if($patient->image_before)<img src="{{ \App\Services\ProtectedFileUrl::make('patient', $patient->id, 'before', $viewerId) }}" alt="{{ __('admin.before') }}">@else<div class="empty-image">{{ __('admin.no_image') }}</div>@endif</div><div><h4>{{ __('admin.after') }}</h4>@if($patient->image_after)<img src="{{ \App\Services\ProtectedFileUrl::make('patient', $patient->id, 'after', $viewerId) }}" alt="{{ __('admin.after') }}">@else<div class="empty-image">{{ __('admin.no_image') }}</div>@endif</div></div>
         </section>
 
         <section class="panel-card">
@@ -85,7 +86,7 @@
                 @php($photoStatusKey = trans()->has('admin.photo_' . $photo->status) ? 'admin.photo_' . $photo->status : null)
                 <div class="submission-card">
                     <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div class="d-flex flex-wrap gap-2"><span class="status-pill {{ $photo->status === 'approved' ? 'success' : ($photo->status === 'rejected' ? 'danger' : 'warning') }}">{{ $photoStatusKey ? __($photoStatusKey) : ucfirst($photo->status) }}</span>@if($photo->consent_for_discount)<span class="record-chip">{{ __('admin.discount_consent') }}</span>@endif @if($photo->coupon)<span class="record-chip">{{ $photo->coupon->code }}</span>@endif</div><small class="text-muted">{{ $photo->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</small></div>
-                    <div class="detail-image-grid compact"><div><h4>{{ __('admin.before') }}</h4><img src="{{ Storage::url($photo->before_image) }}" alt="{{ __('admin.before') }}"></div><div><h4>{{ __('admin.after') }}</h4><img src="{{ Storage::url($photo->after_image) }}" alt="{{ __('admin.after') }}"></div></div>
+                    <div class="detail-image-grid compact"><div><h4>{{ __('admin.before') }}</h4><img src="{{ \App\Services\ProtectedFileUrl::make('progress-photo', $photo->id, 'before', $viewerId) }}" alt="{{ __('admin.before') }}"></div><div><h4>{{ __('admin.after') }}</h4><img src="{{ \App\Services\ProtectedFileUrl::make('progress-photo', $photo->id, 'after', $viewerId) }}" alt="{{ __('admin.after') }}"></div></div>
                     @if($photo->status === 'pending')<div class="d-flex flex-wrap gap-2 justify-content-end mt-3"><form action="{{ route('admin.patients.progressPhotos.approve', $photo) }}" method="POST">@csrf<button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i>{{ __('admin.approve_create_discount') }}</button></form><form action="{{ route('admin.patients.progressPhotos.reject', $photo) }}" method="POST" class="d-flex gap-2"><input type="text" name="rejection_reason" class="form-control form-control-sm" placeholder="{{ __('admin.rejection_reason') }}"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times me-1"></i>{{ __('admin.reject') }}</button></form></div>@elseif($photo->rejection_reason)<div class="alert alert-danger mt-3 mb-0">{{ $photo->rejection_reason }}</div>@endif
                 </div>
             @empty

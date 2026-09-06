@@ -15,6 +15,7 @@ class StoreAppointmentRequest extends FormRequest
     {
         return [
             'doctor_id' => 'nullable|exists:users,id',
+            'provider_type' => 'nullable|in:doctor,team',
             'date' => 'required|date|after_or_equal:today',
             'time' => 'required|date_format:H:i',
             'type' => 'required|in:online,clinic',

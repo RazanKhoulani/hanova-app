@@ -116,6 +116,12 @@
                             <i class="fa-solid fa-money-bill-transfer"></i>
                             <span>{{ __('admin.currency_settings') }}</span>
                         </a>
+                        @if($currentUser->hasRole('admin'))
+                            <a href="{{ route('admin.audit-logs.index') }}" class="sidebar-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>{{ __('admin.audit_log') }}</span>
+                            </a>
+                        @endif
                     </nav>
                 @endunless
             </div>

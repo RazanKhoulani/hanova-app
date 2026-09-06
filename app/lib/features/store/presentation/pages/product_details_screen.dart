@@ -113,6 +113,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               CurrencyFormatter.dual(
                                 product.priceSyp,
                                 product.priceUsd,
+                                languageCode: Localizations.localeOf(
+                                  context,
+                                ).languageCode,
                               ),
                               style: const TextStyle(
                                 color: AppColors.primary,

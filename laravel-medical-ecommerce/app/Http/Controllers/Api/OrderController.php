@@ -9,6 +9,7 @@ use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class OrderController extends Controller
@@ -35,12 +36,19 @@ class OrderController extends Controller
     public function store(CheckoutRequest $request)
     {
         $data = $request->validated();
+        $storedReceipt = null;
+        $receiptDisk = config('filesystems.medical_disk', 'local');
         if ($request->hasFile('payment_receipt')) {
-            $data['shipping_receipt'] = $request->file('payment_receipt')->store('receipts', 'public');
+            $storedReceipt = $request->file('payment_receipt')->store('payment-receipts/'.auth()->id(), $receiptDisk);
+            $data['shipping_receipt'] = $storedReceipt;
+            $data['receipt_disk'] = $receiptDisk;
         }
         try {
             $order = $this->orderService->checkout(auth()->id(), $data);
         } catch (Throwable $exception) {
+            if ($storedReceipt) {
+                Storage::disk($receiptDisk)->delete($storedReceipt);
+            }
             Log::error('Order checkout failed.', [
                 'user_id' => auth()->id(),
                 'delivery_method' => $request->input('delivery_method'),

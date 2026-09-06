@@ -13,11 +13,13 @@ class DeliveryArea extends Model
         'name_ar',
         'name_en',
         'fee',
+        'fee_usd',
         'is_active',
     ];
 
     protected $casts = [
         'fee' => 'float',
+        'fee_usd' => 'float',
         'is_active' => 'boolean',
     ];
 

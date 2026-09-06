@@ -9,16 +9,12 @@ class AppSettingsController extends Controller
 {
     public function __invoke()
     {
-        $settings = AppSetting::pricingValues();
         $siteContent = AppSetting::siteContentValues();
 
         return response()->json([
             'data' => [
-                'base_currency' => 'SYP_OLD',
-                'display_currency' => $settings['display_currency'] === 'usd' ? 'usd' : 'syp_new',
-                'syp_old_per_new' => (float) $settings['syp_old_per_new'],
-                'syp_old_per_usd' => (float) $settings['syp_old_per_usd'],
-                'show_dual_syp' => false,
+                'currencies' => ['SYP', 'USD'],
+                'pricing_mode' => 'independent_dual_prices',
                 'about' => [
                     'ar' => $siteContent['site_about_ar'],
                     'en' => $siteContent['site_about_en'],

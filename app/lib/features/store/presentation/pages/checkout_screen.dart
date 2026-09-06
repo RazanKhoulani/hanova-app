@@ -7,7 +7,6 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/hanova_ui.dart';
@@ -42,6 +41,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _deliveryMethod = 'clinic_pickup';
   int? _deliveryAreaId;
   double _deliveryFee = 0;
+  double? _deliveryFeeUsd = 0;
   double? _shippingLatitude;
   double? _shippingLongitude;
   String? _paymentReceiptPath;
@@ -52,18 +52,63 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (query.isEmpty) return;
     setState(() => _searchingAddress = true);
     try {
-      final response = await Dio().get('https://nominatim.openstreetmap.org/search', queryParameters: {'q': '$query, Syria', 'format': 'jsonv2', 'limit': 5, 'accept-language': Localizations.localeOf(context).languageCode}, options: Options(headers: {'User-Agent': 'HanovaMobile/1.0'}));
+      final response = await Dio().get(
+        'https://nominatim.openstreetmap.org/search',
+        queryParameters: {
+          'q': '$query, Syria',
+          'format': 'jsonv2',
+          'limit': 5,
+          'accept-language': Localizations.localeOf(context).languageCode,
+        },
+        options: Options(headers: {'User-Agent': 'HanovaMobile/1.0'}),
+      );
       final results = response.data is List ? response.data as List : const [];
       if (!mounted) return;
-      final selected = await showModalBottomSheet<Map>(context: context, builder: (context) => SafeArea(child: ListView(shrinkWrap: true, children: [const ListTile(title: Text('اختاري العنوان', style: TextStyle(fontWeight: FontWeight.bold))), ...results.map((item) => ListTile(leading: const Icon(Icons.location_on_outlined, color: AppColors.primary), title: Text(item['display_name']?.toString() ?? ''), onTap: () => Navigator.pop(context, item)))])));
-      if (selected != null) setState(() { _addressController.text = selected['display_name'].toString(); _shippingLatitude = double.tryParse(selected['lat'].toString()); _shippingLongitude = double.tryParse(selected['lon'].toString()); });
-    } catch (_) { if (mounted) _showCheckoutMessage('تعذر البحث عن العنوان، حاولي مجدداً.'); }
-    finally { if (mounted) setState(() => _searchingAddress = false); }
+      final selected = await showModalBottomSheet<Map>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              ListTile(
+                title: Text(
+                  context.tr('select_address'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              ...results.map(
+                (item) => ListTile(
+                  leading: const Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: Text(item['display_name']?.toString() ?? ''),
+                  onTap: () => Navigator.pop(context, item),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (selected != null) {
+        setState(() {
+          _addressController.text = selected['display_name'].toString();
+          _shippingLatitude = double.tryParse(selected['lat'].toString());
+          _shippingLongitude = double.tryParse(selected['lon'].toString());
+        });
+      }
+    } catch (_) {
+      if (mounted) _showCheckoutMessage(context.tr('address_search_failed'));
+    } finally {
+      if (mounted) setState(() => _searchingAddress = false);
+    }
   }
 
   Future<void> _pickPaymentReceipt() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result?.files.single.path != null && mounted) setState(() => _paymentReceiptPath = result!.files.single.path);
+    if (result?.files.single.path != null && mounted) {
+      setState(() => _paymentReceiptPath = result!.files.single.path);
+    }
   }
 
   @override
@@ -74,7 +119,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<List<Map<String, dynamic>>> _loadQadmousLocations() async {
-    final response = await Dio().get('${ApiConstants.baseUrl}/qadmous-locations', options: Options(headers: {'Accept-Language': 'ar'}));
+    final response = await Dio().get(
+      '${ApiConstants.baseUrl}/qadmous-locations',
+      options: Options(headers: {'Accept-Language': 'ar'}),
+    );
     final list = response.data['data'] as List? ?? [];
     return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
   }
@@ -101,12 +149,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (_deliveryMethod == 'home_delivery') {
       if (_deliveryAreaId == null) {
-        _showCheckoutMessage(_checkoutLabel('choose_area'));
+        _showCheckoutMessage(context.tr('choose_area'));
         return;
       }
 
       if (_addressController.text.trim().isEmpty) {
-        _showCheckoutMessage(_checkoutLabel('enter_address'));
+        _showCheckoutMessage(context.tr('enter_address'));
         return;
       }
     }
@@ -117,22 +165,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _recipientNameController,
           _recipientPhoneController,
         ].any((controller) => controller.text.trim().isEmpty)) {
-      _showCheckoutMessage(_checkoutLabel('qadmous_required'));
+      _showCheckoutMessage(context.tr('qadmous_required'));
       return;
     }
-    if (_deliveryMethod == 'qadmous' && _paymentReceiptPath == null) {
-      _showCheckoutMessage('يرجى رفع صورة إشعار الدفع أولاً.');
+    if (_selectedPayment == 'online' && _paymentReceiptPath == null) {
+      _showCheckoutMessage(context.tr('payment_receipt_required'));
       return;
     }
 
     final orderData = {
       'payment_method': _selectedPayment,
       'delivery_method': _deliveryMethod,
+      if (_selectedPayment == 'online')
+        'payment_receipt_path': _paymentReceiptPath,
       if (_deliveryMethod == 'home_delivery') ...{
         'delivery_area_id': _deliveryAreaId,
         'shipping_address': _addressController.text.trim(),
         if (_shippingLatitude != null) 'shipping_latitude': _shippingLatitude,
-        if (_shippingLongitude != null) 'shipping_longitude': _shippingLongitude,
+        if (_shippingLongitude != null)
+          'shipping_longitude': _shippingLongitude,
       } else if (_deliveryMethod == 'qadmous') ...{
         'qadmous_governorate': _qadmousGovernorateController.text.trim(),
         'qadmous_branch': _qadmousBranchController.text.trim(),
@@ -140,7 +191,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'recipient_phone': _recipientPhoneController.text.trim(),
         'shipping_address':
             '${_qadmousGovernorateController.text.trim()} - ${_qadmousBranchController.text.trim()}',
-        'payment_receipt_path': _paymentReceiptPath,
       } else ...{
         'pickup_location': _deliveryMethod == 'clinic_pickup'
             ? 'clinic'
@@ -235,7 +285,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader(_checkoutLabel('delivery_method')),
+                  _buildSectionHeader(context.tr('delivery_method')),
                   const SizedBox(height: 16),
                   _buildDeliveryOptions(),
                   const SizedBox(height: 24),
@@ -244,6 +294,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   _buildSectionHeader(context.tr('payment_method')),
                   const SizedBox(height: 16),
                   _buildPaymentOptions(),
+                  if (_selectedPayment == 'online') ...[
+                    const SizedBox(height: 4),
+                    _buildPaymentReceiptPicker(),
+                  ],
                   const SizedBox(height: 12),
                   _buildPaymentInfo(),
                   const SizedBox(height: 32),
@@ -286,28 +340,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildDeliveryOptions() {
     final options = [
       {
-        'label': _checkoutLabel('clinic_pickup'),
+        'label': context.tr('clinic_pickup'),
         'value': 'clinic_pickup',
         'icon': Icons.local_hospital_rounded,
-        'subtitle': _checkoutLabel('free_pickup'),
+        'subtitle': context.tr('free_pickup'),
       },
       {
-        'label': _checkoutLabel('pharmacy_pickup'),
+        'label': context.tr('pharmacy_pickup'),
         'value': 'pharmacy_pickup',
         'icon': Icons.local_pharmacy_rounded,
-        'subtitle': _checkoutLabel('free_pickup'),
+        'subtitle': context.tr('free_pickup'),
       },
       {
-        'label': _checkoutLabel('home_delivery'),
+        'label': context.tr('home_delivery'),
         'value': 'home_delivery',
         'icon': Icons.delivery_dining_rounded,
-        'subtitle': _checkoutLabel('area_fee'),
+        'subtitle': context.tr('area_fee'),
       },
       {
-        'label': _checkoutLabel('qadmous_shipping'),
+        'label': context.tr('qadmous_shipping'),
         'value': 'qadmous',
         'icon': Icons.local_shipping_rounded,
-        'subtitle': _checkoutLabel('qadmous_note'),
+        'subtitle': context.tr('qadmous_note'),
       },
     ];
 
@@ -353,6 +407,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   if (value != 'home_delivery') {
                     _deliveryAreaId = null;
                     _deliveryFee = 0;
+                    _deliveryFeeUsd = 0;
                   }
                 });
               },
@@ -373,33 +428,56 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
       return Column(
         children: [
-          FutureBuilder<List<Map<String, dynamic>>>(future: _qadmousLocationsFuture, builder: (context, snapshot) {
-            final locations = snapshot.data ?? const <Map<String,dynamic>>[];
-            if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-            if (locations.isEmpty) return _buildInfoCard(icon: Icons.info_outline, text: 'لا توجد فروع قدموس مضافة من الداشبورد حالياً.');
-            return DropdownButtonFormField<int>(decoration: decoration('المحافظة وفرع قدموس'), items: locations.map((location) => DropdownMenuItem<int>(value: location['id'] as int, child: Text('${location['governorate']} — ${location['branch']}'))).toList(), onChanged: (id) { final selected=locations.firstWhere((item)=>item['id']==id); _qadmousGovernorateController.text=selected['governorate'].toString(); _qadmousBranchController.text=selected['branch'].toString(); });
-          }),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: _qadmousLocationsFuture,
+            builder: (context, snapshot) {
+              final locations = snapshot.data ?? const <Map<String, dynamic>>[];
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (locations.isEmpty) {
+                return _buildInfoCard(
+                  icon: Icons.info_outline,
+                  text: context.tr('no_qadmous_branches'),
+                );
+              }
+              return DropdownButtonFormField<int>(
+                decoration: decoration(context.tr('qadmous_location')),
+                items: locations
+                    .map(
+                      (location) => DropdownMenuItem<int>(
+                        value: location['id'] as int,
+                        child: Text(
+                          '${location['governorate']} - ${location['branch']}',
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (id) {
+                  final selected = locations.firstWhere(
+                    (item) => item['id'] == id,
+                  );
+                  _qadmousGovernorateController.text = selected['governorate']
+                      .toString();
+                  _qadmousBranchController.text = selected['branch'].toString();
+                },
+              );
+            },
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _recipientNameController,
-            decoration: decoration(_checkoutLabel('recipient_name')),
+            decoration: decoration(context.tr('recipient_name')),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _recipientPhoneController,
             keyboardType: TextInputType.phone,
-            decoration: decoration(_checkoutLabel('recipient_phone')),
+            decoration: decoration(context.tr('recipient_phone')),
           ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _pickPaymentReceipt,
-            icon: Icon(_paymentReceiptPath == null ? Icons.upload_file_rounded : Icons.check_circle_rounded),
-            label: Text(_paymentReceiptPath == null ? 'رفع صورة إشعار الدفع' : 'تم اختيار الإيصال'),
-          ),
-          const SizedBox(height: 10),
           _buildInfoCard(
             icon: Icons.info_outline,
-            text: _checkoutLabel('qadmous_fee_note'),
+            text: context.tr('qadmous_fee_note'),
           ),
         ],
       );
@@ -408,8 +486,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return _buildInfoCard(
         icon: Icons.storefront_rounded,
         text: _deliveryMethod == 'clinic_pickup'
-            ? _checkoutLabel('clinic_pickup_note')
-            : _checkoutLabel('pharmacy_pickup_note'),
+            ? context.tr('clinic_pickup_note')
+            : context.tr('pharmacy_pickup_note'),
       );
     }
 
@@ -433,14 +511,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             if (areas.isEmpty) {
               return _buildInfoCard(
                 icon: Icons.info_outline_rounded,
-                text: _checkoutLabel('no_areas'),
+                text: context.tr('no_areas'),
               );
             }
 
             return DropdownButtonFormField<int>(
               initialValue: _deliveryAreaId,
               decoration: InputDecoration(
-                labelText: _checkoutLabel('delivery_area'),
+                labelText: context.tr('delivery_area'),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -453,7 +531,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     (area) => DropdownMenuItem<int>(
                       value: area.id,
                       child: Text(
-                        '${area.name} - ${CurrencyFormatter.display(area.fee, context.watch<AppSettingsCubit>().state)}',
+                        '${area.name} - ${CurrencyFormatter.dual(area.fee, area.feeUsd, languageCode: Localizations.localeOf(context).languageCode)}',
                       ),
                     ),
                   )
@@ -470,6 +548,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 setState(() {
                   _deliveryAreaId = value;
                   _deliveryFee = selectedArea?.fee ?? 0;
+                  _deliveryFeeUsd = selectedArea?.feeUsd;
                 });
               },
             );
@@ -491,7 +570,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _searchingAddress ? null : _searchAddress, icon: _searchingAddress ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.map_outlined), label: Text(_shippingLatitude == null ? 'بحث وتحديد العنوان على الخريطة' : 'تم تحديد الموقع — تغيير'))),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _searchingAddress ? null : _searchAddress,
+            icon: _searchingAddress
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.map_outlined),
+            label: Text(
+              _shippingLatitude == null
+                  ? context.tr('locate_address')
+                  : context.tr('change_location'),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -520,8 +616,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildPaymentOptions() {
     final options = <Map<String, dynamic>>[
       {
-        'label': 'الدفع الإلكتروني', 'value': 'online', 'icon': Icons.credit_card_rounded,
-        'enabled': true, 'subtitle': 'الدفع المسبق عبر بوابة الدفع',
+        'label': context.tr('online_payment'),
+        'value': 'online',
+        'icon': Icons.credit_card_rounded,
+        'enabled': true,
+        'subtitle': context.tr('online_payment_note'),
       },
       {
         'label': context.tr('cash_on_delivery'),
@@ -609,7 +708,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              context.tr('payment_info'),
+              context.tr(
+                _selectedPayment == 'online'
+                    ? 'advance_payment_info'
+                    : 'payment_info',
+              ),
               style: const TextStyle(
                 color: AppColors.textPrimary,
                 height: 1.35,
@@ -621,8 +724,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Widget _buildPaymentReceiptPicker() {
+    return HanovaSurface(
+      padding: const EdgeInsets.all(14),
+      borderColor: _paymentReceiptPath == null
+          ? AppColors.primary
+          : AppColors.success,
+      child: Row(
+        children: [
+          Icon(
+            _paymentReceiptPath == null
+                ? Icons.receipt_long_outlined
+                : Icons.check_circle_rounded,
+            color: _paymentReceiptPath == null
+                ? AppColors.primary
+                : AppColors.success,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _paymentReceiptPath == null
+                  ? context.tr('payment_receipt_required')
+                  : context.tr('payment_receipt_selected'),
+            ),
+          ),
+          TextButton(
+            onPressed: _pickPaymentReceipt,
+            child: Text(context.tr('upload_payment_receipt')),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderSummary(CartState cartState) {
     final total = cartState.totalAmount + _deliveryFee;
+    final totalUsd = cartState.totalUsd == null || _deliveryFeeUsd == null
+        ? null
+        : cartState.totalUsd! + _deliveryFeeUsd!;
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     return HanovaSurface(
       padding: const EdgeInsets.all(20),
@@ -639,6 +779,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 CurrencyFormatter.dual(
                   cartState.totalAmount,
                   cartState.totalUsd,
+                  languageCode: languageCode,
                 ),
               ),
             ],
@@ -652,9 +793,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               Text(
-                CurrencyFormatter.display(
+                CurrencyFormatter.dual(
                   _deliveryFee,
-                  context.watch<AppSettingsCubit>().state,
+                  _deliveryFeeUsd,
+                  languageCode: languageCode,
                 ),
               ),
             ],
@@ -671,9 +813,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
               Text(
-                CurrencyFormatter.display(
+                CurrencyFormatter.dual(
                   total,
-                  context.watch<AppSettingsCubit>().state,
+                  totalUsd,
+                  languageCode: languageCode,
                 ),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
@@ -687,60 +830,4 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
     );
   }
-
-  String _checkoutLabel(String key) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final labels = isArabic ? _arabicLabels : _englishLabels;
-    return labels[key] ?? key;
-  }
-
-  static const _englishLabels = {
-    'delivery_method': 'Delivery Method',
-    'clinic_pickup': 'Clinic Pickup',
-    'pharmacy_pickup': 'Pharmacy Pickup',
-    'home_delivery': 'Home Delivery',
-    'free_pickup': 'No delivery fee.',
-    'area_fee': 'Fee depends on the delivery area.',
-    'clinic_pickup_note':
-        'You can pick up your order from the clinic when it is ready.',
-    'pharmacy_pickup_note':
-        'You can pick up your order from the pharmacy when it is ready.',
-    'delivery_area': 'Delivery Area',
-    'no_areas': 'No delivery areas are available yet.',
-    'choose_area': 'Please choose a delivery area.',
-    'enter_address': 'Please enter your delivery address.',
-    'qadmous_shipping': 'Qadmous Shipping',
-    'qadmous_note': 'Ship to the Qadmous branch you choose.',
-    'governorate': 'Governorate',
-    'qadmous_branch': 'Qadmous branch',
-    'recipient_name': 'Recipient name',
-    'recipient_phone': 'Recipient phone',
-    'qadmous_required': 'Please complete all Qadmous shipping details.',
-    'qadmous_fee_note':
-        'Qadmous shipping requires advance payment. Upload your payment receipt before confirming the order.',
-  };
-
-  static const _arabicLabels = {
-    'delivery_method': 'طريقة الاستلام',
-    'clinic_pickup': 'استلام من العيادة',
-    'pharmacy_pickup': 'استلام من الصيدلية',
-    'home_delivery': 'توصيل للمنزل',
-    'free_pickup': 'بدون رسوم توصيل.',
-    'area_fee': 'الرسوم حسب منطقة التوصيل.',
-    'clinic_pickup_note': 'يمكنك استلام الطلب من العيادة عندما يصبح جاهزاً.',
-    'pharmacy_pickup_note': 'يمكنك استلام الطلب من الصيدلية عندما يصبح جاهزاً.',
-    'delivery_area': 'منطقة التوصيل',
-    'no_areas': 'لا توجد مناطق توصيل متاحة حالياً.',
-    'choose_area': 'يرجى اختيار منطقة التوصيل.',
-    'enter_address': 'يرجى كتابة عنوان التوصيل.',
-    'qadmous_shipping': 'شحن قدموس',
-    'qadmous_note': 'شحن الطلب إلى فرع قدموس الذي تختارينه.',
-    'governorate': 'المحافظة',
-    'qadmous_branch': 'فرع قدموس',
-    'recipient_name': 'اسم المستلم',
-    'recipient_phone': 'رقم هاتف المستلم',
-    'qadmous_required': 'يرجى تعبئة جميع معلومات شحن قدموس.',
-    'qadmous_fee_note':
-        'شحن قدموس يتطلب الدفع المسبق. ارفعي صورة إشعار الدفع قبل تأكيد الطلب.',
-  };
 }

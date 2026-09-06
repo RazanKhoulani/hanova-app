@@ -15,6 +15,9 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    // Medical records and payment proofs must never use the public web disk.
+    'medical_disk' => env('MEDICAL_FILESYSTEM_DISK', 'local'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

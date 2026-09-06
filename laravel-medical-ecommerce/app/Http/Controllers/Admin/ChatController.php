@@ -9,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Notification;
 use App\Services\PatientMedicalFactExtractor;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -17,15 +18,19 @@ class ChatController extends Controller
 {
     public function index()
     {
-        $conversations = Conversation::with(['user', 'lastMessage'])
+        $conversations = Conversation::query()
+            ->accessibleBy(auth()->user())
+            ->with(['user', 'lastMessage'])
             ->latest()
             ->paginate(15);
         return view('admin.chats.index', compact('conversations'));
     }
 
-    public function show($id)
+    public function show($id, AuditService $auditService)
     {
         $conversation = Conversation::with(['user', 'messages.sender'])->findOrFail($id);
+        abort_unless($conversation->canBeAccessedBy(auth()->user()), 403);
+        $auditService->record('conversation.viewed', $conversation);
         
         // Mark messages as read
         $conversation->messages()->where('sender_id', '!=', auth()->id())->update(['is_read' => true]);
@@ -38,6 +43,9 @@ class ChatController extends Controller
         $request->validate([
             'body' => 'required|string',
         ]);
+
+        $conversation = Conversation::findOrFail($id);
+        abort_unless($conversation->canBeAccessedBy(auth()->user()), 403);
 
         $message = Message::create([
             'conversation_id' => $id,
@@ -57,7 +65,6 @@ class ChatController extends Controller
             ]);
         }
 
-        $conversation = Conversation::findOrFail($id);
         Notification::create([
             'user_id' => $conversation->user_id,
             'title' => 'رسالة جديدة من العيادة',
@@ -83,6 +90,7 @@ class ChatController extends Controller
     public function markRead($id)
     {
         $conversation = Conversation::findOrFail($id);
+        abort_unless($conversation->canBeAccessedBy(auth()->user()), 403);
         $updated = $conversation->messages()
             ->where('sender_id', '!=', auth()->id())
             ->where('is_read', false)

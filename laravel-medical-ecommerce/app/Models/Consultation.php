@@ -17,6 +17,13 @@ class Consultation extends Model
         'type',
         'status',
         'notes',
+        'internal_notes',
+        'cancellation_reason',
+        'cancelled_at',
+    ];
+
+    protected $casts = [
+        'cancelled_at' => 'datetime',
     ];
 
     public function user()

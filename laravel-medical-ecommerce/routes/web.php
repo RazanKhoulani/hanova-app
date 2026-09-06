@@ -18,13 +18,19 @@ use App\Http\Controllers\Admin\FaqTopicController;
 use App\Http\Controllers\Admin\ChatController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Middleware\EnsureDashboardStaffRole;
 use App\Http\Middleware\EnsureOrderStaffRole;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\ProtectedFileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/', SiteController::class)->name('site.home');
+
+Route::get('/secure-files/{kind}/{id}/{field}', ProtectedFileController::class)
+    ->middleware('signed')
+    ->name('secure-files.show');
 
 Route::get('/language/{locale}', function (string $locale) {
     if (in_array($locale, ['ar', 'en'], true)) {
@@ -60,6 +66,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
             Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
             Route::post('/orders/{id}/receipt', [OrderController::class, 'uploadReceipt'])->name('orders.uploadReceipt');
+            Route::post('/orders/{id}/receipt/review', [OrderController::class, 'reviewReceipt'])->name('orders.reviewReceipt');
             Route::put('/orders/{id}/tracking', [OrderController::class, 'updateTracking'])->name('orders.updateTracking');
         });
 
@@ -78,6 +85,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 ->name('settings.currency.edit');
             Route::put('settings/currency', [AppSettingsController::class, 'update'])
                 ->name('settings.currency.update');
+            Route::get('audit-logs', [AuditLogController::class, 'index'])
+                ->name('audit-logs.index');
 
             // Patients Management
             Route::get('patients', [PatientController::class, 'index'])->name('patients.index');
@@ -96,11 +105,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
             // Appointments Management
             Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
             Route::get('appointments/{id}', [AppointmentController::class, 'show'])->name('appointments.show');
+            Route::put('appointments/{id}', [AppointmentController::class, 'update'])->name('appointments.update');
             Route::put('appointments/{id}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.updateStatus');
 
             // Consultations Management
             Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
             Route::get('consultations/{id}', [ConsultationController::class, 'show'])->name('consultations.show');
+            Route::put('consultations/{id}', [ConsultationController::class, 'update'])->name('consultations.update');
             Route::put('consultations/{id}/status', [ConsultationController::class, 'updateStatus'])->name('consultations.updateStatus');
 
             // Users & Roles Management

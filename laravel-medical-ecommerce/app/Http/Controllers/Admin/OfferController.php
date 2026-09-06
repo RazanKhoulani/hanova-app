@@ -71,6 +71,7 @@ class OfferController extends Controller
             'description_en' => 'nullable|string',
             'discount_type' => 'required|in:percentage,fixed',
             'discount_value' => 'required|numeric|min:0',
+            'discount_value_usd' => 'nullable|required_if:discount_type,fixed|numeric|min:0',
             'target_segment' => 'required|in:all,new_user,loyal_patient,before_after_uploaded,has_completed_appointment',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
@@ -81,6 +82,9 @@ class OfferController extends Controller
 
         $data['priority'] = (int) ($data['priority'] ?? 0);
         $data['is_active'] = $request->boolean('is_active');
+        if ($data['discount_type'] === 'percentage') {
+            $data['discount_value_usd'] = null;
+        }
 
         return $data;
     }

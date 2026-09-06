@@ -50,6 +50,12 @@
                     <input type="number" min="0" step="1" name="low_stock_threshold" class="form-control" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}" required>
                 </div>
 
+                <div class="col-12">
+                    <label class="form-label fw-bold">{{ __('admin.stock_adjustment_reason') }}</label>
+                    <input type="text" name="stock_adjustment_reason" class="form-control" value="{{ old('stock_adjustment_reason') }}" placeholder="{{ __('admin.stock_adjustment_reason_hint') }}">
+                    <div class="form-text">{{ __('admin.stock_reason_only_when_changed') }}</div>
+                </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-bold">{{ __('admin.commercial_category') }}</label>
                     <input type="text" name="category" class="form-control" value="{{ old('category', $product->category) }}" placeholder="{{ __('admin.category_placeholder') }}">

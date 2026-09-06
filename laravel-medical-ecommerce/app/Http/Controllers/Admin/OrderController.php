@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -23,7 +24,7 @@ class OrderController extends Controller
             'status' => 'nullable|in:pending,accepted,ready,paid,shipped,delivered,cancelled',
             'delivery_method' => 'nullable|in:clinic_pickup,pharmacy_pickup,home_delivery,qadmous',
         ]);
-        $ordersQuery = Order::with(['user', 'items.product', 'deliveryArea', 'deliveryUser', 'coupon'])
+        $ordersQuery = Order::with(['user', 'items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'receiptReviewer'])
             ->latest();
 
         if ($search = trim((string) ($filters['search'] ?? ''))) {
@@ -55,7 +56,7 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $orderQuery = Order::with(['user', 'items.product', 'deliveryArea', 'deliveryUser', 'coupon']);
+        $orderQuery = Order::with(['user', 'items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'receiptReviewer']);
 
         if (auth()->user()?->hasRole('delivery')) {
             $orderQuery->where('delivery_user_id', auth()->id());
@@ -97,12 +98,19 @@ class OrderController extends Controller
         }
 
         $request->validate([
-            'shipping_receipt' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'shipping_receipt' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         if ($request->hasFile('shipping_receipt')) {
-            $path = $request->file('shipping_receipt')->store('receipts', 'public');
+            $disk = config('filesystems.medical_disk', 'local');
+            $order = Order::findOrFail($id);
+            $oldPath = $order->shipping_receipt;
+            $oldDisk = $order->receipt_disk ?: 'public';
+            $path = $request->file('shipping_receipt')->store('payment-receipts/'.$order->user_id, $disk);
             $this->orderService->updateShippingReceipt($id, $path);
+            if ($oldPath && ($oldPath !== $path || $oldDisk !== $disk)) {
+                Storage::disk($oldDisk)->delete($oldPath);
+            }
         }
 
         return redirect()->back()->with('success', __('admin.receipt_uploaded'));
@@ -113,5 +121,29 @@ class OrderController extends Controller
         $validated = $request->validate(['tracking_number' => 'required|string|max:100']);
         Order::findOrFail($id)->update($validated);
         return redirect()->back()->with('success', __('admin.tracking_saved'));
+    }
+
+    public function reviewReceipt(Request $request, int $id)
+    {
+        if (auth()->user()?->hasRole('delivery')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'decision' => 'required|in:approve,reject',
+            'reason' => 'nullable|required_if:decision,reject|string|max:1000',
+        ]);
+
+        $this->orderService->reviewPaymentReceipt(
+            $id,
+            $data['decision'] === 'approve',
+            auth()->id(),
+            $data['reason'] ?? null,
+        );
+
+        return back()->with(
+            'success',
+            $data['decision'] === 'approve' ? __('admin.receipt_approved') : __('admin.receipt_rejected'),
+        );
     }
 }

@@ -12,6 +12,7 @@ class Appointment extends Model
     protected $fillable = [
         'patient_id',
         'doctor_id',
+        'provider_type',
         'date',
         'time',
         'type',
@@ -19,6 +20,14 @@ class Appointment extends Model
         'specialty',
         'duration_minutes',
         'status',
+        'internal_notes',
+        'cancellation_reason',
+        'cancelled_at',
+        'assigned_by',
+    ];
+
+    protected $casts = [
+        'cancelled_at' => 'datetime',
     ];
 
     public function patient()
@@ -39,5 +48,10 @@ class Appointment extends Model
     public function consultation()
     {
         return $this->hasOne(Consultation::class);
+    }
+
+    public function assigner()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 }

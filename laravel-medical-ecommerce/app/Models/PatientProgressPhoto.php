@@ -15,6 +15,7 @@ class PatientProgressPhoto extends Model
         'user_id',
         'before_image',
         'after_image',
+        'storage_disk',
         'status',
         'consent_for_discount',
         'discount_percent',

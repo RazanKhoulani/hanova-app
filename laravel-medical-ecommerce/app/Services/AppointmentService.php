@@ -62,6 +62,9 @@ class AppointmentService
     public function bookAppointment(array $data)
     {
         $data['status'] = 'pending';
+        $data['provider_type'] = in_array($data['provider_type'] ?? null, ['doctor', 'team'], true)
+            ? $data['provider_type']
+            : 'doctor';
         $data['appointment_type'] = $this->normalizeAppointmentType($data['appointment_type'] ?? null);
         $data['specialty'] = $this->normalizeSpecialty($data['specialty'] ?? null);
 
@@ -246,6 +249,14 @@ class AppointmentService
         }
 
         $updated = $this->appointmentRepository->update($appointment, $data);
+        $updated->loadMissing('consultation.conversation');
+        if ($updated->consultation) {
+            $updated->consultation->update(['doctor_id' => $updated->doctor_id]);
+            $updated->consultation->conversation?->update([
+                'doctor_id' => $updated->doctor_id,
+                'care_scope' => $updated->provider_type === 'team' ? 'team' : 'doctor',
+            ]);
+        }
         if (array_key_exists('status', $data) || $isRescheduling) {
             $updated->loadMissing('patient');
             $staffIds = User::role('admin')->pluck('id')->push($updated->doctor_id)->filter()->unique();
@@ -263,11 +274,21 @@ class AppointmentService
         return $updated;
     }
 
-    public function deleteAppointment($id)
+    public function cancelAppointment($id, ?string $reason = null)
     {
         $appointment = $this->appointmentRepository->findById($id);
 
-        return $this->appointmentRepository->delete($appointment);
+        if ($appointment->status === 'completed') {
+            throw ValidationException::withMessages([
+                'status' => 'A completed appointment cannot be cancelled.',
+            ]);
+        }
+
+        return $this->appointmentRepository->update($appointment, [
+            'status' => 'cancelled',
+            'cancellation_reason' => $reason,
+            'cancelled_at' => now(),
+        ]);
     }
 
     private function patientHasActiveAppointment(int $patientId): bool

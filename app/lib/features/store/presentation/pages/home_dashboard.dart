@@ -847,6 +847,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
                             CurrencyFormatter.dual(
                               product.priceSyp,
                               product.priceUsd,
+                              languageCode: Localizations.localeOf(
+                                context,
+                              ).languageCode,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

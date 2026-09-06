@@ -477,7 +477,7 @@ class _ClinicScreenState extends State<ClinicScreen>
                             'hh:mm a',
                           ).format(appointment.appointmentDate);
                           await context.push(
-                            '/appointment?appointment_id=${appointment.id}&date=$date&time=${Uri.encodeComponent(time)}&type=${appointment.sessionType}&appointment_type=${appointment.appointmentType}',
+                            '/appointment?appointment_id=${appointment.id}&date=$date&time=${Uri.encodeComponent(time)}&type=${appointment.sessionType}&appointment_type=${appointment.appointmentType}&provider_type=${appointment.providerType}',
                           );
                           _fetchAppointmentsIfAllowed(force: true);
                         },

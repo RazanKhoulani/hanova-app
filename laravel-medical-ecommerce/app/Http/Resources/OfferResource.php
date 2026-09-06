@@ -27,6 +27,7 @@ class OfferResource extends JsonResource
             ],
             'discount_type' => $this->discount_type,
             'discount_value' => (float) $this->discount_value,
+            'discount_value_usd' => $this->discount_value_usd !== null ? (float) $this->discount_value_usd : null,
             'target_segment' => $this->target_segment,
             'starts_at' => $this->starts_at,
             'ends_at' => $this->ends_at,

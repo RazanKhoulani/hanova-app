@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\ProtectedFileUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,10 +18,18 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'status_label' => $this->statusLabel($this->status, $lang),
             'total_amount' => (float) $this->total_amount,
+            'subtotal_amount' => (float) ($this->subtotal_amount ?? 0),
+            'subtotal_usd' => $this->subtotal_usd !== null ? (float) $this->subtotal_usd : null,
+            'total_amount_usd' => $this->total_amount_usd !== null ? (float) $this->total_amount_usd : null,
             'currency_code' => config('app.currency_code', 'SYP'),
             'currency_symbol' => config('app.currency_symbol', 'ل.س'),
             'payment_method' => $this->payment_method,
             'payment_status' => $this->payment_status,
+            'payment_receipt_status' => $this->payment_receipt_status,
+            'payment_receipt_url' => $this->shipping_receipt
+                ? ProtectedFileUrl::make('order-receipt', $this->id, 'receipt', $request->user()?->id)
+                : null,
+            'receipt_rejection_reason' => $this->receipt_rejection_reason,
             'delivery_method' => $this->delivery_method,
             'qadmous_governorate' => $this->qadmous_governorate,
             'qadmous_branch' => $this->qadmous_branch,
@@ -30,13 +39,16 @@ class OrderResource extends JsonResource
             'pickup_location' => $this->pickup_location,
             'delivery_area_id' => $this->delivery_area_id,
             'delivery_fee' => (float) ($this->delivery_fee ?? 0),
+            'delivery_fee_usd' => $this->delivery_fee_usd !== null ? (float) $this->delivery_fee_usd : null,
             'discount_amount' => (float) ($this->discount_amount ?? 0),
+            'discount_amount_usd' => $this->discount_amount_usd !== null ? (float) $this->discount_amount_usd : null,
             'coupon' => $this->whenLoaded('coupon', function () {
                 return $this->coupon ? [
                     'id' => $this->coupon->id,
                     'code' => $this->coupon->code,
                     'discount_type' => $this->coupon->discount_type,
                     'discount_value' => (float) $this->coupon->discount_value,
+                    'discount_value_usd' => $this->coupon->discount_value_usd !== null ? (float) $this->coupon->discount_value_usd : null,
                     'source' => $this->coupon->source,
                 ] : null;
             }),
@@ -46,6 +58,7 @@ class OrderResource extends JsonResource
                     'title' => $this->appliedOffer->title_ar,
                     'discount_type' => $this->appliedOffer->discount_type,
                     'discount_value' => (float) $this->appliedOffer->discount_value,
+                    'discount_value_usd' => $this->appliedOffer->discount_value_usd !== null ? (float) $this->appliedOffer->discount_value_usd : null,
                 ] : null;
             }),
             'delivery_area' => $this->whenLoaded('deliveryArea', function () use ($lang) {

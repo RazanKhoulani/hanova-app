@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DeliveryArea;
 use App\Models\Coupon;
 use App\Models\Notification;
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -24,6 +25,7 @@ class OrderService
         OrderRepository $orderRepository,
         CartRepository $cartRepository,
         private readonly OfferService $offerService,
+        private readonly AuditService $auditService,
     )
     {
         $this->orderRepository = $orderRepository;
@@ -46,8 +48,9 @@ class OrderService
 
         try {
             $subtotal = 0;
+            $subtotalUsd = 0.0;
+            $hasCompleteUsdPricing = true;
             $orderItems = [];
-            $hasReservedInventory = false;
             $usesClientItems = !empty($data['items']) && is_array($data['items']);
 
             if ($usesClientItems) {
@@ -56,10 +59,14 @@ class OrderService
                     $quantity = (int) $item['quantity'];
                     $price = (float) $product->price;
 
-                    $reservedInventory = $this->reserveInventory($product, $quantity);
-                    $hasReservedInventory = $hasReservedInventory || $reservedInventory;
+                    $this->assertInventoryAvailable($product, $quantity);
 
                     $subtotal += $price * $quantity;
+                    if ($product->price_usd === null) {
+                        $hasCompleteUsdPricing = false;
+                    } else {
+                        $subtotalUsd += (float) $product->price_usd * $quantity;
+                    }
                     $orderItems[] = [
                         'product_id' => $product->id,
                         'quantity' => $quantity,
@@ -81,10 +88,14 @@ class OrderService
                     $price = (float) $product->price;
                     $quantity = (int) $item->quantity;
 
-                    $reservedInventory = $this->reserveInventory($product, $quantity);
-                    $hasReservedInventory = $hasReservedInventory || $reservedInventory;
+                    $this->assertInventoryAvailable($product, $quantity);
 
                     $subtotal += $price * $quantity;
+                    if ($product->price_usd === null) {
+                        $hasCompleteUsdPricing = false;
+                    } else {
+                        $subtotalUsd += (float) $product->price_usd * $quantity;
+                    }
                     $orderItems[] = [
                         'product_id' => $product->id,
                         'quantity' => $quantity,
@@ -95,14 +106,15 @@ class OrderService
             }
 
             $deliveryMethod = $this->normalizeDeliveryMethod($data['delivery_method'] ?? null);
-            $deliveryFee = $this->resolveDeliveryFee($deliveryMethod, $data['delivery_area_id'] ?? null);
+            [$deliveryFee, $deliveryFeeUsd] = $this->resolveDeliveryFee($deliveryMethod, $data['delivery_area_id'] ?? null);
             $deliveryUserId = $deliveryMethod === 'home_delivery'
                 ? $this->resolveDefaultDeliveryUserId()
                 : null;
-            [$coupon, $discountAmount] = $this->resolveNextOrderCoupon($userId, $subtotal);
+            $subtotalUsd = $hasCompleteUsdPricing ? round($subtotalUsd, 2) : null;
+            [$coupon, $discountAmount, $discountAmountUsd] = $this->resolveNextOrderCoupon($userId, $subtotal, $subtotalUsd);
             $appliedOffer = null;
             if (! $coupon) {
-                [$appliedOffer, $discountAmount] = $this->resolveActiveOfferDiscount($userId, $subtotal);
+                [$appliedOffer, $discountAmount, $discountAmountUsd] = $this->resolveActiveOfferDiscount($userId, $subtotal, $subtotalUsd);
             }
 
             $paymentMethod = $data['payment_method'] ?? 'cash';
@@ -113,8 +125,16 @@ class OrderService
                 'shipping_latitude' => $data['shipping_latitude'] ?? null,
                 'shipping_longitude' => $data['shipping_longitude'] ?? null,
                 'shipping_receipt' => $data['shipping_receipt'] ?? null,
+                'receipt_disk' => $data['receipt_disk'] ?? null,
                 'payment_method' => $paymentMethod,
+                'subtotal_amount' => $subtotal,
+                'subtotal_usd' => $subtotalUsd,
+                'discount_amount_usd' => $discountAmountUsd,
+                'delivery_fee_usd' => $deliveryFeeUsd,
                 'total_amount' => max(0, $subtotal - $discountAmount) + $deliveryFee,
+                'total_amount_usd' => $subtotalUsd !== null && $deliveryFeeUsd !== null && $discountAmountUsd !== null
+                    ? max(0, $subtotalUsd - $discountAmountUsd) + $deliveryFeeUsd
+                    : null,
             ];
 
             if (Schema::hasColumn('orders', 'coupon_id')) {
@@ -135,8 +155,10 @@ class OrderService
                     : 'pending';
             }
 
-            if ($hasReservedInventory && Schema::hasColumn('orders', 'inventory_reserved_at')) {
-                $orderData['inventory_reserved_at'] = now();
+            if (Schema::hasColumn('orders', 'payment_receipt_status')) {
+                $orderData['payment_receipt_status'] = in_array($paymentMethod, ['cash', 'cash_on_delivery'], true)
+                    ? 'not_required'
+                    : (! empty($data['shipping_receipt']) ? 'pending' : 'missing');
             }
 
             if (Schema::hasColumn('orders', 'delivery_method')) {
@@ -208,7 +230,7 @@ class OrderService
     public function updateOrderStatus($id, $status)
     {
         return DB::transaction(function () use ($id, $status) {
-            $order = $this->orderRepository->findById($id);
+            $order = Order::query()->with('items')->lockForUpdate()->findOrFail($id);
             $previousStatus = $order->status;
 
             if ($status === 'delivered' && !in_array($order->status, ['accepted', 'ready', 'shipped'], true)) {
@@ -219,15 +241,36 @@ class OrderService
 
             $updateData = ['status' => $status];
 
-            if ($status === 'delivered') {
-                $updateData['payment_method'] = 'cash';
+            if (in_array($status, ['accepted', 'paid', 'ready', 'shipped', 'delivered'], true)) {
+                if (! in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)
+                    && $order->payment_receipt_status !== 'approved') {
+                    throw ValidationException::withMessages([
+                        'payment_receipt_status' => 'Approve the payment receipt before processing this order.',
+                    ]);
+                }
 
+                $this->reserveOrderInventory($order);
+            }
+
+            if ($status === 'delivered') {
                 if (Schema::hasColumn('orders', 'payment_status')) {
-                    $updateData['payment_status'] = 'paid';
+                    if (in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)) {
+                        $updateData['payment_status'] = 'paid';
+                    } elseif ($order->payment_status !== 'paid') {
+                        throw ValidationException::withMessages([
+                            'payment_status' => 'A prepaid order must have an approved receipt before delivery.',
+                        ]);
+                    }
                 }
             }
 
             if ($status === 'paid' && Schema::hasColumn('orders', 'payment_status')) {
+                if (! in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)
+                    && $order->payment_receipt_status !== 'approved') {
+                    throw ValidationException::withMessages([
+                        'payment_status' => 'Approve the payment receipt before marking this order as paid.',
+                    ]);
+                }
                 $updateData['payment_status'] = 'paid';
             }
 
@@ -237,6 +280,12 @@ class OrderService
                 $this->releaseInventory($updatedOrder);
             }
             $this->createOrderNotification($updatedOrder, $this->notificationTypeForStatus($status));
+            $this->auditService->record('order.status_updated', $updatedOrder, [
+                'from' => $previousStatus,
+                'to' => $status,
+                'payment_method' => $updatedOrder->payment_method,
+                'payment_status' => $updatedOrder->payment_status,
+            ]);
 
             return $updatedOrder;
         });
@@ -244,30 +293,84 @@ class OrderService
 
     public function confirmOrder($id)
     {
-        $order = $this->orderRepository->findById($id);
+        return DB::transaction(function () use ($id) {
+            $order = Order::query()->with('items')->lockForUpdate()->findOrFail($id);
 
-        if (in_array($order->status, ['cancelled', 'delivered'], true)) {
-            throw ValidationException::withMessages([
-                'status' => 'This order can no longer be confirmed.',
-            ]);
-        }
+            if (in_array($order->status, ['cancelled', 'delivered'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'This order can no longer be confirmed.',
+                ]);
+            }
 
-        if ($order->status === 'accepted' && $order->is_confirmed) {
-            return true;
-        }
+            if (! in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)
+                && $order->payment_receipt_status !== 'approved') {
+                throw ValidationException::withMessages([
+                    'payment_receipt_status' => 'The payment receipt must be approved before accepting this order.',
+                ]);
+            }
 
-        $updated = $order->update(['is_confirmed' => true, 'status' => 'accepted']);
-        $order->refresh();
-        $this->createOrderNotification($order, 'order_accepted');
+            if ($order->status === 'accepted' && $order->is_confirmed && $order->inventory_reserved_at) {
+                return true;
+            }
 
-        return $updated;
+            $this->reserveOrderInventory($order);
+            $updated = $order->update(['is_confirmed' => true, 'status' => 'accepted']);
+            $this->createOrderNotification($order->refresh(), 'order_accepted');
+
+            return $updated;
+        });
     }
 
     public function updateShippingReceipt($id, $path)
     {
         $order = $this->orderRepository->findById($id);
 
-        return $order->update(['shipping_receipt' => $path]);
+        return $order->update([
+            'shipping_receipt' => $path,
+            'receipt_disk' => config('filesystems.medical_disk', 'local'),
+            'payment_receipt_status' => 'pending',
+            'payment_status' => 'pending',
+            'receipt_reviewed_by' => null,
+            'receipt_reviewed_at' => null,
+            'receipt_rejection_reason' => null,
+        ]);
+    }
+
+    public function reviewPaymentReceipt(int $id, bool $approved, int $reviewerId, ?string $reason = null): Order
+    {
+        return DB::transaction(function () use ($id, $approved, $reviewerId, $reason) {
+            $order = $this->orderRepository->findById($id);
+            if (in_array($order->payment_method, ['cash', 'cash_on_delivery'], true) || ! $order->shipping_receipt) {
+                throw ValidationException::withMessages([
+                    'receipt' => 'This order does not have a prepaid payment receipt to review.',
+                ]);
+            }
+
+            if (! $approved && ! trim((string) $reason)) {
+                throw ValidationException::withMessages([
+                    'reason' => 'A rejection reason is required.',
+                ]);
+            }
+
+            $order->update([
+                'payment_receipt_status' => $approved ? 'approved' : 'rejected',
+                'payment_status' => $approved ? 'paid' : 'failed',
+                'receipt_reviewed_by' => $reviewerId,
+                'receipt_reviewed_at' => now(),
+                'receipt_rejection_reason' => $approved ? null : trim((string) $reason),
+            ]);
+
+            $this->auditService->record(
+                $approved ? 'order.receipt_approved' : 'order.receipt_rejected',
+                $order,
+                ['reason' => $approved ? null : trim((string) $reason)],
+                $reviewerId,
+            );
+
+            $this->createPaymentReceiptNotification($order, $approved);
+
+            return $order->refresh();
+        });
     }
 
     private function normalizeDeliveryMethod(?string $method): string
@@ -279,21 +382,23 @@ class OrderService
             : 'home_delivery';
     }
 
-    private function resolveDeliveryFee(string $deliveryMethod, $deliveryAreaId): float
+    private function resolveDeliveryFee(string $deliveryMethod, $deliveryAreaId): array
     {
         if ($deliveryMethod !== 'home_delivery') {
-            return 0.0;
+            return [0.0, 0.0];
         }
 
         if (!$deliveryAreaId || !Schema::hasTable('delivery_areas')) {
-            return 0.0;
+            return [0.0, null];
         }
 
         $area = DeliveryArea::query()
             ->where('is_active', true)
             ->find($deliveryAreaId);
 
-        return $area ? (float) $area->fee : 0.0;
+        return $area
+            ? [(float) $area->fee, $area->fee_usd !== null ? (float) $area->fee_usd : null]
+            : [0.0, null];
     }
 
     private function resolveDefaultDeliveryUserId(): ?int
@@ -305,10 +410,10 @@ class OrderService
         }
     }
 
-    private function resolveNextOrderCoupon(int $userId, float $subtotal): array
+    private function resolveNextOrderCoupon(int $userId, float $subtotal, ?float $subtotalUsd): array
     {
         if (!Schema::hasTable('coupons') || $subtotal <= 0) {
-            return [null, 0.0];
+            return [null, 0.0, $subtotalUsd === null ? null : 0.0];
         }
 
         $coupon = Coupon::query()
@@ -321,17 +426,80 @@ class OrderService
             ->first();
 
         if (!$coupon) {
-            return [null, 0.0];
+            return [null, 0.0, $subtotalUsd === null ? null : 0.0];
         }
 
         $discountAmount = $coupon->discount_type === 'percentage'
             ? $subtotal * ((float) $coupon->discount_value / 100)
             : (float) $coupon->discount_value;
 
-        return [$coupon, min($subtotal, round($discountAmount, 2))];
+        $discountAmountUsd = $subtotalUsd === null
+            ? null
+            : ($coupon->discount_type === 'percentage'
+                ? $subtotalUsd * ((float) $coupon->discount_value / 100)
+                : ($coupon->discount_value_usd !== null ? (float) $coupon->discount_value_usd : null));
+
+        return [
+            $coupon,
+            min($subtotal, round($discountAmount, 2)),
+            $discountAmountUsd === null ? null : min($subtotalUsd, round($discountAmountUsd, 2)),
+        ];
     }
 
-    private function reserveInventory(Product $product, int $quantity, array $visitedProductIds = []): bool
+    private function assertInventoryAvailable(Product $product, int $quantity, array $visitedProductIds = []): void
+    {
+        if (in_array($product->id, $visitedProductIds, true)) {
+            throw ValidationException::withMessages([
+                'items' => "Bundle {$product->name_en} contains a circular product reference.",
+            ]);
+        }
+
+        $visitedProductIds[] = $product->id;
+        if ($product->catalog_type === 'bundle' && ! empty($product->bundle_product_ids)) {
+            foreach (collect($product->bundle_product_ids)->map(fn ($id) => (int) $id)->filter()->unique() as $componentId) {
+                $component = Product::query()->find($componentId);
+                if (! $component) {
+                    throw ValidationException::withMessages([
+                        'items' => "A product in bundle {$product->name_en} is no longer available.",
+                    ]);
+                }
+                $this->assertInventoryAvailable($component, $quantity, $visitedProductIds);
+            }
+            return;
+        }
+
+        if ($product->track_inventory && $product->stock_quantity < $quantity) {
+            throw ValidationException::withMessages([
+                'items' => "Only {$product->stock_quantity} units of {$product->name_en} are available.",
+            ]);
+        }
+    }
+
+    private function reserveOrderInventory(Order $order): void
+    {
+        if (! Schema::hasColumn('orders', 'inventory_reserved_at') || $order->inventory_reserved_at) {
+            return;
+        }
+
+        $movements = [];
+        foreach ($order->items as $item) {
+            $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
+            $this->reserveInventory($product, (int) $item->quantity, [], $movements);
+        }
+
+        foreach ($movements as $movement) {
+            InventoryMovement::create($movement + [
+                'order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'reason' => "Reserved for confirmed order #{$order->id}",
+            ]);
+        }
+
+        $order->update(['inventory_reserved_at' => now()]);
+        $order->refresh();
+    }
+
+    private function reserveInventory(Product $product, int $quantity, array $visitedProductIds = [], array &$movements = []): bool
     {
         if (in_array($product->id, $visitedProductIds, true)) {
             throw ValidationException::withMessages([
@@ -358,7 +526,7 @@ class OrderService
                     ]);
                 }
 
-                $componentReserved = $this->reserveInventory($component, $quantity, $visitedProductIds);
+                $componentReserved = $this->reserveInventory($component, $quantity, $visitedProductIds, $movements);
                 $reservedAnyInventory = $reservedAnyInventory || $componentReserved;
             }
 
@@ -375,7 +543,17 @@ class OrderService
             ]);
         }
 
+        $stockBefore = (int) $product->stock_quantity;
         $product->decrement('stock_quantity', $quantity);
+        $product->refresh();
+        $movements[] = [
+            'product_id' => $product->id,
+            'type' => 'reservation',
+            'quantity_change' => -$quantity,
+            'stock_before' => $stockBefore,
+            'stock_after' => (int) $product->stock_quantity,
+        ];
+        $this->notifyLowStock($product, $stockBefore);
 
         return true;
     }
@@ -400,12 +578,12 @@ class OrderService
         foreach ($order->items as $item) {
             $product = Product::query()->lockForUpdate()->find($item->product_id);
             if ($product) {
-                $this->releaseProductInventory($product, (int) $item->quantity);
+                $this->releaseProductInventory($product, (int) $item->quantity, [], $order);
             }
         }
     }
 
-    private function releaseProductInventory(Product $product, int $quantity, array $visitedProductIds = []): void
+    private function releaseProductInventory(Product $product, int $quantity, array $visitedProductIds = [], ?Order $order = null): void
     {
         if (in_array($product->id, $visitedProductIds, true)) {
             return;
@@ -424,7 +602,7 @@ class OrderService
             foreach ($componentIds as $componentId) {
                 $component = Product::query()->lockForUpdate()->find($componentId);
                 if ($component) {
-                    $this->releaseProductInventory($component, $quantity, $visitedProductIds);
+                    $this->releaseProductInventory($component, $quantity, $visitedProductIds, $order);
                 }
             }
 
@@ -432,22 +610,82 @@ class OrderService
         }
 
         if ($product->track_inventory) {
+            $stockBefore = (int) $product->stock_quantity;
             $product->increment('stock_quantity', $quantity);
+            $product->refresh();
+            InventoryMovement::create([
+                'product_id' => $product->id,
+                'order_id' => $order?->id,
+                'type' => 'release',
+                'quantity_change' => $quantity,
+                'stock_before' => $stockBefore,
+                'stock_after' => (int) $product->stock_quantity,
+                'reason' => $order ? "Released after order #{$order->id} cancellation" : 'Inventory released',
+            ]);
+            if ($product->stock_quantity > $product->low_stock_threshold && $product->low_stock_notified_at) {
+                $product->update(['low_stock_notified_at' => null]);
+            }
         }
     }
 
-    private function resolveActiveOfferDiscount(int $userId, float $subtotal): array
+    private function resolveActiveOfferDiscount(int $userId, float $subtotal, ?float $subtotalUsd): array
     {
         $offer = $this->offerService->getActiveForUser(User::find($userId));
         if (! $offer || $subtotal <= 0) {
-            return [null, 0.0];
+            return [null, 0.0, $subtotalUsd === null ? null : 0.0];
         }
 
         $discountAmount = $offer->discount_type === 'percentage'
             ? $subtotal * ((float) $offer->discount_value / 100)
             : (float) $offer->discount_value;
 
-        return [$offer, min($subtotal, round($discountAmount, 2))];
+        $discountAmountUsd = $subtotalUsd === null
+            ? null
+            : ($offer->discount_type === 'percentage'
+                ? $subtotalUsd * ((float) $offer->discount_value / 100)
+                : ($offer->discount_value_usd !== null ? (float) $offer->discount_value_usd : null));
+
+        return [
+            $offer,
+            min($subtotal, round($discountAmount, 2)),
+            $discountAmountUsd === null ? null : min($subtotalUsd, round($discountAmountUsd, 2)),
+        ];
+    }
+
+    private function notifyLowStock(Product $product, int $stockBefore): void
+    {
+        if ($product->stock_quantity > $product->low_stock_threshold || $product->low_stock_notified_at) {
+            return;
+        }
+
+        foreach (User::role('admin')->pluck('id') as $staffId) {
+            Notification::create([
+                'user_id' => $staffId,
+                'title' => 'تنبيه مخزون',
+                'body' => "وصل مخزون {$product->name_ar} إلى {$product->stock_quantity} قطعة.",
+                'type' => 'low_stock',
+                'data' => [
+                    'product_id' => $product->id,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => (int) $product->stock_quantity,
+                ],
+            ]);
+        }
+
+        $product->update(['low_stock_notified_at' => now()]);
+    }
+
+    private function createPaymentReceiptNotification(Order $order, bool $approved): void
+    {
+        Notification::create([
+            'user_id' => $order->user_id,
+            'title' => $approved ? 'تم اعتماد الدفع' : 'تعذر اعتماد الدفع',
+            'body' => $approved
+                ? "تم اعتماد إيصال الدفع للطلب #{$order->id}."
+                : "تم رفض إيصال الدفع للطلب #{$order->id}: {$order->receipt_rejection_reason}",
+            'type' => $approved ? 'payment_approved' : 'payment_rejected',
+            'data' => ['order_id' => $order->id, 'receipt_status' => $order->payment_receipt_status],
+        ]);
     }
 
     private function createOrderNotification($order, string $type): void

@@ -12,6 +12,7 @@ class Message extends Model
         'body',
         'type',
         'attachment',
+        'attachment_disk',
         'is_read',
     ];
 

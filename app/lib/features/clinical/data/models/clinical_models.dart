@@ -34,6 +34,7 @@ class AppointmentModel {
   final DateTime appointmentDate;
   final String appointmentType;
   final String sessionType;
+  final String providerType;
   final int durationMinutes;
   final String status;
   final String statusLabel;
@@ -48,6 +49,7 @@ class AppointmentModel {
     required this.appointmentDate,
     this.appointmentType = 'treatment',
     this.sessionType = 'clinic',
+    this.providerType = 'doctor',
     this.durationMinutes = 30,
     required this.status,
     this.statusLabel = '',
@@ -75,6 +77,7 @@ class AppointmentModel {
       appointmentDate: parsedDate,
       appointmentType: json['appointment_type']?.toString() ?? 'treatment',
       sessionType: json['type']?.toString() ?? 'clinic',
+      providerType: json['provider_type']?.toString() ?? 'doctor',
       durationMinutes:
           int.tryParse(json['duration_minutes']?.toString() ?? '') ?? 30,
       status: json['status']?.toString() ?? 'pending',

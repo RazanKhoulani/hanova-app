@@ -17,7 +17,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        foreach (array_merge(AppSetting::pricingDefaults(), AppSetting::siteContentDefaults()) as $key => $value) {
+        foreach (AppSetting::siteContentDefaults() as $key => $value) {
             DB::table('app_settings')->updateOrInsert(
                 ['key' => $key],
                 ['value' => $value, 'created_at' => now(), 'updated_at' => now()],

@@ -46,12 +46,14 @@ class ChatController extends Controller
         $request->validate([
             'doctor_id' => 'nullable|exists:users,id',
             'consultation_id' => 'nullable|exists:consultations,id',
+            'care_scope' => 'nullable|in:doctor,team',
         ]);
 
         $conversation = $this->chatService->startConversation(
             auth()->id(),
             $request->input('doctor_id'),
             $request->input('consultation_id'),
+            $request->input('care_scope', 'doctor'),
         );
         return response()->json(['data' => $conversation], 201);
     }

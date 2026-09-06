@@ -36,10 +36,12 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final PusherChannelsFlutter _pusher = PusherChannelsFlutter.getInstance();
   String? _pusherChannelName;
   String? _contactPhone;
   bool _realtimeStarted = false;
+  bool _realtimeConnected = false;
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _recording = false;
@@ -81,7 +83,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // WhatsApp contact data is independent from Pusher. This keeps the
       // staff-only action available while realtime credentials are configured.
-      if (ApiConstants.pusherKey.isEmpty) return;
+      if (ApiConstants.pusherKey.isEmpty) {
+        if (mounted) setState(() => _realtimeConnected = false);
+        return;
+      }
 
       final channelName = 'private-conversation.$conversationId';
       _pusherChannelName = channelName;
@@ -90,8 +95,23 @@ class _ChatScreenState extends State<ChatScreen> {
         apiKey: ApiConstants.pusherKey,
         cluster: ApiConstants.pusherCluster,
         useTLS: true,
+        maxReconnectionAttempts: 10,
+        maxReconnectGapInSeconds: 10,
         onAuthorizer: _authorizePusher,
         onEvent: _handleRealtimeEvent,
+        onConnectionStateChange: (current, previous) {
+          if (mounted) {
+            setState(
+              () => _realtimeConnected = current.toUpperCase() == 'CONNECTED',
+            );
+          }
+        },
+        onSubscriptionError: (message, error) {
+          if (mounted) setState(() => _realtimeConnected = false);
+          if (kDebugMode) {
+            debugPrint('Pusher subscription failed: $message $error');
+          }
+        },
       );
       await _pusher.subscribe(channelName: channelName);
       await _pusher.connect();
@@ -150,7 +170,19 @@ class _ChatScreenState extends State<ChatScreen> {
           consultationId: widget.consultationId,
         ),
       );
+      _scrollToLatest();
     }
+  }
+
+  void _scrollToLatest() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> _sendMessage() async {
@@ -159,20 +191,24 @@ class _ChatScreenState extends State<ChatScreen> {
       _recordingTimer?.cancel();
       if (mounted) setState(() => _recording = false);
       if (path != null && mounted) {
-        context.read<CommunicationBloc>().add(CommunicationSendChatAttachment(
-          path,
-          consultationId: widget.consultationId,
-        ));
+        context.read<CommunicationBloc>().add(
+          CommunicationSendChatAttachment(
+            path,
+            consultationId: widget.consultationId,
+          ),
+        );
       }
       return;
     }
     if (_pendingVoicePath != null) {
       final path = _pendingVoicePath!;
       setState(() => _pendingVoicePath = null);
-      context.read<CommunicationBloc>().add(CommunicationSendChatAttachment(
-        path,
-        consultationId: widget.consultationId,
-      ));
+      context.read<CommunicationBloc>().add(
+        CommunicationSendChatAttachment(
+          path,
+          consultationId: widget.consultationId,
+        ),
+      );
       return;
     }
     if (_controller.text.trim().isNotEmpty) {
@@ -258,9 +294,16 @@ class _ChatScreenState extends State<ChatScreen> {
     );
     _recordingTimer?.cancel();
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _recordingDuration += const Duration(seconds: 1));
+      if (mounted) {
+        setState(() => _recordingDuration += const Duration(seconds: 1));
+      }
     });
-    if (mounted) setState(() { _recording = true; _recordingDuration = Duration.zero; });
+    if (mounted) {
+      setState(() {
+        _recording = true;
+        _recordingDuration = Duration.zero;
+      });
+    }
   }
 
   Future<void> _playAudio(String url) async {
@@ -285,6 +328,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _pusher.unsubscribe(channelName: channelName);
     }
     _controller.dispose();
+    _scrollController.dispose();
     _recorder.dispose();
     _recordingTimer?.cancel();
     _audioPlayer.dispose();
@@ -357,10 +401,16 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 Text(context.tr('clinic_support')),
                 Text(
-                  context.tr('live_chat_subtitle'),
-                  style: const TextStyle(
+                  context.tr(
+                    _realtimeConnected
+                        ? 'realtime_connected'
+                        : 'realtime_connecting',
+                  ),
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.success,
+                    color: _realtimeConnected
+                        ? AppColors.success
+                        : AppColors.textLight,
                     fontWeight: FontWeight.normal,
                   ),
                 ),
@@ -371,7 +421,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   _whatsAppPhone(_contactPhone) != null) ...[
                 IconButton(
                   onPressed: _callContact,
-                  tooltip: 'اتصال',
+                  tooltip: context.tr('call_patient'),
                   icon: const Icon(Icons.call_rounded),
                 ),
                 IconButton(
@@ -385,7 +435,10 @@ class _ChatScreenState extends State<ChatScreen> {
           body: Column(
             children: [
               Expanded(
-                child: BlocBuilder<CommunicationBloc, CommunicationState>(
+                child: BlocConsumer<CommunicationBloc, CommunicationState>(
+                  listenWhen: (previous, current) =>
+                      current is CommunicationChatLoaded,
+                  listener: (context, state) => _scrollToLatest(),
                   builder: (context, state) {
                     if (state is CommunicationLoading) {
                       return const HanovaLoadingView();
@@ -488,6 +541,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       itemCount: messages.length,
       itemBuilder: (context, index) {
@@ -552,11 +606,41 @@ class _ChatScreenState extends State<ChatScreen> {
                 InkWell(
                   onTap: () => _playAudio(attachment),
                   borderRadius: BorderRadius.circular(14),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(_playingUrl == attachment ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 38, color: isMe ? Colors.white : AppColors.primary),
-                    const SizedBox(width: 10),
-                    ...List.generate(18, (index) => AnimatedContainer(duration: const Duration(milliseconds: 160), width: 3, height: 8 + (((index + (_playingUrl == attachment ? _wavePhase : 0)) % 5) * 3.0), margin: const EdgeInsets.symmetric(horizontal: 1.5), decoration: BoxDecoration(color: isMe ? Colors.white70 : AppColors.primary.withValues(alpha: .55), borderRadius: BorderRadius.circular(3)))),
-                  ]),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _playingUrl == attachment
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
+                        size: 38,
+                        color: isMe ? Colors.white : AppColors.primary,
+                      ),
+                      const SizedBox(width: 10),
+                      ...List.generate(
+                        18,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: 3,
+                          height:
+                              8 +
+                              (((index +
+                                          (_playingUrl == attachment
+                                              ? _wavePhase
+                                              : 0)) %
+                                      5) *
+                                  3.0),
+                          margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                          decoration: BoxDecoration(
+                            color: isMe
+                                ? Colors.white70
+                                : AppColors.primary.withValues(alpha: .55),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               else if (isImage)
                 ClipRRect(
@@ -644,8 +728,11 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Text(
                 _recording
                     ? '${_recordingDuration.inMinutes.toString().padLeft(2, '0')}:${(_recordingDuration.inSeconds % 60).toString().padLeft(2, '0')}'
-                    : 'جاهز للإرسال',
-                style: TextStyle(color: _recording ? Colors.red : AppColors.primary, fontWeight: FontWeight.w700),
+                    : context.tr('voice_ready'),
+                style: TextStyle(
+                  color: _recording ? Colors.red : AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           Expanded(

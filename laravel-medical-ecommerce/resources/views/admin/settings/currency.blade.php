@@ -20,6 +20,27 @@
             <div class="alert alert-info border-0 mb-0 d-flex gap-3 align-items-start"><i class="fas fa-circle-info mt-1"></i><div><strong>{{ __('admin.independent_dual_prices') }}</strong><p class="mb-2 mt-1">{{ __('admin.independent_prices_hint') }}</p><a href="{{ route('admin.products.create') }}" class="btn btn-sm btn-outline-primary">{{ __('admin.add_product') }}</a></div></div>
 
         <hr class="my-4">
+        <div class="settings-section-label">{{ __('admin.delivery_fees') }}</div>
+        <p class="text-muted small">{{ __('admin.delivery_fees_hint') }}</p>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th>{{ __('admin.delivery_area') }}</th><th>{{ __('admin.fee_syp') }}</th><th>{{ __('admin.fee_usd') }}</th><th>{{ __('admin.active') }}</th></tr></thead>
+                <tbody>
+                    @forelse($deliveryAreas as $area)
+                        <tr>
+                            <td><strong>{{ app()->getLocale() === 'ar' ? $area->name_ar : $area->name_en }}</strong></td>
+                            <td><input name="delivery_areas[{{ $area->id }}][fee]" type="number" min="0" step="0.01" class="form-control" value="{{ old("delivery_areas.{$area->id}.fee", $area->fee) }}" required></td>
+                            <td><input name="delivery_areas[{{ $area->id }}][fee_usd]" type="number" min="0" step="0.01" class="form-control" value="{{ old("delivery_areas.{$area->id}.fee_usd", $area->fee_usd) }}"></td>
+                            <td><input type="hidden" name="delivery_areas[{{ $area->id }}][is_active]" value="0"><input class="form-check-input" name="delivery_areas[{{ $area->id }}][is_active]" type="checkbox" value="1" @checked(old("delivery_areas.{$area->id}.is_active", $area->is_active))></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="text-muted text-center py-4">{{ __('admin.no_delivery_areas') }}</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <hr class="my-4">
         <div class="settings-section-label">{{ __('admin.review_rewards') }}</div>
         <p class="text-muted small">{{ __('admin.review_rewards_hint') }}</p>
         <div class="row g-4">

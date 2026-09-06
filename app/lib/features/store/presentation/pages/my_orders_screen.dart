@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app/injection_container.dart';
 import '../../../../core/localization/app_localizations.dart';
-import '../../../../core/settings/app_settings_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/hanova_ui.dart';
@@ -222,6 +221,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                       item.priceUsd == null
                           ? null
                           : item.priceUsd! * item.quantity,
+                      languageCode: Localizations.localeOf(
+                        context,
+                      ).languageCode,
                     ),
                   ),
                 ],
@@ -229,19 +231,23 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
             ),
           ),
           const Divider(height: 24),
-          if (order.deliveryFee > 0 || order.discountAmount > 0) ...[
-            if (order.discountAmount > 0)
+          if (order.deliveryFee > 0 ||
+              (order.deliveryFeeUsd ?? 0) > 0 ||
+              order.discountAmount > 0 ||
+              (order.discountAmountUsd ?? 0) > 0) ...[
+            if (order.discountAmount > 0 || (order.discountAmountUsd ?? 0) > 0)
               _buildAmountLine(
                 _isArabic ? 'الحسم' : 'Discount',
-                '-${CurrencyFormatter.display(order.discountAmount, context.watch<AppSettingsCubit>().state)}',
+                '-${CurrencyFormatter.dual(order.discountAmount, order.discountAmountUsd, languageCode: Localizations.localeOf(context).languageCode)}',
                 valueColor: AppColors.success,
               ),
-            if (order.deliveryFee > 0)
+            if (order.deliveryFee > 0 || (order.deliveryFeeUsd ?? 0) > 0)
               _buildAmountLine(
                 context.tr('delivery_fee'),
-                CurrencyFormatter.display(
+                CurrencyFormatter.dual(
                   order.deliveryFee,
-                  context.watch<AppSettingsCubit>().state,
+                  order.deliveryFeeUsd,
+                  languageCode: Localizations.localeOf(context).languageCode,
                 ),
               ),
             const Divider(height: 24),
@@ -267,9 +273,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               Text(
-                CurrencyFormatter.display(
+                CurrencyFormatter.dual(
                   order.totalAmount,
-                  context.watch<AppSettingsCubit>().state,
+                  order.totalAmountUsd,
+                  languageCode: Localizations.localeOf(context).languageCode,
                 ),
                 style: const TextStyle(
                   color: AppColors.primary,
