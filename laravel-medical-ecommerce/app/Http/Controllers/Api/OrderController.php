@@ -58,6 +58,9 @@ class OrderController extends Controller
         }
         try {
             $order = $this->orderService->checkout(auth()->id(), $data);
+            if ($storedReceipt && $order->shipping_receipt !== $storedReceipt) {
+                Storage::disk($receiptDisk)->delete($storedReceipt);
+            }
         } catch (Throwable $exception) {
             if ($storedReceipt) {
                 Storage::disk($receiptDisk)->delete($storedReceipt);

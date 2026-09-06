@@ -223,7 +223,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _newIdempotencyKey() {
     final random = Random.secure();
     final entropy = List.generate(
-      24,
+      20,
       (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
     ).join();
     return '${DateTime.now().microsecondsSinceEpoch}-$entropy';
