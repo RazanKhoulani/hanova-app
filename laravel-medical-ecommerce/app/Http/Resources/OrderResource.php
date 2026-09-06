@@ -33,6 +33,7 @@ class OrderResource extends JsonResource
             'delivery_method' => $this->delivery_method,
             'qadmous_governorate' => $this->qadmous_governorate,
             'qadmous_branch' => $this->qadmous_branch,
+            'qadmous_location_id' => $this->qadmous_location_id,
             'recipient_name' => $this->recipient_name,
             'recipient_phone' => $this->recipient_phone,
             'tracking_number' => $this->tracking_number,

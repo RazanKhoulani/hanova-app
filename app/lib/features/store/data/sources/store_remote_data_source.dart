@@ -175,6 +175,8 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
       if (orderData['shipping_longitude'] != null) 'shipping_longitude': orderData['shipping_longitude'],
       if (orderData['qadmous_governorate'] != null)
         'qadmous_governorate': orderData['qadmous_governorate'],
+      if (orderData['qadmous_location_id'] != null)
+        'qadmous_location_id': orderData['qadmous_location_id'],
       if (orderData['qadmous_branch'] != null)
         'qadmous_branch': orderData['qadmous_branch'],
       if (orderData['recipient_name'] != null)

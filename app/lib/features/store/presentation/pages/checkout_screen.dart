@@ -40,6 +40,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedPayment = 'cash_on_delivery';
   String _deliveryMethod = 'clinic_pickup';
   int? _deliveryAreaId;
+  int? _qadmousLocationId;
   double _deliveryFee = 0;
   double? _deliveryFeeUsd = 0;
   double? _shippingLatitude;
@@ -182,8 +183,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (_shippingLongitude != null)
           'shipping_longitude': _shippingLongitude,
       } else if (_deliveryMethod == 'qadmous') ...{
-        'qadmous_governorate': _qadmousGovernorateController.text.trim(),
-        'qadmous_branch': _qadmousBranchController.text.trim(),
+        'qadmous_location_id': _qadmousLocationId,
         'recipient_name': _recipientNameController.text.trim(),
         'recipient_phone': _recipientPhoneController.text.trim(),
         'shipping_address':
@@ -457,6 +457,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   _qadmousGovernorateController.text = selected['governorate']
                       .toString();
                   _qadmousBranchController.text = selected['branch'].toString();
+                  setState(() => _qadmousLocationId = id);
                 },
               );
             },

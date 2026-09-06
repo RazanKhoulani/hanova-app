@@ -6,6 +6,7 @@ use App\Models\DeliveryArea;
 use App\Models\Coupon;
 use App\Models\Notification;
 use App\Models\InventoryMovement;
+use App\Models\QadmousLocation;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -175,9 +176,13 @@ class OrderService
                 $orderData['delivery_user_id'] = $deliveryUserId;
             }
             if ($deliveryMethod === 'qadmous') {
+                $qadmousLocation = QadmousLocation::query()
+                    ->where('is_active', true)
+                    ->findOrFail($data['qadmous_location_id']);
                 $qadmousFields = [
-                    'qadmous_governorate' => $data['qadmous_governorate'],
-                    'qadmous_branch' => $data['qadmous_branch'],
+                    'qadmous_location_id' => $qadmousLocation->id,
+                    'qadmous_governorate' => $qadmousLocation->governorate_ar,
+                    'qadmous_branch' => $qadmousLocation->branch_ar,
                     'recipient_name' => $data['recipient_name'],
                     'recipient_phone' => $data['recipient_phone'],
                 ];
@@ -188,7 +193,7 @@ class OrderService
                     }
                 }
 
-                $orderData['shipping_address'] = $data['qadmous_governorate'].' - '.$data['qadmous_branch'];
+                $orderData['shipping_address'] = $qadmousLocation->governorate_ar.' - '.$qadmousLocation->branch_ar;
             }
 
             $order = $this->orderRepository->createOrder($orderData);

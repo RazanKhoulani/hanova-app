@@ -21,6 +21,11 @@ class CheckoutRequest extends FormRequest
             'payment_receipt' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'payment_method' => 'required|string|in:cash,online,credit_card,cash_on_delivery,apple_pay',
             'delivery_method' => 'required|string|in:clinic_pickup,pharmacy_pickup,home_delivery,qadmous',
+            'qadmous_location_id' => [
+                'nullable',
+                'required_if:delivery_method,qadmous',
+                Rule::exists('qadmous_locations', 'id')->where('is_active', true),
+            ],
             'pickup_location' => 'nullable|string|in:clinic,pharmacy',
             'delivery_area_id' => [
                 'nullable',
@@ -30,8 +35,6 @@ class CheckoutRequest extends FormRequest
             'items' => 'nullable|array|min:1|max:50',
             'items.*.product_id' => 'required_with:items|exists:products,id',
             'items.*.quantity' => 'required_with:items|integer|min:1|max:99',
-            'qadmous_governorate' => 'nullable|required_if:delivery_method,qadmous|string|max:100',
-            'qadmous_branch' => 'nullable|required_if:delivery_method,qadmous|string|max:150',
             'recipient_name' => 'nullable|required_if:delivery_method,qadmous|string|max:150',
             'recipient_phone' => ['nullable', 'required_if:delivery_method,qadmous', 'string', 'max:30'],
         ];

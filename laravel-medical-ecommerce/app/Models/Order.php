@@ -51,7 +51,7 @@ class Order extends Model
         'receipt_reviewed_at',
         'receipt_rejection_reason',
         'is_confirmed',
-        'qadmous_governorate', 'qadmous_branch', 'recipient_name', 'recipient_phone', 'tracking_number',
+        'qadmous_location_id', 'qadmous_governorate', 'qadmous_branch', 'recipient_name', 'recipient_phone', 'tracking_number',
     ];
 
     public function user()
@@ -67,6 +67,11 @@ class Order extends Model
     public function deliveryArea()
     {
         return $this->belongsTo(DeliveryArea::class);
+    }
+
+    public function qadmousLocation()
+    {
+        return $this->belongsTo(QadmousLocation::class);
     }
 
     public function deliveryUser()
