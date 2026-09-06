@@ -57,7 +57,7 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $orderQuery = Order::with(['user', 'items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'receiptReviewer']);
+        $orderQuery = Order::with(['user', 'items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'receiptReviewer', 'qadmousLocation']);
 
         if (auth()->user()?->hasRole('delivery')) {
             $orderQuery->where('delivery_user_id', auth()->id());

@@ -17,4 +17,5 @@ return [
     'insufficient_stock' => 'Only :count units of :product are available.',
     'receipt_not_allowed_for_cash' => 'A payment receipt cannot be attached to a cash or cash-on-delivery order.',
     'tracking_only_for_qadmous' => 'A tracking number can only be added to a Qadmous shipment.',
+    'confirmed_successfully' => 'Order confirmed successfully.',
 ];

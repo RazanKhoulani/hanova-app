@@ -31,8 +31,8 @@ class OrderResource extends JsonResource
                 : null,
             'receipt_rejection_reason' => $this->receipt_rejection_reason,
             'delivery_method' => $this->delivery_method,
-            'qadmous_governorate' => $this->qadmous_governorate,
-            'qadmous_branch' => $this->qadmous_branch,
+            'qadmous_governorate' => $this->localizedQadmousValue('governorate', $lang),
+            'qadmous_branch' => $this->localizedQadmousValue('branch', $lang),
             'qadmous_location_id' => $this->qadmous_location_id,
             'recipient_name' => $this->recipient_name,
             'recipient_phone' => $this->recipient_phone,
@@ -102,5 +102,15 @@ class OrderResource extends JsonResource
         ];
 
         return $labels[$status][$lang] ?? (string) $status;
+    }
+
+    private function localizedQadmousValue(string $field, string $lang): ?string
+    {
+        if ($this->relationLoaded('qadmousLocation') && $this->qadmousLocation) {
+            return $this->qadmousLocation->{$field.'_'.$lang}
+                ?: $this->qadmousLocation->{$field.'_ar'};
+        }
+
+        return $this->{'qadmous_'.$field};
     }
 }

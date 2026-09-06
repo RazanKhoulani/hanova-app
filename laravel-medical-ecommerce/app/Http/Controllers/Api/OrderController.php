@@ -60,7 +60,7 @@ class OrderController extends Controller
         }
 
         return (new OrderResource(
-            $order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer'])
+            $order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer', 'qadmousLocation'])
         ))->response()->setStatusCode(201);
     }
 
@@ -72,7 +72,7 @@ class OrderController extends Controller
         $order = $this->orderService->getOrderById($id);
         $this->authorizeOrderAccess($order, request()->user());
 
-        return new OrderResource($order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer']));
+        return new OrderResource($order->load(['items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer', 'qadmousLocation']));
     }
 
     public function confirm(Request $request, $id)
@@ -82,7 +82,7 @@ class OrderController extends Controller
         }
 
         $this->orderService->confirmOrder($id);
-        return response()->json(['message' => 'Order confirmed successfully']);
+        return response()->json(['message' => __('orders.confirmed_successfully')]);
     }
 
     public function markDelivered(Request $request, $id)
