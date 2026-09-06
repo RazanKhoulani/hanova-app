@@ -15,4 +15,6 @@ return [
     'circular_bundle' => 'تحتوي باقة :product على مرجع دائري لمنتج.',
     'bundle_component_unavailable' => 'أحد منتجات باقة :product لم يعد متاحاً.',
     'insufficient_stock' => 'المتوفر من :product هو :count فقط.',
+    'receipt_not_allowed_for_cash' => 'لا يمكن إرفاق إشعار تحويل بطلب نقدي أو مدفوع عند الاستلام.',
+    'tracking_only_for_qadmous' => 'يمكن إضافة رقم تتبع لطلبات شحن قدموس فقط.',
 ];

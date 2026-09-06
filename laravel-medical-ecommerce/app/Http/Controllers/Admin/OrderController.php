@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -97,13 +98,19 @@ class OrderController extends Controller
             abort(403);
         }
 
+        $order = Order::findOrFail($id);
+        if (in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)) {
+            throw ValidationException::withMessages([
+                'shipping_receipt' => __('orders.receipt_not_allowed_for_cash'),
+            ]);
+        }
+
         $request->validate([
             'shipping_receipt' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         if ($request->hasFile('shipping_receipt')) {
             $disk = config('filesystems.medical_disk', 'local');
-            $order = Order::findOrFail($id);
             $oldPath = $order->shipping_receipt;
             $oldDisk = $order->receipt_disk ?: 'public';
             $path = $request->file('shipping_receipt')->store('payment-receipts/'.$order->user_id, $disk);
@@ -119,7 +126,13 @@ class OrderController extends Controller
     public function updateTracking(Request $request, $id)
     {
         $validated = $request->validate(['tracking_number' => 'required|string|max:100']);
-        Order::findOrFail($id)->update($validated);
+        $order = Order::findOrFail($id);
+        if ($order->delivery_method !== 'qadmous') {
+            throw ValidationException::withMessages([
+                'tracking_number' => __('orders.tracking_only_for_qadmous'),
+            ]);
+        }
+        $order->update($validated);
         return redirect()->back()->with('success', __('admin.tracking_saved'));
     }
 
