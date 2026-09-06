@@ -103,12 +103,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (type == 'chat_message' || data['conversation_id'] != null) {
       final consultationId = data['consultation_id'];
       context.push(
-        consultationId == null ? '/chat' : '/chat?consultation_id=$consultationId',
+        consultationId == null
+            ? '/chat'
+            : '/chat?consultation_id=$consultationId',
       );
       return;
     }
     if (type.contains('appointment') || data['appointment_id'] != null) {
-      context.push('/clinic');
+      final appointmentId = data['appointment_id']?.toString();
+      context.push(
+        appointmentId == null || appointmentId.isEmpty
+            ? '/clinic'
+            : '/appointment?appointment_id=${Uri.encodeQueryComponent(appointmentId)}',
+      );
       return;
     }
     if (type.startsWith('order') ||
@@ -179,11 +186,13 @@ class _NotificationCard extends StatelessWidget {
                   ? Colors.transparent
                   : AppColors.primary.withValues(alpha: 0.28),
             ),
-            boxShadow: const [BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 18,
-              offset: Offset(0, 6),
-            )],
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.cardShadow,
+                blurRadius: 18,
+                offset: Offset(0, 6),
+              ),
+            ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,

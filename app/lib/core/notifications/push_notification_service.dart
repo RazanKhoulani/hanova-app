@@ -195,12 +195,22 @@ class PushNotificationService {
     final type = data['type']?.toString();
 
     if (type == 'chat_message' || data['conversation_id'] != null) {
-      AppRouter.router.go('/chat');
+      final consultationId = data['consultation_id']?.toString();
+      AppRouter.router.go(
+        consultationId == null || consultationId.isEmpty
+            ? '/chat'
+            : '/chat?consultation_id=${Uri.encodeQueryComponent(consultationId)}',
+      );
     } else if (type?.startsWith('order_') == true || data['order_id'] != null) {
       AppRouter.router.go('/orders');
     } else if (type?.contains('appointment') == true ||
         data['appointment_id'] != null) {
-      AppRouter.router.go('/clinic');
+      final appointmentId = data['appointment_id']?.toString();
+      AppRouter.router.go(
+        appointmentId == null || appointmentId.isEmpty
+            ? '/clinic'
+            : '/appointment?appointment_id=${Uri.encodeQueryComponent(appointmentId)}',
+      );
     } else {
       AppRouter.router.go('/notifications');
     }

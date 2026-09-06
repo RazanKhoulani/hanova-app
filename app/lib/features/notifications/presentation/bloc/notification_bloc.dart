@@ -44,12 +44,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     NotificationFetchRequested event,
     Emitter<NotificationState> emit,
   ) async {
-    emit(NotificationLoading());
+    final previous = state;
+    if (previous is! NotificationLoaded) emit(NotificationLoading());
     try {
       final notifications = await _remoteDataSource.getNotifications();
       emit(NotificationLoaded(notifications));
     } catch (e) {
-      emit(NotificationFailure(e.toString()));
+      if (previous is! NotificationLoaded) {
+        emit(NotificationFailure(e.toString()));
+      }
     }
   }
 

@@ -136,21 +136,39 @@ class ChatService
 
         $message->loadMissing('sender');
         $senderName = $message->sender?->name ?? 'Hanova';
-        $preview = $message->type === 'text'
-            ? Str::limit((string) $message->body, 100)
-            : 'مرفق طبي جديد';
+        $previewAr = match ($message->type) {
+            'text' => Str::limit((string) $message->body, 100),
+            'audio' => 'رسالة صوتية جديدة',
+            'image' => 'صورة جديدة',
+            default => 'مرفق طبي جديد',
+        };
+        $previewEn = match ($message->type) {
+            'text' => Str::limit((string) $message->body, 100),
+            'audio' => 'New voice message',
+            'image' => 'New image',
+            default => 'New medical attachment',
+        };
 
         foreach ($recipientIds as $recipientId) {
             Notification::create([
                 'user_id' => $recipientId,
                 'title' => "رسالة جديدة من {$senderName}",
-                'body' => $preview,
+                'body' => $previewAr,
                 'type' => 'chat_message',
                 'data' => [
                     'conversation_id' => $conversation->id,
                     'message_id' => $message->id,
-                    'title_en' => "New message from {$senderName}",
-                    'body_en' => $message->type === 'text' ? Str::limit((string) $message->body, 100) : 'New medical attachment',
+                    'consultation_id' => $conversation->consultation_id,
+                    'translations' => [
+                        'ar' => [
+                            'title' => "رسالة جديدة من {$senderName}",
+                            'body' => $previewAr,
+                        ],
+                        'en' => [
+                            'title' => "New message from {$senderName}",
+                            'body' => $previewEn,
+                        ],
+                    ],
                 ],
             ]);
         }
