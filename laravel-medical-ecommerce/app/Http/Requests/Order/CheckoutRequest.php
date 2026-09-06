@@ -45,12 +45,12 @@ class CheckoutRequest extends FormRequest
         $validator->after(function ($validator) {
             if ($this->input('delivery_method') === 'qadmous'
                 && in_array($this->input('payment_method'), ['cash', 'cash_on_delivery'], true)) {
-                $validator->errors()->add('payment_method', 'Qadmous shipments require advance payment.');
+                $validator->errors()->add('payment_method', __('orders.qadmous_requires_advance_payment'));
             }
 
             if (! in_array($this->input('payment_method'), ['cash', 'cash_on_delivery'], true)
                 && ! $this->hasFile('payment_receipt')) {
-                $validator->errors()->add('payment_receipt', 'A payment receipt is required for prepaid orders.');
+                $validator->errors()->add('payment_receipt', __('orders.payment_receipt_required'));
             }
         });
     }

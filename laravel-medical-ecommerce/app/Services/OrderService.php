@@ -80,7 +80,7 @@ class OrderService
 
                 if ($cart->items->isEmpty()) {
                     throw ValidationException::withMessages([
-                        'items' => 'Cart is empty.',
+                        'items' => __('orders.cart_empty'),
                     ]);
                 }
 
@@ -240,7 +240,7 @@ class OrderService
 
             if ($status === 'delivered' && !in_array($order->status, ['accepted', 'ready', 'shipped'], true)) {
                 throw ValidationException::withMessages([
-                    'status' => 'Only an accepted, ready, or shipped order can be marked as delivered.',
+                    'status' => __('orders.invalid_delivery_status'),
                 ]);
             }
 
@@ -250,7 +250,7 @@ class OrderService
                 if (! in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)
                     && $order->payment_receipt_status !== 'approved') {
                     throw ValidationException::withMessages([
-                        'payment_receipt_status' => 'Approve the payment receipt before processing this order.',
+                        'payment_receipt_status' => __('orders.approve_receipt_before_processing'),
                     ]);
                 }
 
@@ -263,7 +263,7 @@ class OrderService
                         $updateData['payment_status'] = 'paid';
                     } elseif ($order->payment_status !== 'paid') {
                         throw ValidationException::withMessages([
-                            'payment_status' => 'A prepaid order must have an approved receipt before delivery.',
+                            'payment_status' => __('orders.approved_receipt_required_for_delivery'),
                         ]);
                     }
                 }
@@ -273,7 +273,7 @@ class OrderService
                 if (! in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)
                     && $order->payment_receipt_status !== 'approved') {
                     throw ValidationException::withMessages([
-                        'payment_status' => 'Approve the payment receipt before marking this order as paid.',
+                        'payment_status' => __('orders.approve_receipt_before_paid'),
                     ]);
                 }
                 $updateData['payment_status'] = 'paid';
@@ -303,14 +303,14 @@ class OrderService
 
             if (in_array($order->status, ['cancelled', 'delivered'], true)) {
                 throw ValidationException::withMessages([
-                    'status' => 'This order can no longer be confirmed.',
+                    'status' => __('orders.cannot_confirm'),
                 ]);
             }
 
             if (! in_array($order->payment_method, ['cash', 'cash_on_delivery'], true)
                 && $order->payment_receipt_status !== 'approved') {
                 throw ValidationException::withMessages([
-                    'payment_receipt_status' => 'The payment receipt must be approved before accepting this order.',
+                    'payment_receipt_status' => __('orders.approve_receipt_before_accepting'),
                 ]);
             }
 
@@ -347,13 +347,13 @@ class OrderService
             $order = $this->orderRepository->findById($id);
             if (in_array($order->payment_method, ['cash', 'cash_on_delivery'], true) || ! $order->shipping_receipt) {
                 throw ValidationException::withMessages([
-                    'receipt' => 'This order does not have a prepaid payment receipt to review.',
+                    'receipt' => __('orders.no_receipt_to_review'),
                 ]);
             }
 
             if (! $approved && ! trim((string) $reason)) {
                 throw ValidationException::withMessages([
-                    'reason' => 'A rejection reason is required.',
+                    'reason' => __('orders.rejection_reason_required'),
                 ]);
             }
 
@@ -455,7 +455,7 @@ class OrderService
     {
         if (in_array($product->id, $visitedProductIds, true)) {
             throw ValidationException::withMessages([
-                'items' => "Bundle {$product->name_en} contains a circular product reference.",
+                'items' => __('orders.circular_bundle', ['product' => $this->localizedProductName($product)]),
             ]);
         }
 
@@ -465,7 +465,7 @@ class OrderService
                 $component = Product::query()->find($componentId);
                 if (! $component) {
                     throw ValidationException::withMessages([
-                        'items' => "A product in bundle {$product->name_en} is no longer available.",
+                        'items' => __('orders.bundle_component_unavailable', ['product' => $this->localizedProductName($product)]),
                     ]);
                 }
                 $this->assertInventoryAvailable($component, $quantity, $visitedProductIds);
@@ -475,7 +475,10 @@ class OrderService
 
         if ($product->track_inventory && $product->stock_quantity < $quantity) {
             throw ValidationException::withMessages([
-                'items' => "Only {$product->stock_quantity} units of {$product->name_en} are available.",
+                'items' => __('orders.insufficient_stock', [
+                    'count' => $product->stock_quantity,
+                    'product' => $this->localizedProductName($product),
+                ]),
             ]);
         }
     }
@@ -508,7 +511,7 @@ class OrderService
     {
         if (in_array($product->id, $visitedProductIds, true)) {
             throw ValidationException::withMessages([
-                'items' => "Bundle {$product->name_en} contains a circular product reference.",
+                'items' => __('orders.circular_bundle', ['product' => $this->localizedProductName($product)]),
             ]);
         }
 
@@ -527,7 +530,7 @@ class OrderService
                 $component = Product::query()->lockForUpdate()->find($componentId);
                 if (! $component) {
                     throw ValidationException::withMessages([
-                        'items' => "A product in bundle {$product->name_en} is no longer available.",
+                        'items' => __('orders.bundle_component_unavailable', ['product' => $this->localizedProductName($product)]),
                     ]);
                 }
 
@@ -544,7 +547,10 @@ class OrderService
 
         if ($product->stock_quantity < $quantity) {
             throw ValidationException::withMessages([
-                'items' => "Only {$product->stock_quantity} units of {$product->name_en} are available.",
+                'items' => __('orders.insufficient_stock', [
+                    'count' => $product->stock_quantity,
+                    'product' => $this->localizedProductName($product),
+                ]),
             ]);
         }
 
@@ -774,5 +780,14 @@ class OrderService
             'cancelled' => 'ملغي',
             default => $status,
         };
+    }
+
+    private function localizedProductName(Product $product): string
+    {
+        if (app()->getLocale() === 'ar') {
+            return $product->name_ar ?: $product->name_en;
+        }
+
+        return $product->name_en ?: $product->name_ar;
     }
 }
