@@ -22,6 +22,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'idempotency_key',
         'status',
         'inventory_reserved_at',
         'inventory_released_at',

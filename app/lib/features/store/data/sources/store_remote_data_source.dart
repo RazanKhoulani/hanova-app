@@ -160,6 +160,8 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
     }
 
     final payload = {
+      if (orderData['idempotency_key'] != null)
+        'idempotency_key': orderData['idempotency_key'],
       if (orderData['shipping_address'] != null)
         'shipping_address': orderData['shipping_address'],
       'payment_method': normalizePaymentMethod(
@@ -171,8 +173,10 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
         'pickup_location': orderData['pickup_location'],
       if (orderData['delivery_area_id'] != null)
         'delivery_area_id': orderData['delivery_area_id'],
-      if (orderData['shipping_latitude'] != null) 'shipping_latitude': orderData['shipping_latitude'],
-      if (orderData['shipping_longitude'] != null) 'shipping_longitude': orderData['shipping_longitude'],
+      if (orderData['shipping_latitude'] != null)
+        'shipping_latitude': orderData['shipping_latitude'],
+      if (orderData['shipping_longitude'] != null)
+        'shipping_longitude': orderData['shipping_longitude'],
       if (orderData['qadmous_governorate'] != null)
         'qadmous_governorate': orderData['qadmous_governorate'],
       if (orderData['qadmous_location_id'] != null)
@@ -186,7 +190,9 @@ class StoreRemoteDataSourceImpl implements StoreRemoteDataSource {
       'items': orderData['items'] ?? [],
     };
     if (orderData['payment_receipt_path'] != null) {
-      payload['payment_receipt'] = await MultipartFile.fromFile(orderData['payment_receipt_path'].toString());
+      payload['payment_receipt'] = await MultipartFile.fromFile(
+        orderData['payment_receipt_path'].toString(),
+      );
     }
     await _dioClient.post(ApiConstants.orders, data: FormData.fromMap(payload));
   }

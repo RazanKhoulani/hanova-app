@@ -36,6 +36,19 @@ class OrderController extends Controller
     public function store(CheckoutRequest $request)
     {
         $data = $request->validated();
+        $idempotencyKey = $data['idempotency_key'] ?? $request->header('Idempotency-Key');
+        if (is_string($idempotencyKey) && $idempotencyKey !== '' && \Illuminate\Support\Facades\Schema::hasColumn('orders', 'idempotency_key')) {
+            $data['idempotency_key'] = $idempotencyKey;
+            $existingOrder = Order::query()
+                ->where('user_id', auth()->id())
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+            if ($existingOrder) {
+                return new OrderResource($existingOrder->load([
+                    'items.product', 'deliveryArea', 'deliveryUser', 'coupon', 'appliedOffer', 'qadmousLocation',
+                ]));
+            }
+        }
         $storedReceipt = null;
         $receiptDisk = config('filesystems.medical_disk', 'local');
         if ($request->hasFile('payment_receipt')) {

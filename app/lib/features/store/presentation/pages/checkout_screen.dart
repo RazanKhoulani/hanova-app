@@ -1,4 +1,6 @@
 import 'package:app/injection_container.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +27,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  late final String _idempotencyKey = _newIdempotencyKey();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _qadmousGovernorateController =
       TextEditingController();
@@ -174,6 +177,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final orderData = {
       'payment_method': _selectedPayment,
       'delivery_method': _deliveryMethod,
+      'idempotency_key': _idempotencyKey,
       if (_selectedPayment == 'online')
         'payment_receipt_path': _paymentReceiptPath,
       if (_deliveryMethod == 'home_delivery') ...{
@@ -214,6 +218,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _newIdempotencyKey() {
+    final random = Random.secure();
+    final entropy = List.generate(
+      24,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+    return '${DateTime.now().microsecondsSinceEpoch}-$entropy';
   }
 
   void _showAuthRequiredSheet() {
