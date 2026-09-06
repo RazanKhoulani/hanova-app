@@ -18,4 +18,12 @@ return [
     'receipt_not_allowed_for_cash' => 'لا يمكن إرفاق إشعار تحويل بطلب نقدي أو مدفوع عند الاستلام.',
     'tracking_only_for_qadmous' => 'يمكن إضافة رقم تتبع لطلبات شحن قدموس فقط.',
     'confirmed_successfully' => 'تم تأكيد الطلب بنجاح.',
+    'invalid_status_transition' => 'لا يمكن نقل الطلب من حالة :from إلى :to.',
+    'status_pending' => 'قيد الانتظار',
+    'status_accepted' => 'مقبول',
+    'status_paid' => 'مدفوع',
+    'status_ready' => 'جاهز',
+    'status_shipped' => 'قيد الشحن',
+    'status_delivered' => 'تم التسليم',
+    'status_cancelled' => 'ملغي',
 ];

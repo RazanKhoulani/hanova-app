@@ -18,4 +18,12 @@ return [
     'receipt_not_allowed_for_cash' => 'A payment receipt cannot be attached to a cash or cash-on-delivery order.',
     'tracking_only_for_qadmous' => 'A tracking number can only be added to a Qadmous shipment.',
     'confirmed_successfully' => 'Order confirmed successfully.',
+    'invalid_status_transition' => 'The order cannot move from :from to :to.',
+    'status_pending' => 'pending',
+    'status_accepted' => 'accepted',
+    'status_paid' => 'paid',
+    'status_ready' => 'ready',
+    'status_shipped' => 'shipped',
+    'status_delivered' => 'delivered',
+    'status_cancelled' => 'cancelled',
 ];

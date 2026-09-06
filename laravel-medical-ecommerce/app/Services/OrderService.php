@@ -48,6 +48,19 @@ class OrderService
         DB::beginTransaction();
 
         try {
+            User::query()->whereKey($userId)->lockForUpdate()->firstOrFail();
+            $supportsIdempotency = Schema::hasColumn('orders', 'idempotency_key');
+            if ($supportsIdempotency && ! empty($data['idempotency_key'])) {
+                $existingOrder = Order::query()
+                    ->where('user_id', $userId)
+                    ->where('idempotency_key', $data['idempotency_key'])
+                    ->first();
+                if ($existingOrder) {
+                    DB::commit();
+                    return $existingOrder->load(['items', 'coupon', 'appliedOffer']);
+                }
+            }
+
             $subtotal = 0;
             $subtotalUsd = 0.0;
             $hasCompleteUsdPricing = true;
@@ -58,7 +71,7 @@ class OrderService
                 foreach ($data['items'] as $item) {
                     $product = Product::query()->lockForUpdate()->findOrFail($item['product_id']);
                     $quantity = (int) $item['quantity'];
-                    $price = (float) $product->price;
+                    $price = (float) ($product->price_syp ?? $product->price);
 
                     $this->assertInventoryAvailable($product, $quantity);
 
@@ -86,7 +99,7 @@ class OrderService
 
                 foreach ($cart->items as $item) {
                     $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
-                    $price = (float) $product->price;
+                    $price = (float) ($product->price_syp ?? $product->price);
                     $quantity = (int) $item->quantity;
 
                     $this->assertInventoryAvailable($product, $quantity);
@@ -128,15 +141,19 @@ class OrderService
                 'shipping_receipt' => $data['shipping_receipt'] ?? null,
                 'receipt_disk' => $data['receipt_disk'] ?? null,
                 'payment_method' => $paymentMethod,
-                'subtotal_amount' => $subtotal,
+                'subtotal_amount' => round($subtotal, 2),
                 'subtotal_usd' => $subtotalUsd,
                 'discount_amount_usd' => $discountAmountUsd,
                 'delivery_fee_usd' => $deliveryFeeUsd,
-                'total_amount' => max(0, $subtotal - $discountAmount) + $deliveryFee,
+                'total_amount' => round(max(0, $subtotal - $discountAmount) + $deliveryFee, 2),
                 'total_amount_usd' => $subtotalUsd !== null && $deliveryFeeUsd !== null && $discountAmountUsd !== null
-                    ? max(0, $subtotalUsd - $discountAmountUsd) + $deliveryFeeUsd
+                    ? round(max(0, $subtotalUsd - $discountAmountUsd) + $deliveryFeeUsd, 2)
                     : null,
             ];
+
+            if ($supportsIdempotency) {
+                $orderData['idempotency_key'] = $data['idempotency_key'] ?? null;
+            }
 
             if (Schema::hasColumn('orders', 'coupon_id')) {
                 $orderData['coupon_id'] = $coupon?->id;
@@ -238,9 +255,16 @@ class OrderService
             $order = Order::query()->with('items')->lockForUpdate()->findOrFail($id);
             $previousStatus = $order->status;
 
-            if ($status === 'delivered' && !in_array($order->status, ['accepted', 'ready', 'shipped'], true)) {
+            if ($status === $previousStatus) {
+                return $order;
+            }
+
+            if (! $this->canTransitionOrder($previousStatus, $status)) {
                 throw ValidationException::withMessages([
-                    'status' => __('orders.invalid_delivery_status'),
+                    'status' => __('orders.invalid_status_transition', [
+                        'from' => __('orders.status_'.$previousStatus),
+                        'to' => __('orders.status_'.$status),
+                    ]),
                 ]);
             }
 
@@ -301,7 +325,11 @@ class OrderService
         return DB::transaction(function () use ($id) {
             $order = Order::query()->with('items')->lockForUpdate()->findOrFail($id);
 
-            if (in_array($order->status, ['cancelled', 'delivered'], true)) {
+            if ($order->status === 'accepted' && $order->is_confirmed && $order->inventory_reserved_at) {
+                return true;
+            }
+
+            if (! in_array($order->status, ['pending', 'paid'], true)) {
                 throw ValidationException::withMessages([
                     'status' => __('orders.cannot_confirm'),
                 ]);
@@ -312,10 +340,6 @@ class OrderService
                 throw ValidationException::withMessages([
                     'payment_receipt_status' => __('orders.approve_receipt_before_accepting'),
                 ]);
-            }
-
-            if ($order->status === 'accepted' && $order->is_confirmed && $order->inventory_reserved_at) {
-                return true;
             }
 
             $this->reserveOrderInventory($order);
@@ -385,6 +409,21 @@ class OrderService
         return in_array($method, ['clinic_pickup', 'pharmacy_pickup', 'home_delivery', 'qadmous'], true)
             ? $method
             : 'home_delivery';
+    }
+
+    private function canTransitionOrder(string $from, string $to): bool
+    {
+        $allowed = [
+            'pending' => ['accepted', 'cancelled'],
+            'accepted' => ['ready', 'cancelled'],
+            'paid' => ['accepted', 'ready', 'cancelled'],
+            'ready' => ['shipped', 'delivered', 'cancelled'],
+            'shipped' => ['delivered'],
+            'delivered' => [],
+            'cancelled' => [],
+        ];
+
+        return in_array($to, $allowed[$from] ?? [], true);
     }
 
     private function resolveDeliveryFee(string $deliveryMethod, $deliveryAreaId): array
