@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,7 +30,7 @@ class Patient extends Model
     protected function phone(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => SyrianPhoneNumber::normalize($value),
+            set: fn ($value) => PhoneNumber::normalize($value),
         );
     }
 

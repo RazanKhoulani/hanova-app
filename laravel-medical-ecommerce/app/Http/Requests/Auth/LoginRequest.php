@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
@@ -26,7 +26,7 @@ class LoginRequest extends FormRequest
         $identifier = trim((string) ($this->input('identifier') ?: $this->input('phone')));
         $identifier = filter_var($identifier, FILTER_VALIDATE_EMAIL)
             ? strtolower($identifier)
-            : SyrianPhoneNumber::normalize($identifier);
+            : PhoneNumber::normalize($identifier);
 
         $this->merge(['identifier' => $identifier]);
     }
@@ -38,8 +38,8 @@ class LoginRequest extends FormRequest
             if ($identifier === '') {
                 $validator->errors()->add('identifier', 'Phone number or email is required.');
             }
-            if (!filter_var($identifier, FILTER_VALIDATE_EMAIL) && !preg_match('/'.trim(SyrianPhoneNumber::VALIDATION_REGEX, '/').'/u', $identifier)) {
-                $validator->errors()->add('identifier', 'Enter a valid Syrian phone number or email address.');
+            if (!filter_var($identifier, FILTER_VALIDATE_EMAIL) && !preg_match('/'.trim(PhoneNumber::VALIDATION_REGEX, '/').'/u', $identifier)) {
+                $validator->errors()->add('identifier', 'Enter a valid international phone number or email address.');
             }
         });
     }

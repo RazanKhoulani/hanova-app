@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/syrian_phone_number.dart';
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _submitted = false;
+  String _callingCode = '+963';
 
   bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
   String _label(String ar, String en) => _isArabic ? ar : en;
@@ -40,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final rawIdentifier = _phoneController.text.trim();
     final identifier = rawIdentifier.contains('@')
         ? rawIdentifier.toLowerCase()
-        : SyrianPhoneNumber.tryInternational(rawIdentifier);
+        : SyrianPhoneNumber.tryInternational(rawIdentifier, callingCode: _callingCode);
     if (identifier == null) return;
 
     FocusScope.of(context).unfocus();
@@ -126,17 +128,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     scrollPadding: const EdgeInsets.only(bottom: 150),
                     autofillHints: const [AutofillHints.username],
                     decoration: InputDecoration(
-                      hintText: _label('9XXXXXXXX أو name@example.com', '9XXXXXXXX or name@example.com'),
-                      prefixIcon: const Icon(Icons.alternate_email_rounded),
+                      hintText: _label('رقم الموبايل أو البريد', 'Phone number or email'),
+                      prefixIcon: CountryCodePicker(
+                        initialSelection: 'SY',
+                        favorite: const ['SY', 'AE', 'SA', 'LB'],
+                        showCountryOnly: false,
+                        showOnlyCountryWhenClosed: false,
+                        searchDecoration: InputDecoration(hintText: _label('ابحثي عن دولة', 'Search country')),
+                        onChanged: (country) => setState(() => _callingCode = country.dialCode ?? '+963'),
+                      ),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 112),
                     ),
                     validator: (value) {
                       final raw = value?.trim() ?? '';
                       final isEmail = raw.contains('@') &&
                           RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(raw);
-                      if (!isEmail && SyrianPhoneNumber.tryInternational(raw) == null) {
+                      if (!isEmail && SyrianPhoneNumber.tryInternational(raw, callingCode: _callingCode) == null) {
                         return _label(
-                          'أدخلي رقم موبايل سوري صحيح أو بريداً إلكترونياً صحيحاً',
-                          'Enter a valid Syrian mobile number or email address',
+                          'أدخلي رقم موبايل صحيحاً أو بريداً إلكترونياً صحيحاً',
+                          'Enter a valid phone number or email address',
                         );
                       }
                       return null;
@@ -188,6 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           : () {
                               final phone = SyrianPhoneNumber.tryInternational(
                                 _phoneController.text,
+                                callingCode: _callingCode,
                               );
                               if (phone == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -195,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     content: Text(
                                       _label(
                                         'أدخلي رقم الموبايل الصحيح أولاً',
-                                        'Enter a valid Syrian number first',
+                                        'Enter a valid phone number first',
                                       ),
                                     ),
                                   ),

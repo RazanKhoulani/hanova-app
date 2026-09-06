@@ -9,7 +9,7 @@ use App\Http\Requests\Auth\VerifyRegistrationOtpRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Otp\OtpService;
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -101,10 +101,10 @@ class AuthController extends Controller
     public function resendRegistrationOtp(Request $request)
     {
         $request->merge([
-            'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
+            'phone' => PhoneNumber::normalize($request->input('phone')),
         ]);
         $request->validate([
-            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
+            'phone' => ['required', 'string', 'regex:'.PhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
         ]);
 
         $user = User::where('phone', $request->phone)->firstOrFail();
@@ -180,14 +180,18 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($request->has('phone')) {
-            $request->merge([
-                'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
-            ]);
+            $phone = PhoneNumber::normalize($request->input('phone'));
+            if ($phone !== $user->phone) {
+                throw ValidationException::withMessages([
+                    'phone' => ['Changing the verified phone number requires OTP verification.'],
+                ]);
+            }
+            $request->merge(['phone' => $phone]);
         }
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'phone' => ['sometimes', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'unique:users,phone,'.$user->id],
+            'phone' => ['sometimes', 'string', 'regex:'.PhoneNumber::VALIDATION_REGEX, 'unique:users,phone,'.$user->id],
             'email' => 'nullable|email|unique:users,email,'.$user->id,
         ]);
 
@@ -200,10 +204,10 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $request->merge([
-            'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
+            'phone' => PhoneNumber::normalize($request->input('phone')),
         ]);
         $request->validate([
-            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
+            'phone' => ['required', 'string', 'regex:'.PhoneNumber::VALIDATION_REGEX, 'exists:users,phone'],
         ]);
 
         $user = User::where('phone', $request->phone)->firstOrFail();

@@ -7,7 +7,7 @@ use App\Http\Requests\Patient\StorePatientRequest;
 use App\Http\Resources\PatientResource;
 use App\Models\Patient;
 use App\Services\PatientService;
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
@@ -66,14 +66,14 @@ class PatientController extends Controller
 
         if ($request->has('phone')) {
             $request->merge([
-                'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
+                'phone' => PhoneNumber::normalize($request->input('phone')),
             ]);
         }
 
         $payload = $request->validate([
             'name' => 'sometimes|string|max:255',
             'age' => 'sometimes|integer|min:0',
-            'phone' => ['sometimes', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
+            'phone' => ['sometimes', 'string', 'regex:'.PhoneNumber::VALIDATION_REGEX],
             'address' => 'nullable|string',
             'notes' => 'nullable|string',
             'medical_file' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120',

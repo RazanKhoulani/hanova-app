@@ -3,7 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -40,7 +40,7 @@ class User extends Authenticatable
     protected function phone(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => SyrianPhoneNumber::normalize($value),
+            set: fn ($value) => PhoneNumber::normalize($value),
         );
     }
 

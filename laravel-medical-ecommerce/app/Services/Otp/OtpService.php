@@ -2,7 +2,7 @@
 
 namespace App\Services\Otp;
 
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use RuntimeException;
 
 class OtpService
@@ -16,7 +16,7 @@ class OtpService
         ?string $ipAddress = null,
         ?string $userAgent = null,
     ): array {
-        $recipient = SyrianPhoneNumber::international($phone);
+        $recipient = PhoneNumber::international($phone);
         $expirySeconds = (int) config('otp.expiry_seconds', 300);
         $codeLength = (int) config('otp.length', 5);
 
@@ -48,7 +48,7 @@ class OtpService
 
         return [
             'request_id' => $requestId,
-            'phone' => SyrianPhoneNumber::normalize($phone),
+            'phone' => PhoneNumber::normalize($phone),
             'delivery_status' => (string) ($result['status'] ?? 'queued'),
             'expires_in' => $expirySeconds,
             'code_length' => $codeLength,
@@ -62,7 +62,7 @@ class OtpService
         $result = $this->qverify->verifyOtp(
             otp: $otp,
             requestId: $requestId,
-            recipient: $requestId === null ? SyrianPhoneNumber::international($phone) : null,
+            recipient: $requestId === null ? PhoneNumber::international($phone) : null,
             channel: $requestId === null ? 'whatsapp' : null,
         );
 

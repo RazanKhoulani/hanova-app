@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterRequest extends FormRequest
@@ -17,7 +17,7 @@ class RegisterRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255|unique:users,email',
-            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
+            'phone' => ['required', 'string', 'regex:'.PhoneNumber::VALIDATION_REGEX],
             'phone_confirmation' => ['required', 'string', 'same:phone'],
             'password' => 'required|string|min:6',
         ];
@@ -26,8 +26,8 @@ class RegisterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'phone' => SyrianPhoneNumber::normalize($this->input('phone')),
-            'phone_confirmation' => SyrianPhoneNumber::normalize($this->input('phone_confirmation')),
+            'phone' => PhoneNumber::normalize($this->input('phone')),
+            'phone_confirmation' => PhoneNumber::normalize($this->input('phone_confirmation')),
         ]);
     }
 }

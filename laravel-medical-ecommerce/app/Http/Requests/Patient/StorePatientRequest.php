@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Patient;
 
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePatientRequest extends FormRequest
@@ -17,7 +17,7 @@ class StorePatientRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'age' => 'required|integer|min:0',
-            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
+            'phone' => ['required', 'string', 'regex:'.PhoneNumber::VALIDATION_REGEX],
             'address' => 'nullable|string',
             'notes' => 'nullable|string',
             'medical_file' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120',
@@ -29,7 +29,7 @@ class StorePatientRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'phone' => SyrianPhoneNumber::normalize($this->input('phone')),
+            'phone' => PhoneNumber::normalize($this->input('phone')),
         ]);
     }
 }

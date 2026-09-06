@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Support\SyrianPhoneNumber;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,11 +28,11 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->merge([
-            'phone' => SyrianPhoneNumber::normalize($request->input('phone')),
+            'phone' => PhoneNumber::normalize($request->input('phone')),
         ]);
 
         $credentials = $request->validate([
-            'phone' => ['required', 'string', 'regex:'.SyrianPhoneNumber::VALIDATION_REGEX],
+            'phone' => ['required', 'string', 'regex:'.PhoneNumber::VALIDATION_REGEX],
             'password' => ['required'],
         ]);
 

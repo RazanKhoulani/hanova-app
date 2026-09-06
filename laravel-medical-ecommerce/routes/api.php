@@ -24,11 +24,11 @@ use Illuminate\Support\Facades\Route;
 
 // Auth routes
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/verify-registration-otp', [AuthController::class, 'verifyRegistrationOtp']);
-    Route::post('/resend-registration-otp', [AuthController::class, 'resendRegistrationOtp']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,10');
+    Route::post('/verify-registration-otp', [AuthController::class, 'verifyRegistrationOtp'])->middleware('throttle:10,1');
+    Route::post('/resend-registration-otp', [AuthController::class, 'resendRegistrationOtp'])->middleware('throttle:3,10');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,10');
 });
 
 // Public browsing/chatbot routes for guest mode
@@ -40,7 +40,7 @@ Route::get('/catalog-filters', [ProductController::class, 'catalogFilters']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/faqs', [FaqController::class, 'index']);
 Route::get('/bot/bootstrap', [BotController::class, 'bootstrap']);
-Route::post('/bot/ask', [BotController::class, 'ask']);
+Route::post('/bot/ask', [BotController::class, 'ask'])->middleware('throttle:30,1');
 Route::get('/appointments/available-slots', [AppointmentController::class, 'availableSlots']);
 Route::get('/delivery-areas', [DeliveryAreaController::class, 'index']);
 Route::get('/qadmous-locations', [QadmousLocationController::class, 'index']);

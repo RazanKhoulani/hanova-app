@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/syrian_phone_number.dart';
@@ -24,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPhoneController = TextEditingController();
   bool _obscurePassword = true;
+  String _callingCode = '+963';
 
   bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
   String _label(String ar, String en) => _isArabic ? ar : en;
@@ -40,8 +42,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _submit() {
     final name = _nameController.text.trim();
-    final phone = SyrianPhoneNumber.tryInternational(_phoneController.text);
-    final phoneConfirmation = SyrianPhoneNumber.tryInternational(_confirmPhoneController.text);
+    final phone = SyrianPhoneNumber.tryInternational(
+      _phoneController.text,
+      callingCode: _callingCode,
+    );
+    final phoneConfirmation = SyrianPhoneNumber.tryInternational(
+      _confirmPhoneController.text,
+      callingCode: _callingCode,
+    );
     final password = _passwordController.text;
     final email = _emailController.text.trim();
 
@@ -51,8 +59,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         phoneConfirmation == null) {
       _showMessage(
         _label(
-          'أكملي جميع الحقول وأدخلي رقماً سورياً صحيحاً',
-          'Complete all fields with a valid Syrian number',
+          'أكملي جميع الحقول وأدخلي رقم موبايل صحيحاً',
+          'Complete all fields with a valid phone number',
         ),
       );
       return;
@@ -161,14 +169,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.telephoneNumber],
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(9),
-                  ],
-                  decoration: const InputDecoration(
-                    hintText: '9XXXXXXXX',
-                    prefixText: '+963  ',
-                    prefixIcon: Icon(Icons.phone_iphone_rounded),
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    hintText: _callingCode == '+963' ? '0945345844 أو 945345844' : _label('رقم الموبايل', 'Phone number'),
+                    prefixIcon: CountryCodePicker(
+                      initialSelection: 'SY',
+                      favorite: const ['SY', 'AE', 'SA', 'LB'],
+                      showCountryOnly: false,
+                      showOnlyCountryWhenClosed: false,
+                      searchDecoration: InputDecoration(hintText: _label('ابحثي عن دولة', 'Search country')),
+                      onChanged: (country) => setState(() => _callingCode = country.dialCode ?? '+963'),
+                    ),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 112),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -177,14 +189,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _confirmPhoneController,
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(9),
-                  ],
-                  decoration: const InputDecoration(
-                    hintText: '9XXXXXXXX',
-                    prefixText: '+963  ',
-                    prefixIcon: Icon(Icons.phone_android_rounded),
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    hintText: _label('أعيدي كتابة الرقم', 'Repeat phone number'),
+                    prefixText: '$_callingCode  ',
+                    prefixIcon: const Icon(Icons.phone_android_rounded),
                   ),
                 ),
                 const SizedBox(height: 16),
