@@ -881,6 +881,62 @@ a {
     white-space: normal;
 }
 
+.receipt-preview-button {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    background: #fff8f5;
+    border: 1px solid var(--clinic-border);
+    border-radius: 16px;
+    cursor: zoom-in;
+}
+
+.receipt-preview-image {
+    display: block;
+    width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+}
+
+.receipt-preview-overlay {
+    position: absolute;
+    inset-inline: 12px;
+    bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 12px;
+    color: #fff;
+    background: rgba(41, 31, 28, 0.76);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.receipt-zoom-stage {
+    overflow: auto;
+    cursor: zoom-in;
+}
+
+.receipt-full-image {
+    min-width: min(100%, 720px);
+    max-height: 82vh;
+    object-fit: contain;
+    cursor: zoom-in;
+    transition: transform 0.18s ease;
+    transform-origin: center top;
+}
+
+.receipt-full-image.is-zoomed {
+    max-width: none;
+    max-height: none;
+    width: auto;
+    cursor: zoom-out;
+}
+
 .form-label {
     margin-bottom: 7px;
     color: var(--clinic-text);

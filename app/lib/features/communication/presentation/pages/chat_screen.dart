@@ -376,6 +376,53 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  Future<void> _showImagePreview(String url) async {
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 5,
+                  boundaryMargin: const EdgeInsets.all(80),
+                  child: Center(
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) =>
+                          progress == null
+                          ? child
+                          : const Center(child: CircularProgressIndicator()),
+                      errorBuilder: (_, error, stackTrace) => const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white70,
+                        size: 54,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              PositionedDirectional(
+                top: 10,
+                end: 10,
+                child: IconButton.filled(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     final channelName = _pusherChannelName;
@@ -632,11 +679,12 @@ class _ChatScreenState extends State<ChatScreen> {
     final isMe = message.isMe;
     final attachment = message.attachmentUrl;
     final isImage =
-        attachment != null &&
-        RegExp(
+        message.attachmentType == 'image' ||
+        (attachment != null &&
+            RegExp(
           r'\.(jpe?g|png|webp)(\?.*)?$',
           caseSensitive: false,
-        ).hasMatch(attachment);
+            ).hasMatch(attachment));
     final isAudio =
         message.attachmentType == 'audio' ||
         (attachment != null &&
@@ -724,15 +772,32 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 )
               else if (isImage)
-                ClipRRect(
+                InkWell(
+                  onTap: () => _showImagePreview(attachment),
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    attachment,
-                    width: 240,
-                    height: 180,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, error, stackTrace) =>
-                        const Icon(Icons.broken_image_outlined),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      attachment,
+                      width: 240,
+                      height: 180,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) =>
+                          progress == null
+                          ? child
+                          : const SizedBox(
+                              width: 240,
+                              height: 180,
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                      errorBuilder: (_, error, stackTrace) => const SizedBox(
+                        width: 240,
+                        height: 120,
+                        child: Icon(Icons.broken_image_outlined),
+                      ),
+                    ),
                   ),
                 )
               else

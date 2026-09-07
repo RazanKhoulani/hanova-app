@@ -141,11 +141,25 @@
                         </span>
                     </div>
                     @if($order->shipping_receipt)
-                        <a href="{{ \App\Services\ProtectedFileUrl::make('order-receipt', $order->id, 'receipt', auth()->id()) }}" target="_blank" rel="noopener" class="file-row mb-3">
-                            <i class="fas fa-image"></i>
-                            <span>{{ __('admin.view_uploaded_receipt') }}</span>
-                            <i class="fas fa-external-link-alt"></i>
-                        </a>
+                        @php($receiptUrl = \App\Services\ProtectedFileUrl::make('order-receipt', $order->id, 'receipt', auth()->id()))
+                        <button type="button" class="receipt-preview-button mb-3" data-bs-toggle="modal" data-bs-target="#paymentReceiptModal">
+                            <img src="{{ $receiptUrl }}" alt="{{ __('admin.view_uploaded_receipt') }}" class="receipt-preview-image">
+                            <span class="receipt-preview-overlay"><i class="fas fa-magnifying-glass-plus"></i>{{ __('admin.view_uploaded_receipt') }}</span>
+                        </button>
+
+                        <div class="modal fade" id="paymentReceiptModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-xl">
+                                <div class="modal-content bg-dark border-0">
+                                    <div class="modal-header border-0">
+                                        <h5 class="modal-title text-white">{{ __('admin.receipt') }}</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ __('admin.close') }}"></button>
+                                    </div>
+                                    <div class="modal-body p-2 text-center receipt-zoom-stage">
+                                        <img src="{{ $receiptUrl }}" alt="{{ __('admin.receipt') }}" class="img-fluid receipt-full-image" onclick="this.classList.toggle('is-zoomed')">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     @endif
                     @if(in_array($order->payment_receipt_status, ['pending', 'rejected'], true) && $order->shipping_receipt)
                         <div class="d-grid gap-2 mb-3">

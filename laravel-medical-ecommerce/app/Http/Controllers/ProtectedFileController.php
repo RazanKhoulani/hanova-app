@@ -24,9 +24,14 @@ class ProtectedFileController extends Controller
             abort(403);
         }
 
-        $disk = $disk ?: 'public';
-        if (! Storage::disk($disk)->exists($path) && $disk !== 'public' && Storage::disk('public')->exists($path)) {
-            $disk = 'public';
+        $disk = $disk ?: 'local';
+        if (! Storage::disk($disk)->exists($path)) {
+            foreach (['local', 'public'] as $fallbackDisk) {
+                if ($fallbackDisk !== $disk && Storage::disk($fallbackDisk)->exists($path)) {
+                    $disk = $fallbackDisk;
+                    break;
+                }
+            }
         }
 
         abort_unless(Storage::disk($disk)->exists($path), 404);
