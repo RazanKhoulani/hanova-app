@@ -10,6 +10,7 @@ import 'core/router/app_router.dart';
 import 'core/settings/app_settings_cubit.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
+import 'features/auth/presentation/bloc/auth_state.dart';
 import 'features/store/presentation/bloc/store_bloc.dart';
 import 'features/store/presentation/bloc/cart_bloc.dart';
 import 'features/clinical/presentation/bloc/clinical_bloc.dart';
@@ -73,8 +74,9 @@ class _AppViewState extends State<_AppView> with WidgetsBindingObserver {
   }
 
   void _refreshNotifications() {
-    if (!mounted || context.read<AuthBloc>().state is! AuthAuthenticated)
+    if (!mounted || context.read<AuthBloc>().state is! AuthAuthenticated) {
       return;
+    }
     _notificationRefreshDebounce?.cancel();
     _notificationRefreshDebounce = Timer(const Duration(milliseconds: 350), () {
       if (mounted) {
