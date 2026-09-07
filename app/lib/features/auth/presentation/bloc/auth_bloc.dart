@@ -73,6 +73,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           otpSimulated: response.otpSimulated,
           message: response.message,
           deliveryStatus: response.deliveryStatus,
+          requestId: response.requestId,
         ),
       );
     } catch (e) {
@@ -89,6 +90,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final response = await _authRepository.verifyRegistrationOtp(
         event.phone,
         event.otp,
+        requestId: event.requestId,
       );
       if (response.user == null) {
         emit(AuthFailure('OTP verification failed.'));
@@ -107,8 +109,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _authRepository.resendRegistrationOtp(event.phone);
-      emit(AuthActionSuccess('A new code was sent by WhatsApp.'));
+      final response = await _authRepository.resendRegistrationOtp(event.phone);
+      emit(
+        AuthOtpResent(
+          requestId: response.requestId,
+          deliveryStatus: response.deliveryStatus,
+        ),
+      );
     } catch (e) {
       emit(AuthFailure(ApiErrorMessage.from(e)));
     }

@@ -44,23 +44,27 @@ class AuthRemoteDataSource {
 
   Future<AuthResponseModel> verifyRegistrationOtp(
     String phone,
-    String otp,
-  ) async {
+    String otp, {
+    String? requestId,
+  }) async {
     final response = await _dioClient.post(
       ApiConstants.verifyRegistrationOtp,
       data: {
         'phone': SyrianPhoneNumber.storedInternational(phone),
         'otp': otp,
+        if (requestId != null && requestId.isNotEmpty)
+          'request_id': requestId,
       },
     );
     return AuthResponseModel.fromJson(response.data);
   }
 
-  Future<void> resendRegistrationOtp(String phone) async {
-    await _dioClient.post(
+  Future<AuthResponseModel> resendRegistrationOtp(String phone) async {
+    final response = await _dioClient.post(
       ApiConstants.resendRegistrationOtp,
       data: {'phone': SyrianPhoneNumber.storedInternational(phone)},
     );
+    return AuthResponseModel.fromJson(response.data);
   }
 
   Future<UserModel> updateProfile(UserModel user) async {

@@ -16,12 +16,14 @@ class AuthOtpRequired extends AuthState {
   final String? otpSimulated;
   final String? message;
   final String? deliveryStatus;
+  final String? requestId;
 
   AuthOtpRequired({
     required this.phone,
     this.otpSimulated,
     this.message,
     this.deliveryStatus,
+    this.requestId,
   });
 }
 
@@ -30,6 +32,13 @@ class AuthUnauthenticated extends AuthState {}
 class AuthActionSuccess extends AuthState {
   final String message;
   AuthActionSuccess(this.message);
+}
+
+class AuthOtpResent extends AuthState {
+  final String? requestId;
+  final String? deliveryStatus;
+
+  AuthOtpResent({this.requestId, this.deliveryStatus});
 }
 
 class AuthFailure extends AuthState {

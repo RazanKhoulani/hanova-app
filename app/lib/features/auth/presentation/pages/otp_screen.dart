@@ -20,6 +20,7 @@ class OtpScreen extends StatefulWidget {
 class _OtpScreenState extends State<OtpScreen> {
   final _pinController = TextEditingController();
   final _focusNode = FocusNode();
+  String? _requestId;
 
   bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
   String _label(String ar, String en) => _isArabic ? ar : en;
@@ -31,7 +32,7 @@ class _OtpScreenState extends State<OtpScreen> {
     super.dispose();
   }
 
-  void _verify(String phone) {
+  void _verify(String phone, String? requestId) {
     if (_pinController.text.length != 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -43,7 +44,11 @@ class _OtpScreenState extends State<OtpScreen> {
       return;
     }
     context.read<AuthBloc>().add(
-      AuthVerifyOtpRequested(phone, _pinController.text),
+      AuthVerifyOtpRequested(
+        phone,
+        _pinController.text,
+        requestId: requestId,
+      ),
     );
   }
 
@@ -54,6 +59,9 @@ class _OtpScreenState extends State<OtpScreen> {
     final phone = (payload['phone'] ?? '').toString();
     final otpSimulated = payload['otp_simulated']?.toString();
     final deliveryStatus = payload['delivery_status']?.toString();
+    final requestId = payload['request_id']?.toString();
+    _requestId ??= requestId;
+    final displayPhone = SyrianPhoneNumber.display(phone);
 
     final defaultPinTheme = PinTheme(
       width: 56,
@@ -81,10 +89,22 @@ class _OtpScreenState extends State<OtpScreen> {
               backgroundColor: AppColors.danger,
             ),
           );
-        } else if (state is AuthActionSuccess) {
+        } else if (state is AuthOtpResent) {
+          setState(() => _requestId = state.requestId ?? _requestId);
+          _pinController.clear();
+          _focusNode.requestFocus();
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          ).showSnackBar(
+            SnackBar(
+              content: Text(
+                _label(
+                  'تم قبول طلب رمز جديد عبر واتساب. استخدمي آخر رمز يصلك.',
+                  'A new WhatsApp code was accepted. Use the latest code you receive.',
+                ),
+              ),
+            ),
+          );
         }
       },
       builder: (context, state) {
@@ -98,8 +118,8 @@ class _OtpScreenState extends State<OtpScreen> {
                   'Complete verification to continue',
                 )
               : _label(
-                  'أرسلنا الرمز عبر واتساب إلى ${SyrianPhoneNumber.display(phone)}',
-                  'We sent a WhatsApp code to ${SyrianPhoneNumber.display(phone)}',
+                  'أرسلنا الرمز عبر واتساب إلى \u2066$displayPhone\u2069',
+                  'We sent a WhatsApp code to $displayPhone',
                 ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,28 +141,33 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 20),
               Center(
-                child: Pinput(
-                  length: 5,
-                  controller: _pinController,
-                  focusNode: _focusNode,
-                  defaultPinTheme: defaultPinTheme,
-                  focusedPinTheme: defaultPinTheme.copyWith(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(17),
-                      border: Border.all(color: AppColors.primary, width: 2),
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Pinput(
+                    length: 5,
+                    controller: _pinController,
+                    focusNode: _focusNode,
+                    defaultPinTheme: defaultPinTheme,
+                    focusedPinTheme: defaultPinTheme.copyWith(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(17),
+                        border: Border.all(color: AppColors.primary, width: 2),
+                      ),
                     ),
-                  ),
-                  submittedPinTheme: defaultPinTheme.copyWith(
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(17),
-                      border: Border.all(color: AppColors.primary),
+                    submittedPinTheme: defaultPinTheme.copyWith(
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(17),
+                        border: Border.all(color: AppColors.primary),
+                      ),
                     ),
+                    onCompleted: (_) {
+                      if (phone.isNotEmpty && !isLoading) {
+                        _verify(phone, _requestId);
+                      }
+                    },
                   ),
-                  onCompleted: (_) {
-                    if (phone.isNotEmpty && !isLoading) _verify(phone);
-                  },
                 ),
               ),
               if (deliveryStatus == 'accepted') ...[
@@ -178,7 +203,7 @@ class _OtpScreenState extends State<OtpScreen> {
               ElevatedButton(
                 onPressed: (phone.isEmpty || isLoading)
                     ? null
-                    : () => _verify(phone),
+                    : () => _verify(phone, _requestId),
                 child: isLoading
                     ? const SizedBox.square(
                         dimension: 20,

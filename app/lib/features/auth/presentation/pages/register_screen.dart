@@ -116,6 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               'phone': state.phone,
               'otp_simulated': state.otpSimulated,
               'delivery_status': state.deliveryStatus,
+              'request_id': state.requestId,
             },
           );
         } else if (state is AuthFailure) {

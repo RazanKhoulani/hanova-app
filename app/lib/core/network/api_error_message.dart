@@ -105,6 +105,9 @@ class ApiErrorMessage {
     if (normalized.contains('file field must be a file')) {
       return '\u0646\u0648\u0639 \u0627\u0644\u0645\u0644\u0641 \u063a\u064a\u0631 \u0645\u0633\u0645\u0648\u062d. اختاري صورة JPG أو PNG أو تسجيلاً صوتياً أو ملف PDF.';
     }
+    if (normalized.contains('verification code is invalid or expired')) {
+      return 'رمز التحقق غير صحيح أو انتهت صلاحيته. أعيدي إرسال الرمز واستخدمي آخر رمز وصلك.';
+    }
 
     return message.replaceFirst('Exception: ', '');
   }

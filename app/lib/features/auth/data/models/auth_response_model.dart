@@ -7,6 +7,7 @@ class AuthResponseModel {
   final String? phone;
   final String? otpSimulated;
   final String? deliveryStatus;
+  final String? requestId;
   final bool requiresOtpVerification;
 
   AuthResponseModel({
@@ -16,6 +17,7 @@ class AuthResponseModel {
     this.phone,
     this.otpSimulated,
     this.deliveryStatus,
+    this.requestId,
     this.requiresOtpVerification = false,
   });
 
@@ -35,6 +37,7 @@ class AuthResponseModel {
       phone: json['phone'],
       otpSimulated: json['otp_simulated']?.toString(),
       deliveryStatus: json['delivery_status']?.toString(),
+      requestId: json['request_id']?.toString(),
       requiresOtpVerification: json['requires_otp_verification'] == true,
     );
   }

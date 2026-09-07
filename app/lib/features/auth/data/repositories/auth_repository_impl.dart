@@ -50,9 +50,14 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AuthResponseModel> verifyRegistrationOtp(
     String phone,
-    String otp,
-  ) async {
-    final response = await _remoteDataSource.verifyRegistrationOtp(phone, otp);
+    String otp, {
+    String? requestId,
+  }) async {
+    final response = await _remoteDataSource.verifyRegistrationOtp(
+      phone,
+      otp,
+      requestId: requestId,
+    );
     if (response.token != null) {
       await _storage.write(key: 'access_token', value: response.token);
       _apiInterceptor.setToken(response.token);
@@ -62,7 +67,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> resendRegistrationOtp(String phone) {
+  Future<AuthResponseModel> resendRegistrationOtp(String phone) {
     return _remoteDataSource.resendRegistrationOtp(phone);
   }
 
