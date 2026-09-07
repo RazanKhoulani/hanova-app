@@ -57,11 +57,16 @@
 
                 <div class="mt-4 text-start">
                     <label class="text-muted small text-uppercase fw-bold d-block mb-2">{{ __('admin.commercial_category') }}</label>
-                    <div>{{ $product->category ?? __('admin.no_commercial_category') }}</div>
+                    <div dir="auto">{{ $product->category ?: __('admin.no_commercial_category') }}</div>
 
                     <label class="text-muted small text-uppercase fw-bold d-block mt-3 mb-2">{{ __('admin.treatment_concerns') }}</label>
                     @forelse($product->concerns as $concern)
-                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle mb-1">{{ $concern->name_ar }} / {{ $concern->name_en }}</span>
+                        @php
+                            $concernName = app()->getLocale() === 'ar'
+                                ? ($concern->name_ar ?: $concern->name_en)
+                                : ($concern->name_en ?: $concern->name_ar);
+                        @endphp
+                        <span class="badge concern-badge border mb-1">{{ $concernName ?: __('admin.unnamed_concern') }}</span>
                     @empty
                         <span class="text-muted small">{{ __('admin.no_concerns') }}</span>
                     @endforelse
@@ -89,7 +94,25 @@
     <div class="panel-heading"><div><h3>{{ __('admin.inventory_history') }}</h3><p>{{ __('admin.inventory_history_hint') }}</p></div></div>
     <div class="table-responsive"><table class="table mb-0"><thead><tr><th>{{ __('admin.date') }}</th><th>{{ __('admin.movement_type') }}</th><th>{{ __('admin.quantity_change') }}</th><th>{{ __('admin.stock') }}</th><th>{{ __('admin.reason') }}</th><th>{{ __('admin.changed_by') }}</th></tr></thead><tbody>
     @forelse($product->inventoryMovements as $movement)
-        <tr><td>{{ $movement->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</td><td>{{ __('admin.movement_' . $movement->type) }}</td><td class="{{ $movement->quantity_change >= 0 ? 'text-success' : 'text-danger' }} fw-bold">{{ $movement->quantity_change > 0 ? '+' : '' }}{{ $movement->quantity_change }}</td><td>{{ $movement->stock_before }} → {{ $movement->stock_after }}</td><td>{{ $movement->reason ?: '-' }}@if($movement->order_id) <a href="{{ route('admin.orders.show', $movement->order_id) }}">#{{ $movement->order_id }}</a>@endif</td><td>{{ $movement->user?->name ?: __('admin.system') }}</td></tr>
+        @php
+            $movementKey = 'admin.movement_' . $movement->type;
+            $movementReason = match ($movement->type) {
+                'opening_balance' => __('admin.opening_stock'),
+                'reservation' => __('admin.inventory_reserved_for_order'),
+                'release' => $movement->order_id
+                    ? __('admin.inventory_released_after_cancellation')
+                    : __('admin.inventory_released'),
+                default => $movement->reason ?: '-',
+            };
+        @endphp
+        <tr>
+            <td>{{ $movement->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</td>
+            <td>{{ trans()->has($movementKey) ? __($movementKey) : str_replace('_', ' ', $movement->type) }}</td>
+            <td class="{{ $movement->quantity_change >= 0 ? 'text-success' : 'text-danger' }} fw-bold">{{ $movement->quantity_change > 0 ? '+' : '' }}{{ $movement->quantity_change }}</td>
+            <td>{{ $movement->stock_before }} → {{ $movement->stock_after }}</td>
+            <td>{{ $movementReason }}@if($movement->order_id) <a href="{{ route('admin.orders.show', $movement->order_id) }}">#{{ $movement->order_id }}</a>@endif</td>
+            <td>{{ $movement->user?->name ?: __('admin.system') }}</td>
+        </tr>
     @empty
         <tr><td colspan="6" class="text-center text-muted py-4">{{ __('admin.no_inventory_movements') }}</td></tr>
     @endforelse

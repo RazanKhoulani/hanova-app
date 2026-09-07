@@ -58,7 +58,8 @@
 
                 <div class="col-md-6">
                     <label class="form-label fw-bold">{{ __('admin.commercial_category') }}</label>
-                    <input type="text" name="category" class="form-control" value="{{ old('category', $product->category) }}" placeholder="{{ __('admin.category_placeholder') }}">
+                    <input type="text" name="category" class="form-control" dir="auto" value="{{ old('category', $product->category) }}" placeholder="{{ __('admin.category_placeholder') }}">
+                    <div class="form-text">{{ __('admin.commercial_category_hint') }}</div>
                 </div>
 
                 <div class="col-md-6">
@@ -80,9 +81,14 @@
                     @php($selectedConcerns = old('concern_ids', $product->concerns->pluck('id')->all()))
                     <div class="border rounded p-3 bg-light" style="max-height: 180px; overflow-y: auto;">
                         @foreach($concerns as $concern)
+                            @php
+                                $concernName = app()->getLocale() === 'ar'
+                                    ? ($concern->name_ar ?: $concern->name_en)
+                                    : ($concern->name_en ?: $concern->name_ar);
+                            @endphp
                             <label class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="concern_ids[]" value="{{ $concern->id }}" @checked(in_array($concern->id, $selectedConcerns))>
-                                <span class="form-check-label">{{ $concern->name_ar }} / {{ $concern->name_en }}</span>
+                                <span class="form-check-label">{{ $concernName ?: __('admin.unnamed_concern') }}</span>
                             </label>
                         @endforeach
                     </div>

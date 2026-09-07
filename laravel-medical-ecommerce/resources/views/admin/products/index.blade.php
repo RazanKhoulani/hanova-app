@@ -56,7 +56,12 @@
                         <td class="align-middle px-4 text-muted">{{ $product->name_ar }}</td>
                         <td class="align-middle px-4">
                             @forelse($product->concerns as $concern)
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle mb-1">{{ $concern->name_ar }}</span>
+                                @php
+                                    $concernName = app()->getLocale() === 'ar'
+                                        ? ($concern->name_ar ?: $concern->name_en)
+                                        : ($concern->name_en ?: $concern->name_ar);
+                                @endphp
+                                <span class="badge concern-badge border mb-1">{{ $concernName ?: __('admin.unnamed_concern') }}</span>
                             @empty
                                 <span class="text-muted small">{{ __('admin.no_concerns') }}</span>
                             @endforelse

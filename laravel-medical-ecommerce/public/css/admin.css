@@ -873,6 +873,14 @@ a {
     font-weight: 800;
 }
 
+.concern-badge {
+    color: var(--clinic-primary-dark) !important;
+    background: var(--clinic-primary-soft) !important;
+    border-color: rgba(202, 109, 132, 0.3) !important;
+    line-height: 1.35;
+    white-space: normal;
+}
+
 .form-label {
     margin-bottom: 7px;
     color: var(--clinic-text);

@@ -121,36 +121,64 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                   HanovaFieldLabel(_label('رقم الموبايل أو البريد الإلكتروني', 'Phone number or email')),
-                  TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    scrollPadding: const EdgeInsets.only(bottom: 150),
-                    autofillHints: const [AutofillHints.username],
-                    decoration: InputDecoration(
-                      hintText: _label('رقم الموبايل أو البريد', 'Phone number or email'),
-                      prefixIcon: CountryCodePicker(
-                        initialSelection: 'SY',
-                        favorite: const ['SY', 'AE', 'SA', 'LB'],
-                        showCountryOnly: false,
-                        showOnlyCountryWhenClosed: false,
-                        searchDecoration: InputDecoration(hintText: _label('ابحثي عن دولة', 'Search country')),
-                        onChanged: (country) => setState(() => _callingCode = country.dialCode ?? '+963'),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      textDirection: TextDirection.ltr,
+                      textAlign: TextAlign.left,
+                      scrollPadding: const EdgeInsets.only(bottom: 150),
+                      autofillHints: const [AutofillHints.username],
+                      decoration: InputDecoration(
+                        hintText: _label(
+                          'رقم الموبايل أو البريد',
+                          'Phone number or email',
+                        ),
+                        prefixIcon: CountryCodePicker(
+                          initialSelection: 'SY',
+                          favorite: const ['SY', 'AE', 'SA', 'LB'],
+                          showCountryOnly: false,
+                          showOnlyCountryWhenClosed: false,
+                          headerText: _label(
+                            'اختاري الدولة',
+                            'Select country',
+                          ),
+                          searchDecoration: InputDecoration(
+                            hintText: _label(
+                              'ابحثي عن دولة',
+                              'Search country',
+                            ),
+                          ),
+                          onChanged: (country) => setState(
+                            () => _callingCode = country.dialCode ?? '+963',
+                          ),
+                        ),
+                        prefixIconConstraints: const BoxConstraints(
+                          minWidth: 112,
+                        ),
                       ),
-                      prefixIconConstraints: const BoxConstraints(minWidth: 112),
+                      validator: (value) {
+                        final raw = value?.trim() ?? '';
+                        final isEmail = raw.contains('@') &&
+                            RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            ).hasMatch(raw);
+                        if (!isEmail &&
+                            SyrianPhoneNumber.tryInternational(
+                                  raw,
+                                  callingCode: _callingCode,
+                                ) ==
+                                null) {
+                          return _label(
+                            'أدخلي رقم موبايل صحيحاً أو بريداً إلكترونياً صحيحاً',
+                            'Enter a valid phone number or email address',
+                          );
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      final raw = value?.trim() ?? '';
-                      final isEmail = raw.contains('@') &&
-                          RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(raw);
-                      if (!isEmail && SyrianPhoneNumber.tryInternational(raw, callingCode: _callingCode) == null) {
-                        return _label(
-                          'أدخلي رقم موبايل صحيحاً أو بريداً إلكترونياً صحيحاً',
-                          'Enter a valid phone number or email address',
-                        );
-                      }
-                      return null;
-                    },
                   ),
                   const SizedBox(height: 18),
                   HanovaFieldLabel(_label('كلمة المرور', 'Password')),

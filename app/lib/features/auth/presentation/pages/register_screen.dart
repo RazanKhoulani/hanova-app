@@ -164,36 +164,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 HanovaFieldLabel(_label('رقم الموبايل', 'Phone number')),
-                TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.telephoneNumber],
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    hintText: _callingCode == '+963' ? '0945345844 أو 945345844' : _label('رقم الموبايل', 'Phone number'),
-                    prefixIcon: CountryCodePicker(
-                      initialSelection: 'SY',
-                      favorite: const ['SY', 'AE', 'SA', 'LB'],
-                      showCountryOnly: false,
-                      showOnlyCountryWhenClosed: false,
-                      searchDecoration: InputDecoration(hintText: _label('ابحثي عن دولة', 'Search country')),
-                      onChanged: (country) => setState(() => _callingCode = country.dialCode ?? '+963'),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    textDirection: TextDirection.ltr,
+                    textAlign: TextAlign.left,
+                    autofillHints: const [AutofillHints.telephoneNumber],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      hintText: _callingCode == '+963'
+                          ? '0945345844 / 945345844'
+                          : _label('رقم الموبايل', 'Phone number'),
+                      prefixIcon: CountryCodePicker(
+                        initialSelection: 'SY',
+                        favorite: const ['SY', 'AE', 'SA', 'LB'],
+                        showCountryOnly: false,
+                        showOnlyCountryWhenClosed: false,
+                        headerText: _label('اختاري الدولة', 'Select country'),
+                        searchDecoration: InputDecoration(
+                          hintText: _label('ابحثي عن دولة', 'Search country'),
+                        ),
+                        onChanged: (country) => setState(
+                          () => _callingCode = country.dialCode ?? '+963',
+                        ),
+                      ),
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 112,
+                      ),
                     ),
-                    prefixIconConstraints: const BoxConstraints(minWidth: 112),
                   ),
                 ),
                 const SizedBox(height: 16),
                 HanovaFieldLabel(_label('تأكيد رقم الموبايل', 'Confirm phone number')),
-                TextField(
-                  controller: _confirmPhoneController,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    hintText: _label('أعيدي كتابة الرقم', 'Repeat phone number'),
-                    prefixText: '$_callingCode  ',
-                    prefixIcon: const Icon(Icons.phone_android_rounded),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: TextField(
+                    controller: _confirmPhoneController,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    textDirection: TextDirection.ltr,
+                    textAlign: TextAlign.left,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      hintText: _label(
+                        'أعيدي كتابة الرقم',
+                        'Repeat phone number',
+                      ),
+                      prefixText: '$_callingCode  ',
+                      prefixIcon: const Icon(Icons.phone_android_rounded),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

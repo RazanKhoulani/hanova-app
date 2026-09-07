@@ -10,7 +10,19 @@ class SyrianPhoneNumber {
     var digits = _digits(raw);
     final explicitlyInternational = raw.startsWith('+') || raw.startsWith('00');
 
+    if (selectedCode.isEmpty) return null;
     if (digits.startsWith('00')) digits = digits.substring(2);
+
+    // Phone autofill may provide the selected calling code together with the
+    // local trunk prefix (for example 9630945...). Keep the selected country
+    // code once and remove only that redundant national leading zero.
+    if (selectedCode == '963' && digits.startsWith(selectedCode)) {
+      final nationalNumber = digits.substring(selectedCode.length);
+      if (nationalNumber.startsWith('0')) {
+        digits = '$selectedCode${nationalNumber.substring(1)}';
+      }
+    }
+
     if (!explicitlyInternational && !digits.startsWith(selectedCode)) {
       if (selectedCode == '963' && RegExp(r'^09\d{8}$').hasMatch(digits)) {
         digits = digits.substring(1);
@@ -29,6 +41,18 @@ class SyrianPhoneNumber {
       throw const FormatException('Enter a valid international phone number.');
     }
     return result;
+  }
+
+  /// Restores the leading plus for a canonical E.164 value returned by the API.
+  /// This is deliberately separate from [international] because a bare
+  /// nine-digit value is ambiguous with a Syrian local number.
+  static String storedInternational(String value) {
+    var digits = _digits(value);
+    if (digits.startsWith('00')) digits = digits.substring(2);
+    if (!RegExp(r'^[1-9]\d{7,14}$').hasMatch(digits)) {
+      throw const FormatException('Invalid stored international phone number.');
+    }
+    return '+$digits';
   }
 
   static String display(String value) {

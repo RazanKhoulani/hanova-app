@@ -48,7 +48,10 @@ class AuthRemoteDataSource {
   ) async {
     final response = await _dioClient.post(
       ApiConstants.verifyRegistrationOtp,
-      data: {'phone': SyrianPhoneNumber.international(phone), 'otp': otp},
+      data: {
+        'phone': SyrianPhoneNumber.storedInternational(phone),
+        'otp': otp,
+      },
     );
     return AuthResponseModel.fromJson(response.data);
   }
@@ -56,7 +59,7 @@ class AuthRemoteDataSource {
   Future<void> resendRegistrationOtp(String phone) async {
     await _dioClient.post(
       ApiConstants.resendRegistrationOtp,
-      data: {'phone': SyrianPhoneNumber.international(phone)},
+      data: {'phone': SyrianPhoneNumber.storedInternational(phone)},
     );
   }
 
@@ -65,7 +68,7 @@ class AuthRemoteDataSource {
       ApiConstants.updateProfile,
       data: {
         ...user.toJson(),
-        'phone': SyrianPhoneNumber.international(user.phone),
+        'phone': SyrianPhoneNumber.storedInternational(user.phone),
       },
     );
     final payload = response.data['data'] ?? response.data;
