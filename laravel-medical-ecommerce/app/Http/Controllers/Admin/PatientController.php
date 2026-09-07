@@ -11,6 +11,8 @@ use App\Models\PatientProgressPhoto;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -74,7 +76,34 @@ class PatientController extends Controller
             return back()->with('error', __('admin.patient_delete_blocked'));
         }
 
-        $patient->delete();
+        DB::transaction(function () use ($patient): void {
+            $user = $patient->user;
+
+            if ($user !== null) {
+                $archiveTag = 'deleted-'.$user->id.'-'.now()->format('YmdHis');
+
+                // Preserve linked business history while freeing the original
+                // phone and email so the patient can register again later.
+                DB::table('users')->where('id', $user->id)->update([
+                    'name' => $user->name.' [deleted #'.$user->id.']',
+                    'phone' => $archiveTag.'-'.$user->phone,
+                    'email' => $user->email === null
+                        ? null
+                        : $archiveTag.'@deleted.hanova.local',
+                    'password' => Hash::make(Str::random(48)),
+                    'phone_verified_at' => null,
+                    'qverify_request_id' => null,
+                    'qverify_expires_at' => null,
+                    'remember_token' => null,
+                    'updated_at' => now(),
+                ]);
+
+                $user->tokens()->delete();
+                $user->deviceTokens()->delete();
+            }
+
+            $patient->delete();
+        });
 
         return redirect()->route('admin.patients.index')->with('success', __('admin.patient_deleted'));
     }

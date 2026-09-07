@@ -126,14 +126,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
         },
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: widget.showAppBar
-              ? AppBar(
-                  leading: const HanovaBackButton(),
-                  title: Text(context.tr('my_orders')),
-                )
-              : null,
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: HanovaBackButton(
+              onPressed: widget.showAppBar
+                  ? null
+                  : () => context.go('/home?tab=0'),
+            ),
+            title: Text(context.tr('my_orders')),
+          ),
           body: SafeArea(
-            top: !widget.showAppBar,
+            top: false,
             bottom: false,
             child: BlocBuilder<AuthBloc, AuthState>(
               builder: (context, authState) {

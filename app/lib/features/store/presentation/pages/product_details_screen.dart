@@ -235,7 +235,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ],
             ),
           ),
-          bottomNavigationBar: _buildBottomBar(product),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: _buildBottomBar(product),
+          ),
         );
       },
     );
@@ -246,7 +249,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       expandedHeight: 350,
       pinned: true,
       backgroundColor: AppColors.background,
-      leading: const HanovaBackButton(),
+      leading: const HanovaBackButton(backgroundColor: Colors.white),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(
@@ -308,7 +311,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final canIncrease = !product.tracksInventory || _quantity < product.stock;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 18),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [

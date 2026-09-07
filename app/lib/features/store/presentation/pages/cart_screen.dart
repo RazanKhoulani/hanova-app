@@ -78,7 +78,10 @@ class _CartScreenState extends State<CartScreen> {
                         },
                       ),
                     ),
-                    _buildSummary(context, state),
+                    SafeArea(
+                      top: false,
+                      child: _buildSummary(context, state),
+                    ),
                   ],
                 ),
         );
@@ -214,7 +217,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildSummary(BuildContext context, CartState state) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
