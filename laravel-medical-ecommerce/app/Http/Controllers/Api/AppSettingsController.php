@@ -23,6 +23,16 @@ class AppSettingsController extends Controller
                     'ar' => $siteContent['site_goal_ar'],
                     'en' => $siteContent['site_goal_en'],
                 ],
+                'consultation_banner' => [
+                    'ar' => [
+                        'title' => $siteContent['home_consultation_title_ar'],
+                        'description' => $siteContent['home_consultation_description_ar'],
+                    ],
+                    'en' => [
+                        'title' => $siteContent['home_consultation_title_en'],
+                        'description' => $siteContent['home_consultation_description_en'],
+                    ],
+                ],
             ],
         ]);
     }

@@ -75,6 +75,28 @@
         </div>
 
         <hr class="my-4">
+        <div class="settings-section-label">{{ __('admin.home_consultation_content') }}</div>
+        <p class="text-muted small">{{ __('admin.home_consultation_content_hint') }}</p>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label for="home_consultation_title_ar">{{ __('admin.home_consultation_title_ar') }}</label>
+                <input id="home_consultation_title_ar" name="home_consultation_title_ar" class="form-control" dir="rtl" maxlength="120" value="{{ old('home_consultation_title_ar', $settings['home_consultation_title_ar']) }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="home_consultation_title_en">{{ __('admin.home_consultation_title_en') }}</label>
+                <input id="home_consultation_title_en" name="home_consultation_title_en" class="form-control" dir="ltr" maxlength="120" value="{{ old('home_consultation_title_en', $settings['home_consultation_title_en']) }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="home_consultation_description_ar">{{ __('admin.home_consultation_description_ar') }}</label>
+                <textarea id="home_consultation_description_ar" name="home_consultation_description_ar" class="form-control" dir="rtl" rows="3" maxlength="500" required>{{ old('home_consultation_description_ar', $settings['home_consultation_description_ar']) }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label for="home_consultation_description_en">{{ __('admin.home_consultation_description_en') }}</label>
+                <textarea id="home_consultation_description_en" name="home_consultation_description_en" class="form-control" dir="ltr" rows="3" maxlength="500" required>{{ old('home_consultation_description_en', $settings['home_consultation_description_en']) }}</textarea>
+            </div>
+        </div>
+
+        <hr class="my-4">
         <div class="settings-section-label">{{ __('admin.site_content') }}</div>
         <div class="row g-4">
             <div class="col-md-6">

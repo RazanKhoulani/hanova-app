@@ -30,6 +30,10 @@ class AppSettingsController extends Controller
             'site_about_en' => ['nullable', 'string', 'max:1000'],
             'site_goal_ar' => ['nullable', 'string', 'max:1000'],
             'site_goal_en' => ['nullable', 'string', 'max:1000'],
+            'home_consultation_title_ar' => ['required', 'string', 'max:120'],
+            'home_consultation_title_en' => ['required', 'string', 'max:120'],
+            'home_consultation_description_ar' => ['required', 'string', 'max:500'],
+            'home_consultation_description_en' => ['required', 'string', 'max:500'],
             'delivery_areas' => ['sometimes', 'array'],
             'delivery_areas.*.fee' => ['required', 'numeric', 'min:0'],
             'delivery_areas.*.fee_usd' => ['nullable', 'numeric', 'min:0'],
@@ -43,6 +47,10 @@ class AppSettingsController extends Controller
             'site_about_en' => $data['site_about_en'] ?? '',
             'site_goal_ar' => $data['site_goal_ar'] ?? '',
             'site_goal_en' => $data['site_goal_en'] ?? '',
+            'home_consultation_title_ar' => trim($data['home_consultation_title_ar']),
+            'home_consultation_title_en' => trim($data['home_consultation_title_en']),
+            'home_consultation_description_ar' => trim($data['home_consultation_description_ar']),
+            'home_consultation_description_en' => trim($data['home_consultation_description_en']),
         ];
 
         DB::transaction(function () use ($values, $data): void {

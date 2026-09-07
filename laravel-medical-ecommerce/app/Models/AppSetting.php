@@ -37,6 +37,10 @@ class AppSetting extends Model
             'site_about_en' => 'One connected experience for clinic visits, consultations, appointments, and carefully selected skincare.',
             'site_goal_ar' => 'كل خطوة في التطبيق مرتبطة بالداشبورد وملفك، من الحجز حتى استلام الطلب.',
             'site_goal_en' => 'Every app step connects to the dashboard and your profile, from booking to order delivery.',
+            'home_consultation_title_ar' => 'استشارة البشرة',
+            'home_consultation_title_en' => 'Skin Consultation',
+            'home_consultation_description_ar' => 'احجزي موعداً في العيادة أو أونلاين ضمن الأوقات المتاحة فعلياً.',
+            'home_consultation_description_en' => 'Book an in-clinic or online appointment from the available times.',
         ];
     }
 

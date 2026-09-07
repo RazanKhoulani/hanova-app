@@ -287,13 +287,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-                          Text(
-                            context.tr('skin_consultation'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textSecondary,
+                          FutureBuilder<HomeDataModel>(
+                            future: _homeFuture,
+                            builder: (context, snapshot) => Text(
+                              snapshot.data?.consultationTitle?.trim().isNotEmpty == true
+                                  ? snapshot.data!.consultationTitle!
+                                  : context.tr('skin_consultation'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -387,8 +392,13 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 onAction: _scrollToProducts,
               ),
               _BannerSlideData(
-                title: context.tr('skin_consultation'),
-                description: context.tr('clinic_banner_copy'),
+                title: snapshot.data?.consultationTitle?.trim().isNotEmpty == true
+                    ? snapshot.data!.consultationTitle!
+                    : context.tr('skin_consultation'),
+                description:
+                    snapshot.data?.consultationDescription?.trim().isNotEmpty == true
+                    ? snapshot.data!.consultationDescription!
+                    : context.tr('clinic_banner_copy'),
                 actionLabel: isAuthenticated
                     ? context.tr('book_now')
                     : context.tr('login_to_book'),

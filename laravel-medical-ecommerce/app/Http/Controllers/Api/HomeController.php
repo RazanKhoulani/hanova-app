@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OfferResource;
 use App\Http\Resources\ProductResource;
+use App\Models\AppSetting;
 use App\Models\Concern;
 use App\Models\Product;
 use App\Services\OfferService;
@@ -35,12 +36,17 @@ class HomeController extends Controller
             ])
             ->values();
         $offer = $offerService->getActiveForUser($request->user('sanctum'));
+        $content = AppSetting::siteContentValues();
 
         return response()->json([
             'data' => [
                 'products' => ProductResource::collection($products)->resolve($request),
                 'categories' => $categories,
                 'active_offer' => $offer ? (new OfferResource($offer))->resolve($request) : null,
+                'consultation_banner' => [
+                    'title' => $content['home_consultation_title_'.$lang],
+                    'description' => $content['home_consultation_description_'.$lang],
+                ],
             ],
         ]);
     }
