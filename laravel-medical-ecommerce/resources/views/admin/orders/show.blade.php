@@ -31,9 +31,152 @@
         <section class="panel-card"><div class="panel-heading"><div><h3>{{ __('admin.customer_information') }}</h3><p>{{ __('admin.customer_information_hint') }}</p></div></div><div class="detail-stat-grid"><div><span>{{ __('admin.customer') }}</span><strong>{{ $order->user?->name ?? __('admin.unknown_customer') }}</strong></div><div><span>{{ __('admin.phone_number') }}</span><strong dir="ltr">{{ $order->user?->phone ?? '-' }}</strong></div><div class="wide"><span>{{ __('admin.shipping_address') }}</span><strong>{{ $order->shipping_address ?: __('admin.no_address') }}</strong>@if($order->shipping_latitude !== null && $order->shipping_longitude !== null)<a class="btn btn-sm btn-outline-primary mt-2" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat={{ $order->shipping_latitude }}&mlon={{ $order->shipping_longitude }}#map=17/{{ $order->shipping_latitude }}/{{ $order->shipping_longitude }}"><i class="fas fa-map-location-dot me-1"></i>{{ app()->getLocale() === 'ar' ? 'فتح الموقع على الخريطة' : 'Open delivery location' }}</a>@endif</div></div></section>
     </div>
     <div class="col-xl-4">
-        <section class="panel-card mb-4"><div class="panel-heading"><div><h3>{{ __('admin.order_status') }}</h3><p>{{ __('admin.status_update_hint') }}</p></div><span class="status-pill {{ in_array($order->status, ['cancelled', 'canceled']) ? 'danger' : (in_array($order->status, ['delivered', 'paid']) ? 'success' : 'warning') }}">{{ trans()->has($statusKey) ? __($statusKey) : ucfirst($order->status) }}</span></div>@if($prepaidBlocked)<div class="alert alert-warning">{{ __('admin.approve_receipt_before_order') }}</div>@endif<form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">@csrf @method('PUT')@if(auth()->user()->hasRole('delivery'))<input type="hidden" name="status" value="delivered"><button type="submit" class="btn btn-success w-100" @disabled($order->status === 'delivered' || $prepaidBlocked)>{{ __('admin.mark_delivered') }}</button>@else<select name="status" class="form-select mb-3">@foreach(['pending', 'accepted', 'ready', 'shipped', 'delivered', 'cancelled'] as $status)<option value="{{ $status }}" @selected($order->status === $status) @disabled($prepaidBlocked && !in_array($status, ['pending', 'cancelled'], true))>{{ __('admin.status_' . $status) }}</option>@endforeach</select><button type="submit" class="btn btn-primary w-100">{{ __('admin.update_status') }}</button>@endif</form></section>
-        <section class="panel-card mb-4"><div class="panel-heading"><div><h3>{{ __('admin.delivery_and_payment') }}</h3><p>{{ __('admin.delivery_payment_hint') }}</p></div></div><div class="info-list"><div><span>{{ __('admin.delivery_method') }}</span><strong>{{ trans()->has($deliveryKey) ? __($deliveryKey) : ucfirst(str_replace('_', ' ', $order->delivery_method)) }}</strong></div>@if($order->delivery_method === 'qadmous')<div><span>{{ __('admin.qadmous_governorate') }}</span><strong>{{ $order->qadmous_governorate ?: '-' }}</strong></div><div><span>{{ __('admin.qadmous_branch') }}</span><strong>{{ $order->qadmous_branch ?: '-' }}</strong></div><div><span>{{ __('admin.recipient') }}</span><strong>{{ $order->recipient_name ?: '-' }} · {{ $order->recipient_phone ?: '-' }}</strong></div><form method="POST" action="{{ route('admin.orders.updateTracking', $order->id) }}" class="mt-2">@csrf @method('PUT')<label for="tracking_number" class="form-label">{{ __('admin.tracking_number') }}</label><div class="input-group"><input id="tracking_number" name="tracking_number" value="{{ $order->tracking_number }}" class="form-control" placeholder="{{ __('admin.tracking_number') }}" required><button class="btn btn-outline-primary">{{ __('admin.save_tracking') }}</button></div></form>@elseif($order->pickup_location)<div><span>{{ __('admin.pickup_location') }}</span><strong>{{ __('admin.' . $order->pickup_location) }}</strong></div>@endif@if($order->deliveryArea)<div><span>{{ __('admin.delivery_area') }}</span><strong>{{ app()->getLocale() === 'ar' ? $order->deliveryArea->name_ar : $order->deliveryArea->name_en }} · {{ $money($order->delivery_fee ?? 0) }}@if($order->delivery_fee_usd !== null) · {{ $usd($order->delivery_fee_usd) }}@endif</strong></div>@endif@if($order->deliveryUser)<div><span>{{ __('admin.assigned_delivery') }}</span><strong>{{ $order->deliveryUser->name }}</strong></div>@endif<div><span>{{ __('admin.payment') }}</span><strong>{{ __($paymentKey) }}</strong></div><div><span>{{ __('admin.payment_status') }}</span><strong>{{ __('admin.payment_status_' . ($order->payment_status ?: 'unpaid')) }}</strong></div>@if($requiresReceipt)<div><span>{{ __('admin.receipt_status') }}</span><strong>{{ trans()->has($receiptStatusKey) ? __($receiptStatusKey) : $order->payment_receipt_status }}</strong></div>@endif@if($order->coupon)<div><span>{{ __('admin.coupon') }}</span><strong>{{ $order->coupon->code }}</strong></div>@endif</div></section>
-        @unless(auth()->user()->hasRole('delivery'))<section class="panel-card">@if($requiresReceipt)<div class="panel-heading"><div><h3>{{ __('admin.receipt') }}</h3><p>{{ __('admin.receipt_hint') }}</p></div><span class="status-pill {{ $order->payment_receipt_status === 'approved' ? 'success' : ($order->payment_receipt_status === 'rejected' ? 'danger' : 'warning') }}">{{ trans()->has($receiptStatusKey) ? __($receiptStatusKey) : $order->payment_receipt_status }}</span></div>@if($order->shipping_receipt)<a href="{{ \App\Services\ProtectedFileUrl::make('order-receipt', $order->id, 'receipt', auth()->id()) }}" target="_blank" class="file-row mb-3"><i class="fas fa-image"></i><span>{{ __('admin.view_uploaded_receipt') }}</span><i class="fas fa-external-link-alt"></i></a>@endif@if(in_array($order->payment_receipt_status, ['pending', 'rejected'], true) && $order->shipping_receipt)<div class="d-grid gap-2 mb-3"><form action="{{ route('admin.orders.reviewReceipt', $order->id) }}" method="POST">@csrf<input type="hidden" name="decision" value="approve"><button class="btn btn-success w-100"><i class="fas fa-check me-1"></i>{{ __('admin.approve_receipt') }}</button></form><form action="{{ route('admin.orders.reviewReceipt', $order->id) }}" method="POST">@csrf<input type="hidden" name="decision" value="reject"><input name="reason" class="form-control mb-2" placeholder="{{ __('admin.receipt_rejection_reason') }}" required><button class="btn btn-outline-danger w-100"><i class="fas fa-times me-1"></i>{{ __('admin.reject_receipt') }}</button></form></div>@endif<form action="{{ route('admin.orders.uploadReceipt', $order->id) }}" method="POST" enctype="multipart/form-data">@csrf<input type="file" name="shipping_receipt" class="form-control mb-2" accept="image/*" required><button type="submit" class="btn btn-outline-primary w-100">{{ $order->shipping_receipt ? __('admin.replace_receipt') : __('admin.upload_receipt') }}</button></form>@if($order->receipt_rejection_reason)<div class="alert alert-danger mt-3 mb-0">{{ $order->receipt_rejection_reason }}</div>@endif@else<div class="notice-card"><i class="fas fa-receipt"></i><span>{{ __('admin.receipt_not_required') }}</span></div>@endif</section>@endunless
+        <section class="panel-card mb-4">
+            <div class="panel-heading">
+                <div>
+                    <h3>{{ __('admin.order_status') }}</h3>
+                    <p>{{ __('admin.status_update_hint') }}</p>
+                </div>
+                <span class="status-pill {{ in_array($order->status, ['cancelled', 'canceled']) ? 'danger' : (in_array($order->status, ['delivered', 'paid']) ? 'success' : 'warning') }}">
+                    {{ trans()->has($statusKey) ? __($statusKey) : ucfirst($order->status) }}
+                </span>
+            </div>
+            @if($prepaidBlocked)
+                <div class="alert alert-warning">
+                    <div>{{ __('admin.approve_receipt_before_order') }}</div>
+                    @if($order->shipping_receipt && !auth()->user()->hasRole('delivery'))
+                        <a class="alert-link d-inline-block mt-1" href="#payment-receipt">
+                            {{ __('admin.review_receipt') }}
+                        </a>
+                    @endif
+                </div>
+            @endif
+            <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                @if(auth()->user()->hasRole('delivery'))
+                    <input type="hidden" name="status" value="delivered">
+                    <button type="submit" class="btn btn-success w-100" @disabled($order->status === 'delivered' || $prepaidBlocked)>
+                        {{ __('admin.mark_delivered') }}
+                    </button>
+                @else
+                    <select name="status" class="form-select mb-3">
+                        @foreach(['pending', 'accepted', 'ready', 'shipped', 'delivered', 'cancelled'] as $status)
+                            <option value="{{ $status }}" @selected($order->status === $status) @disabled($prepaidBlocked && !in_array($status, ['pending', 'cancelled'], true))>
+                                {{ __('admin.status_' . $status) }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn btn-primary w-100">{{ __('admin.update_status') }}</button>
+                @endif
+            </form>
+        </section>
+
+        <section class="panel-card mb-4">
+            <div class="panel-heading">
+                <div>
+                    <h3>{{ __('admin.delivery_and_payment') }}</h3>
+                    <p>{{ __('admin.delivery_payment_hint') }}</p>
+                </div>
+            </div>
+            <div class="info-list">
+                <div>
+                    <span>{{ __('admin.delivery_method') }}</span>
+                    <strong>{{ trans()->has($deliveryKey) ? __($deliveryKey) : ucfirst(str_replace('_', ' ', $order->delivery_method)) }}</strong>
+                </div>
+                @if($order->delivery_method === 'qadmous')
+                    <div><span>{{ __('admin.qadmous_governorate') }}</span><strong>{{ $order->qadmous_governorate ?: '-' }}</strong></div>
+                    <div><span>{{ __('admin.qadmous_branch') }}</span><strong>{{ $order->qadmous_branch ?: '-' }}</strong></div>
+                    <div><span>{{ __('admin.recipient') }}</span><strong>{{ $order->recipient_name ?: '-' }} · {{ $order->recipient_phone ?: '-' }}</strong></div>
+                    <form method="POST" action="{{ route('admin.orders.updateTracking', $order->id) }}" class="mt-2">
+                        @csrf
+                        @method('PUT')
+                        <label for="tracking_number" class="form-label">{{ __('admin.tracking_number') }}</label>
+                        <div class="input-group">
+                            <input id="tracking_number" name="tracking_number" value="{{ $order->tracking_number }}" class="form-control" placeholder="{{ __('admin.tracking_number') }}" required>
+                            <button class="btn btn-outline-primary">{{ __('admin.save_tracking') }}</button>
+                        </div>
+                    </form>
+                @elseif($order->pickup_location)
+                    <div><span>{{ __('admin.pickup_location') }}</span><strong>{{ __('admin.' . $order->pickup_location) }}</strong></div>
+                @endif
+
+                @if($order->deliveryArea)
+                    <div>
+                        <span>{{ __('admin.delivery_area') }}</span>
+                        <strong>
+                            {{ app()->getLocale() === 'ar' ? $order->deliveryArea->name_ar : $order->deliveryArea->name_en }} · {{ $money($order->delivery_fee ?? 0) }}
+                            @if($order->delivery_fee_usd !== null)
+                                · {{ $usd($order->delivery_fee_usd) }}
+                            @endif
+                        </strong>
+                    </div>
+                @endif
+
+                @if($order->deliveryUser)
+                    <div><span>{{ __('admin.assigned_delivery') }}</span><strong>{{ $order->deliveryUser->name }}</strong></div>
+                @endif
+
+                <div><span>{{ __('admin.payment') }}</span><strong>{{ __($paymentKey) }}</strong></div>
+                <div><span>{{ __('admin.payment_status') }}</span><strong>{{ __('admin.payment_status_' . ($order->payment_status ?: 'unpaid')) }}</strong></div>
+                @if($requiresReceipt)
+                    <div><span>{{ __('admin.receipt_status') }}</span><strong>{{ trans()->has($receiptStatusKey) ? __($receiptStatusKey) : $order->payment_receipt_status }}</strong></div>
+                @endif
+                @if($order->coupon)
+                    <div><span>{{ __('admin.coupon') }}</span><strong>{{ $order->coupon->code }}</strong></div>
+                @endif
+            </div>
+        </section>
+
+        @unless(auth()->user()->hasRole('delivery'))
+            <section id="payment-receipt" class="panel-card scroll-mt-3">
+                @if($requiresReceipt)
+                    <div class="panel-heading">
+                        <div>
+                            <h3>{{ __('admin.receipt') }}</h3>
+                            <p>{{ __('admin.receipt_hint') }}</p>
+                        </div>
+                        <span class="status-pill {{ $order->payment_receipt_status === 'approved' ? 'success' : ($order->payment_receipt_status === 'rejected' ? 'danger' : 'warning') }}">
+                            {{ trans()->has($receiptStatusKey) ? __($receiptStatusKey) : $order->payment_receipt_status }}
+                        </span>
+                    </div>
+                    @if($order->shipping_receipt)
+                        <a href="{{ \App\Services\ProtectedFileUrl::make('order-receipt', $order->id, 'receipt', auth()->id()) }}" target="_blank" rel="noopener" class="file-row mb-3">
+                            <i class="fas fa-image"></i>
+                            <span>{{ __('admin.view_uploaded_receipt') }}</span>
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    @endif
+                    @if(in_array($order->payment_receipt_status, ['pending', 'rejected'], true) && $order->shipping_receipt)
+                        <div class="d-grid gap-2 mb-3">
+                            <form action="{{ route('admin.orders.reviewReceipt', $order->id) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="decision" value="approve">
+                                <button class="btn btn-success w-100"><i class="fas fa-check me-1"></i>{{ __('admin.approve_receipt') }}</button>
+                            </form>
+                            <form action="{{ route('admin.orders.reviewReceipt', $order->id) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="decision" value="reject">
+                                <input name="reason" class="form-control mb-2" placeholder="{{ __('admin.receipt_rejection_reason') }}" required>
+                                <button class="btn btn-outline-danger w-100"><i class="fas fa-times me-1"></i>{{ __('admin.reject_receipt') }}</button>
+                            </form>
+                        </div>
+                    @endif
+                    <form action="{{ route('admin.orders.uploadReceipt', $order->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="file" name="shipping_receipt" class="form-control mb-2" accept="image/*" required>
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            {{ $order->shipping_receipt ? __('admin.replace_receipt') : __('admin.upload_receipt') }}
+                        </button>
+                    </form>
+                    @if($order->receipt_rejection_reason)
+                        <div class="alert alert-danger mt-3 mb-0">{{ $order->receipt_rejection_reason }}</div>
+                    @endif
+                @else
+                    <div class="notice-card"><i class="fas fa-receipt"></i><span>{{ __('admin.receipt_not_required') }}</span></div>
+                @endif
+            </section>
+        @endunless
     </div>
 </div>
 @endsection

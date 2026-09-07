@@ -39,6 +39,7 @@ class _CartScreenState extends State<CartScreen> {
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
+            leading: const HanovaBackButton(),
             title: Text(context.tr('shopping_cart')),
             actions: [
               if (cartItems.isNotEmpty)

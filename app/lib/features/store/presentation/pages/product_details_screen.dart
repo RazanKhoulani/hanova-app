@@ -45,7 +45,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
         if (snapshot.hasError || !snapshot.hasData) {
           return Scaffold(
-            appBar: AppBar(),
+            appBar: AppBar(leading: const HanovaBackButton()),
             body: HanovaStateView(
               icon: Icons.cloud_off_rounded,
               title: context.tr('something_went_wrong'),
@@ -63,15 +63,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         final product = snapshot.data!;
         return Scaffold(
           backgroundColor: AppColors.background,
-          body: CustomScrollView(
-            slivers: [
-              _buildAppBar(product),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+          body: SafeArea(
+            bottom: false,
+            child: CustomScrollView(
+              slivers: [
+                _buildAppBar(product),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -226,11 +228,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         ],
                       ),
                       const SizedBox(height: 40),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           bottomNavigationBar: _buildBottomBar(product),
         );
@@ -243,10 +246,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       expandedHeight: 350,
       pinned: true,
       backgroundColor: AppColors.background,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-        onPressed: () => context.pop(),
-      ),
+      leading: const HanovaBackButton(),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: const BoxDecoration(

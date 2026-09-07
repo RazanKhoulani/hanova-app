@@ -14,8 +14,77 @@
             $statusKey = 'admin.status_' . $order->status;
             $paymentKey = match ($order->payment_method) { 'cash_on_delivery' => 'admin.cash_on_delivery', 'credit_card' => 'admin.credit_card', 'online', 'apple_pay' => 'admin.online_payment', default => 'admin.cash' };
             $deliveryKey = 'admin.' . ($order->delivery_method ?: 'home_delivery');
+            $requiresReceipt = !in_array($order->payment_method, ['cash', 'cash_on_delivery'], true);
+            $prepaidBlocked = $requiresReceipt && $order->payment_receipt_status !== 'approved';
+            $receiptNeedsReview = $requiresReceipt
+                && $order->shipping_receipt
+                && $order->payment_receipt_status === 'pending';
         @endphp
-        <tr class="clickable-row" data-href="{{ route('admin.orders.show', $order->id) }}"><td class="fw-bold">#{{ $order->id }}</td><td class="text-muted">{{ $order->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</td><td><strong>{{ $order->user?->name ?? __('admin.unknown_customer') }}</strong><small class="d-block text-muted" dir="ltr">{{ $order->user?->phone }}</small></td><td class="fw-bold">{{ $money($order->total_amount) }}@if(($order->discount_amount ?? 0) > 0)<small class="d-block text-success">-{{ $money($order->discount_amount) }} {{ __('admin.discount') }}</small>@endif</td><td><span class="status-pill info">{{ __($paymentKey) }}</span><small class="d-block text-muted">{{ $order->payment_status === 'paid' ? __('admin.paid') : __('admin.unpaid') }}</small></td><td><span>{{ trans()->has($deliveryKey) ? __($deliveryKey) : ucfirst(str_replace('_', ' ', $order->delivery_method)) }}</span>@if($order->deliveryArea)<small class="d-block text-muted">{{ app()->getLocale() === 'ar' ? $order->deliveryArea->name_ar : $order->deliveryArea->name_en }}</small>@elseif($order->pickup_location)<small class="d-block text-muted">{{ __('admin.' . $order->pickup_location) }}</small>@else<small class="d-block text-muted">{{ __('admin.no_area') }}</small>@endif</td><td><span class="status-pill {{ in_array($order->status, ['cancelled', 'canceled']) ? 'danger' : (in_array($order->status, ['delivered', 'paid']) ? 'success' : 'warning') }}">{{ trans()->has($statusKey) ? __($statusKey) : ucfirst($order->status) }}</span></td><td><div class="action-toolbar justify-content-end">@if(auth()->user()->hasRole('delivery')) @if($order->status !== 'delivered')<form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">@csrf @method('PUT')<input type="hidden" name="status" value="delivered"><button type="submit" class="btn btn-sm btn-success">{{ __('admin.mark_delivered') }}</button></form>@endif @else<form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">@csrf @method('PUT')<select name="status" class="form-select form-select-sm" onchange="this.form.submit()">@foreach(['pending', 'accepted', 'ready', 'paid', 'shipped', 'delivered', 'cancelled'] as $status)<option value="{{ $status }}" @selected($order->status === $status)>{{ __('admin.status_' . $status) }}</option>@endforeach</select></form>@endif<a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-light" title="{{ __('admin.view_details') }}"><i class="fas fa-eye"></i></a></div></td></tr>
+        <tr class="clickable-row" data-href="{{ route('admin.orders.show', $order->id) }}">
+            <td class="fw-bold">#{{ $order->id }}</td>
+            <td class="text-muted">{{ $order->created_at->locale(app()->getLocale())->translatedFormat('d M Y، H:i') }}</td>
+            <td>
+                <strong>{{ $order->user?->name ?? __('admin.unknown_customer') }}</strong>
+                <small class="d-block text-muted" dir="ltr">{{ $order->user?->phone }}</small>
+            </td>
+            <td class="fw-bold">
+                {{ $money($order->total_amount) }}
+                @if(($order->discount_amount ?? 0) > 0)
+                    <small class="d-block text-success">-{{ $money($order->discount_amount) }} {{ __('admin.discount') }}</small>
+                @endif
+            </td>
+            <td>
+                <span class="status-pill info">{{ __($paymentKey) }}</span>
+                <small class="d-block text-muted">{{ $order->payment_status === 'paid' ? __('admin.paid') : __('admin.unpaid') }}</small>
+                @if($receiptNeedsReview && !auth()->user()->hasRole('delivery'))
+                    <a href="{{ route('admin.orders.show', $order->id) }}#payment-receipt" class="btn btn-sm btn-outline-warning mt-2">
+                        <i class="fas fa-file-circle-check me-1"></i>{{ __('admin.review_receipt') }}
+                    </a>
+                @endif
+            </td>
+            <td>
+                <span>{{ trans()->has($deliveryKey) ? __($deliveryKey) : ucfirst(str_replace('_', ' ', $order->delivery_method)) }}</span>
+                @if($order->deliveryArea)
+                    <small class="d-block text-muted">{{ app()->getLocale() === 'ar' ? $order->deliveryArea->name_ar : $order->deliveryArea->name_en }}</small>
+                @elseif($order->pickup_location)
+                    <small class="d-block text-muted">{{ __('admin.' . $order->pickup_location) }}</small>
+                @else
+                    <small class="d-block text-muted">{{ __('admin.no_area') }}</small>
+                @endif
+            </td>
+            <td>
+                <span class="status-pill {{ in_array($order->status, ['cancelled', 'canceled']) ? 'danger' : (in_array($order->status, ['delivered', 'paid']) ? 'success' : 'warning') }}">
+                    {{ trans()->has($statusKey) ? __($statusKey) : ucfirst($order->status) }}
+                </span>
+            </td>
+            <td>
+                <div class="action-toolbar justify-content-end">
+                    @if(auth()->user()->hasRole('delivery'))
+                        @if($order->status !== 'delivered')
+                            <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="status" value="delivered">
+                                <button type="submit" class="btn btn-sm btn-success" @disabled($prepaidBlocked)>{{ __('admin.mark_delivered') }}</button>
+                            </form>
+                        @endif
+                    @else
+                        <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                @foreach(['pending', 'accepted', 'ready', 'paid', 'shipped', 'delivered', 'cancelled'] as $status)
+                                    <option value="{{ $status }}" @selected($order->status === $status) @disabled($prepaidBlocked && !in_array($status, ['pending', 'cancelled'], true))>
+                                        {{ __('admin.status_' . $status) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @endif
+                    <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-light" title="{{ __('admin.view_details') }}"><i class="fas fa-eye"></i></a>
+                </div>
+            </td>
+        </tr>
     @empty
         <tr><td colspan="8" class="empty-table"><i class="fas fa-shopping-cart"></i><span>{{ __('admin.no_orders_found') }}</span></td></tr>
     @endforelse

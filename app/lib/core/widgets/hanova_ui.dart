@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
 
@@ -19,6 +20,60 @@ class HanovaRadii {
   static const double sheet = 28;
 
   const HanovaRadii._();
+}
+
+/// The single back control used by pushed Hanova screens.
+///
+/// It follows the current text direction and still has a useful destination
+/// when a screen was opened from a deep link without navigation history.
+class HanovaBackButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final String fallbackLocation;
+  final Color? foregroundColor;
+  final Color backgroundColor;
+
+  const HanovaBackButton({
+    super.key,
+    this.onPressed,
+    this.fallbackLocation = '/home',
+    this.foregroundColor,
+    this.backgroundColor = Colors.transparent,
+  });
+
+  void _goBack(BuildContext context) {
+    if (onPressed != null) {
+      onPressed!();
+      return;
+    }
+
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(fallbackLocation);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: IconButton(
+          onPressed: () => _goBack(context),
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: Icon(
+            // This icon mirrors itself in RTL, so the same back chevron is
+            // correct in both Arabic and English without double mirroring.
+            Icons.arrow_back_ios_new_rounded,
+            size: 19,
+            color: foregroundColor,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class HanovaSurface extends StatelessWidget {

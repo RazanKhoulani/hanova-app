@@ -39,37 +39,55 @@ class OrdersState {
 
 class OrdersCubit extends Cubit<OrdersState> {
   final StoreRepository _repository;
+  bool _refreshQueued = false;
 
   OrdersCubit(this._repository) : super(OrdersState.initial());
 
   Future<void> loadOrders() async {
     if (state.isLoading) {
+      _refreshQueued = true;
       return;
     }
 
-    emit(state.copyWith(isLoading: true, clearError: true));
+    do {
+      _refreshQueued = false;
+      emit(state.copyWith(isLoading: true, clearError: true));
 
-    try {
-      final orders = await _repository.getOrders();
-      emit(OrdersState(isLoading: false, orders: orders, errorMessage: null));
-    } catch (e) {
-      emit(
-        state.copyWith(isLoading: false, errorMessage: ApiErrorMessage.from(e)),
-      );
-    }
+      try {
+        final orders = await _repository.getOrders();
+        if (isClosed) return;
+        emit(OrdersState(isLoading: false, orders: orders, errorMessage: null));
+      } catch (e) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            isLoading: false,
+            errorMessage: ApiErrorMessage.from(e),
+          ),
+        );
+      }
+    } while (_refreshQueued && !isClosed);
   }
 
   Future<void> markDelivered(int orderId) async {
+    if (state.isLoading) return;
+
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
       await _repository.markOrderDelivered(orderId);
       final orders = await _repository.getOrders();
+      if (isClosed) return;
       emit(OrdersState(isLoading: false, orders: orders, errorMessage: null));
     } catch (e) {
+      if (isClosed) return;
       emit(
         state.copyWith(isLoading: false, errorMessage: ApiErrorMessage.from(e)),
       );
+    }
+
+    if (_refreshQueued && !isClosed) {
+      await loadOrders();
     }
   }
 }

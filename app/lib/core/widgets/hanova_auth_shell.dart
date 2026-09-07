@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
-
 import '../theme/app_colors.dart';
+import 'hanova_ui.dart';
 
 class HanovaBrandMark extends StatelessWidget {
   final double size;
@@ -112,11 +111,11 @@ class HanovaAuthShell extends StatelessWidget {
                     Row(
                       children: [
                         if (showBack)
-                          _HeaderButton(
-                            icon: Icons.arrow_back_ios_new_rounded,
-                            onTap: () => context.canPop()
-                                ? context.pop()
-                                : context.go('/home'),
+                          HanovaBackButton(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.14,
+                            ),
                           )
                         else
                           const SizedBox(width: 44),
@@ -210,30 +209,6 @@ class HanovaFieldLabel extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
-class _HeaderButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _HeaderButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.14),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(icon, color: Colors.white, size: 18),
-        ),
       ),
     );
   }

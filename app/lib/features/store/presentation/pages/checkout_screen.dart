@@ -278,7 +278,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: Text(context.tr('checkout'))),
+        appBar: AppBar(
+          leading: const HanovaBackButton(),
+          title: Text(context.tr('checkout')),
+        ),
         body: BlocBuilder<CartBloc, CartState>(
           builder: (context, cartState) {
             if (cartState.items.isEmpty) {

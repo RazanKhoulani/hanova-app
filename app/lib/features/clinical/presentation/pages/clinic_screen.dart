@@ -17,7 +17,9 @@ import '../../domain/repositories/clinical_repository.dart';
 import '../bloc/clinical_bloc.dart';
 
 class ClinicScreen extends StatefulWidget {
-  const ClinicScreen({super.key});
+  final bool showBack;
+
+  const ClinicScreen({super.key, this.showBack = false});
 
   @override
   State<ClinicScreen> createState() => _ClinicScreenState();
@@ -162,7 +164,11 @@ class _ClinicScreenState extends State<ClinicScreen>
         if (authState is! AuthAuthenticated) {
           return Scaffold(
             backgroundColor: AppColors.background,
-            appBar: AppBar(title: Text(context.tr('my_clinic'))),
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              leading: widget.showBack ? const HanovaBackButton() : null,
+              title: Text(context.tr('my_clinic')),
+            ),
             body: _buildAuthRequired(context),
           );
         }
@@ -173,7 +179,11 @@ class _ClinicScreenState extends State<ClinicScreen>
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(title: Text(context.tr('my_clinic'))),
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: widget.showBack ? const HanovaBackButton() : null,
+            title: Text(context.tr('my_clinic')),
+          ),
           body: BlocBuilder<ClinicalBloc, ClinicalState>(
             builder: (context, state) {
               if (state is ClinicalLoading) {
@@ -400,6 +410,7 @@ class _ClinicScreenState extends State<ClinicScreen>
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      showDragHandle: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -411,17 +422,7 @@ class _ClinicScreenState extends State<ClinicScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.divider,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 4),
               Text(
                 _clinicText('تفاصيل الموعد', 'Appointment Details'),
                 style: const TextStyle(

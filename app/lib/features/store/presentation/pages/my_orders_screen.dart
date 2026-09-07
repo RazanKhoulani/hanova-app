@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app/injection_container.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/notifications/push_notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/hanova_ui.dart';
@@ -26,17 +29,35 @@ class MyOrdersScreen extends StatefulWidget {
   State<MyOrdersScreen> createState() => _MyOrdersScreenState();
 }
 
-class _MyOrdersScreenState extends State<MyOrdersScreen> {
+class _MyOrdersScreenState extends State<MyOrdersScreen>
+    with WidgetsBindingObserver {
   late final OrdersCubit _ordersCubit;
   bool _requestedOrders = false;
+  StreamSubscription<Map<String, dynamic>>? _notificationSubscription;
+  Timer? _refreshDebounce;
 
   @override
   void initState() {
     super.initState();
     _ordersCubit = sl<OrdersCubit>();
+    WidgetsBinding.instance.addObserver(this);
+    _notificationSubscription = sl<PushNotificationService>().events.listen(
+      (data) {
+        if (_isOrderNotification(data)) {
+          _scheduleRefresh();
+        }
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _fetchOrdersIfAllowed(),
     );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _scheduleRefresh();
+    }
   }
 
   @override
@@ -56,8 +77,25 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshDebounce?.cancel();
+    _notificationSubscription?.cancel();
     _ordersCubit.close();
     super.dispose();
+  }
+
+  bool _isOrderNotification(Map<String, dynamic> data) {
+    final type = data['type']?.toString().toLowerCase() ?? '';
+    return type.startsWith('order_') ||
+        type == 'new_order' ||
+        data['order_id'] != null;
+  }
+
+  void _scheduleRefresh() {
+    _refreshDebounce?.cancel();
+    _refreshDebounce = Timer(const Duration(milliseconds: 350), () {
+      _fetchOrdersIfAllowed(force: true);
+    });
   }
 
   void _fetchOrdersIfAllowed({bool force = false}) {
@@ -89,49 +127,60 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         child: Scaffold(
           backgroundColor: AppColors.background,
           appBar: widget.showAppBar
-              ? AppBar(title: Text(context.tr('my_orders')))
+              ? AppBar(
+                  leading: const HanovaBackButton(),
+                  title: Text(context.tr('my_orders')),
+                )
               : null,
-          body: BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, authState) {
-              if (authState is AuthLoading || authState is AuthInitial) {
-                return const HanovaLoadingView();
-              }
+          body: SafeArea(
+            top: !widget.showAppBar,
+            bottom: false,
+            child: BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                if (authState is AuthLoading || authState is AuthInitial) {
+                  return const HanovaLoadingView();
+                }
 
-              if (authState is! AuthAuthenticated) {
-                return _buildAuthRequired(context);
-              }
+                if (authState is! AuthAuthenticated) {
+                  return _buildAuthRequired(context);
+                }
 
-              return BlocBuilder<OrdersCubit, OrdersState>(
-                builder: (context, state) {
-                  final isDeliveryUser = authState.user.role == 'delivery';
+                return BlocBuilder<OrdersCubit, OrdersState>(
+                  builder: (context, state) {
+                    final isDeliveryUser = authState.user.role == 'delivery';
 
-                  if (state.isLoading && state.orders.isEmpty) {
-                    return const HanovaLoadingView();
-                  }
+                    if (state.isLoading && state.orders.isEmpty) {
+                      return const HanovaLoadingView();
+                    }
 
-                  if (state.errorMessage != null && state.orders.isEmpty) {
-                    return _buildFailureState(context, state.errorMessage!);
-                  }
+                    if (state.errorMessage != null && state.orders.isEmpty) {
+                      return _buildFailureState(context, state.errorMessage!);
+                    }
 
-                  if (state.orders.isEmpty) {
-                    return _buildEmptyState(context);
-                  }
+                    if (state.orders.isEmpty) {
+                      return _buildEmptyState(context);
+                    }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: state.orders.length,
-                    itemBuilder: (context, index) {
-                      final order = state.orders[index];
-                      return _buildOrderCard(
-                        order,
-                        isDeliveryUser: isDeliveryUser,
-                        isUpdating: state.isLoading,
-                      );
-                    },
-                  );
-                },
-              );
-            },
+                    return RefreshIndicator(
+                      onRefresh: _ordersCubit.loadOrders,
+                      child: ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(20),
+                        itemCount: state.orders.length,
+                        itemBuilder: (context, index) {
+                          final order = state.orders[index];
+                          return _buildOrderCard(
+                            order,
+                            isDeliveryUser: isDeliveryUser,
+                            isUpdating: state.isLoading,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),

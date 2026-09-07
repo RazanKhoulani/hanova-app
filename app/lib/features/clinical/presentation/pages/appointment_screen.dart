@@ -122,7 +122,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         },
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(title: Text(context.tr('book_appointment'))),
+          appBar: AppBar(
+            leading: const HanovaBackButton(),
+            title: Text(context.tr('book_appointment')),
+          ),
           body: SingleChildScrollView(
             child: Column(
               children: [

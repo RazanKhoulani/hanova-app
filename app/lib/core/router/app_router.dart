@@ -87,11 +87,12 @@ class AppRouter {
       ),
       GoRoute(
         path: '/clinic',
-        builder: (context, state) => const ClinicScreen(),
+        builder: (context, state) => const ClinicScreen(showBack: true),
       ),
       GoRoute(
         path: '/chat',
         builder: (context, state) => ChatScreen(
+          showBack: true,
           consultationId: int.tryParse(
             state.uri.queryParameters['consultation_id'] ?? '',
           ),

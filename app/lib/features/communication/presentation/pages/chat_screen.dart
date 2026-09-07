@@ -27,8 +27,13 @@ import '../../data/models/message_model.dart';
 
 class ChatScreen extends StatefulWidget {
   final int? consultationId;
+  final bool showBack;
 
-  const ChatScreen({super.key, this.consultationId});
+  const ChatScreen({
+    super.key,
+    this.consultationId,
+    this.showBack = false,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -408,7 +413,11 @@ class _ChatScreenState extends State<ChatScreen> {
         if (authState is! AuthAuthenticated) {
           return Scaffold(
             backgroundColor: AppColors.background,
-            appBar: AppBar(title: Text(context.tr('clinic_support'))),
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              leading: widget.showBack ? const HanovaBackButton() : null,
+              title: Text(context.tr('clinic_support')),
+            ),
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -450,6 +459,8 @@ class _ChatScreenState extends State<ChatScreen> {
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: widget.showBack ? const HanovaBackButton() : null,
             title: Column(
               children: [
                 Text(context.tr('clinic_support')),

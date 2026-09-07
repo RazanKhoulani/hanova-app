@@ -39,7 +39,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(title: Text(context.tr('notifications'))),
+          appBar: AppBar(
+            leading: const HanovaBackButton(),
+            title: Text(context.tr('notifications')),
+          ),
           body: isAuthenticated
               ? _buildNotifications()
               : _buildAuthRequired(context),

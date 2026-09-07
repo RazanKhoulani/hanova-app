@@ -6,6 +6,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../../injection_container.dart';
 
 class HelpCenterScreen extends StatefulWidget {
@@ -50,7 +51,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('help_center'))),
+      appBar: AppBar(
+        leading: const HanovaBackButton(),
+        title: Text(context.tr('help_center')),
+      ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: AppColors.primary,

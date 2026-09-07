@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hanova_ui.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -20,7 +21,10 @@ class SecurityScreen extends StatelessWidget {
         final phone = user?.phone;
 
         return Scaffold(
-          appBar: AppBar(title: Text(context.tr('security'))),
+          appBar: AppBar(
+            leading: const HanovaBackButton(),
+            title: Text(context.tr('security')),
+          ),
           body: ListView(
             padding: const EdgeInsets.all(20),
             children: [

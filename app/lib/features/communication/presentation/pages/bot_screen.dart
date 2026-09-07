@@ -85,7 +85,11 @@ class _BotScreenState extends State<BotScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(context.tr('bot_title')), centerTitle: true),
+      appBar: AppBar(
+        leading: const HanovaBackButton(),
+        title: Text(context.tr('bot_title')),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
           _buildHeader(),
