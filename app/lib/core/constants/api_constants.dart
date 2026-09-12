@@ -2,7 +2,7 @@ class ApiConstants {
   static const String supportPhone = '+963 951 582 835';
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://hanova-api-production.up.railway.app/api',
+    defaultValue: 'https://hanova-app-production.up.railway.app/api',
   );
   static const String pusherKey = String.fromEnvironment(
     'PUSHER_APP_KEY',

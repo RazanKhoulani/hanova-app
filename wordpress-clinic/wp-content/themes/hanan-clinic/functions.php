@@ -309,7 +309,7 @@ function hanan_clinic_customize(WP_Customize_Manager $customizer): void
         'instagram_url' => ['Instagram URL', '#', 'esc_url_raw'],
         'booking_url' => ['Booking URL', '', 'esc_url_raw'],
         'app_download_url' => ['App download URL', '', 'esc_url_raw'],
-        'api_url' => ['Hanova API URL', 'https://hanova-api-production.up.railway.app/api', 'esc_url_raw'],
+        'api_url' => ['Hanova API URL', 'https://hanova-app-production.up.railway.app/api', 'esc_url_raw'],
     ];
 
     foreach ($fields as $id => [$label, $default, $sanitize]) {
@@ -364,7 +364,7 @@ add_action('init', 'hanan_clinic_register_content_types');
 
 function hanan_clinic_api_url(): string
 {
-    $default = 'https://hanova-api-production.up.railway.app/api';
+    $default = 'https://hanova-app-production.up.railway.app/api';
     $apiUrl = trim((string) get_theme_mod('hanan_api_url', $default));
 
     // Existing local installations stored the old development URL as a theme option.

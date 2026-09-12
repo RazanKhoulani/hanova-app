@@ -18,7 +18,7 @@ Open `Appearance > Customize > Clinic details` to configure:
 - Hanova API base URL
 
 The production API default is
-`https://hanova-api-production.up.railway.app/api`.
+`https://hanova-app-production.up.railway.app/api`.
 
 The theme reads `/home`, which is the same endpoint used by the Hanova mobile
 home screen. It renders the active offer, current care categories, product

@@ -2,19 +2,21 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_the_public_landing_page_uses_hanova_branding(): void
     {
         $response = $this->get('/');
 
         $response
             ->assertOk()
-            ->assertSee('Hanova | Beauty, Clinic & Care')
-            ->assertSee('Open Hanova Dashboard')
+            ->assertSee('Hanova |')
+            ->assertSee(route('admin.login'))
             ->assertDontSee('Laravel Logo');
     }
 

@@ -41,8 +41,8 @@ class QVerifyRegistrationTest extends TestCase
         $this->postJson('/api/auth/register', [
             'name' => 'QVerify Patient',
             'phone' => '+963945345844',
+            'phone_confirmation' => '+963945345844',
             'password' => 'password',
-            'password_confirmation' => 'password',
         ])->assertAccepted()
             ->assertJsonPath('request_id', $requestId)
             ->assertJsonPath('delivery_status', 'sent')
